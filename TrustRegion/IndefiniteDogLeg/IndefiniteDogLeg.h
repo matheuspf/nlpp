@@ -38,7 +38,7 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 			{db("LEL   ", delta, "   ", (-dx + (v1 / v1.norm()) * (delta - dx.norm())).norm());
 				return -dx + (v1 / v1.norm()) * (delta - dx.norm());
 			}
-
+asddddddddddddddddddddd
 			v = gx;
 			u = dx;
 		}
