@@ -75,14 +75,16 @@ ll power (ll x, ll b)
 }
 
 
-void db () { cout << '\n' << flush; }
+ostream& db () { return cout << '\n' << flush; }
 
 template <typename T, typename... Args>
-void db (const T& t, const Args& ...args)
+ostream& db (const T& t, const Args& ...args)
 {
 	cout << t;
+	
 	if(sizeof...(Args)) cout << ' ';
-	db(args...);
+
+	return db(args...);
 }
 
 

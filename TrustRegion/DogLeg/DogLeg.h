@@ -1,5 +1,5 @@
-#ifndef OPT_TR_CAUCHY_POINT_H
-#define OPT_TR_CAUCHY_POINT_H
+#ifndef OPT_TR_DOGLEG_H
+#define OPT_TR_DOGLEG_H
 
 #include "../TrustRegion.h"
 
@@ -56,4 +56,4 @@ struct DogLeg : public TrustRegion<DogLeg>
 
 
 
-#endif // OPT_TR_CAUCHY_POINT_H
+#endif // OPT_TR_DOGLEG_H
