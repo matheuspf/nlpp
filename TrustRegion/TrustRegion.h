@@ -40,7 +40,7 @@ struct TrustRegion
 			double rho = aRed / abs(pRed);
 
 
-			db(delta, "       ", function(x), "      ", aRed, "      ", pRed, "       ", rho, "       ", x.transpose(), "     ", dir.transpose(), "\n\n\n");
+			//db(delta, "       ", function(x), "      ", aRed, "      ", pRed, "       ", rho, "       ", x.transpose(), "     ", dir.transpose(), "\n\n\n");
 			//db((fx - fy), "      ", (-gx.dot(dir) - 0.5 * dir.transpose() * hx * dir), "       ", x.transpose(), "     ", dir.transpose(), "\n\n\n");
 
 
@@ -106,7 +106,7 @@ struct TrustRegion
 private:
 
 	TrustRegion (double delta0 = 1.0, double alpha = 0.25, double beta = 2.0,
-			 double eta = 0.1, int maxIter = 1e3, double maxDelta = 1e2) :
+			 double eta = 0.1, int maxIter = 1e4, double maxDelta = 1e2) :
 			 delta0(delta0), alpha(alpha), beta(beta), eta(eta),
 			 maxIter(maxIter), maxDelta(maxDelta) {}
 

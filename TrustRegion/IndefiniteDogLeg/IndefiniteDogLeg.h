@@ -28,38 +28,48 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 					alpha = es.eigenvalues().real()(i), pos = i;
 			
 			Vec v1 = es.eigenvectors().real().col(pos);
-			alpha = -2*alpha;
+			alpha = 2*abs(alpha);
 
 			//db("\n", (hx + alpha * Mat::Identity(N, N)).inverse(), "\n");
 
-			Vec dx = (hx + alpha * Mat::Identity(N, N)).inverse() * gx;
+			Vec dx = -(hx + alpha * Mat::Identity(N, N)).inverse() * gx;
 
 			if(dx.norm() < delta)
-			{db("LEL   ", delta, "   ", (-dx + (v1 / v1.norm()) * (delta - dx.norm())).norm());
-				return -dx + (v1 / v1.norm()) * (delta - dx.norm());
+			{
+				double a = v1.dot(v1);
+				double b = 2*dx.dot(v1);
+				double c = dx.dot(dx) - delta*delta;
+
+				double lx = (-b + sqrt(b*b - 4*a*c)) / (2*a), ux = (-b - sqrt(b*b - 4*a*c)) / (2*a);
+				double fl = function(x + (dx + lx*v1)), fu = function(x + (dx + ux*v1));
+				double e;
+
+				e = fl < fu ? lx : ux;
+
+				return dx + e * v1;
 			}
-asddddddddddddddddddddd
+
 			v = gx;
-			u = dx;
+			u = -dx;
+
+			//DB("AAA");
 		}
 
 		else
-		{
+		{//db("BBB");
 			v = gx;
 			u = hx.inverse() * gx;
 		}
 
-		v = gx;
-		u = hx.inverse() * gx;
 
 		Vector2d g;
 		g(0) = v.dot(gx);
 		g(1) = u.dot(gx);
 		
 		Matrix2d h;
-		h(0, 0) = v.transpose() * hx * v;
-		h(1, 1) = u.transpose() * hx * u;
-		h(0, 1) = h(1, 0) = v.transpose() * hx * u;
+		h(0, 0) = 2*v.transpose() * hx * v;
+		h(1, 1) = 2*u.transpose() * hx * u;
+		h(0, 1) = h(1, 0) = 2*v.transpose() * hx * u;
 		
 
 		Vec dir = -h.inverse() * g;
@@ -67,9 +77,13 @@ asddddddddddddddddddddd
 		dir = dir(0) * v + dir(1) * u;
 
 		//db("\n\n LEL    ", dir.norm(), "  ", delta, "   ", dir.norm() <= delta, "\n\n");
-
+		
 		if(dir.norm() <= delta)
 			return dir;
+
+		
+
+		//DB("CCC");
 
 		Matrix2d a;
 		a(0, 0) = v.dot(v);
@@ -80,7 +94,7 @@ asddddddddddddddddddddd
 
 		dir = dir(0) * v + dir(1) * u;
 
-		return dir;
+		return dir * (delta / dir.norm());
 	}
 
 	template <class Function, class Gradient, class Hessian>
