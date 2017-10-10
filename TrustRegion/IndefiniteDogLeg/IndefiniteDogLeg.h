@@ -3,6 +3,10 @@
 
 #include "../TrustRegion.h"
 
+#include "../CauchyPoint/CauchyPoint.h"
+
+#include "../DogLeg/DogLeg.h"
+
 #include "../../SpectraHelpers.h"
 
 
@@ -30,17 +34,29 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 					alpha = es.eigenvalues().real()(i), pos = i;
 			
 			Vec v1 = es.eigenvectors().real().col(pos);
-			alpha = 2*abs(alpha);
+			alpha = 2.0*abs(alpha);
+
+
+			if(alpha < EPS)
+			{
+				//db("DDD");
+
+				CauchyPoint cp;
+
+				return cp.direction(function, gradient, hessian, x, delta, fx, gx, hx);
+			}
+
 
 			Vec dx = -(hx + alpha * Mat::Identity(N, N)).inverse() * gx;
+			
 
 			if(dx.norm() < delta)
 			{
 				double a = v1.dot(v1);
-				double b = 2*dx.dot(v1);
+				double b = 2.0*dx.dot(v1);
 				double c = dx.dot(dx) - delta*delta;
 
-				double lx = (-b + sqrt(b*b - 4*a*c)) / (2*a), ux = (-b - sqrt(b*b - 4*a*c)) / (2*a);
+				double lx = (-b + sqrt(b*b - 4.0*a*c)) / (2.0*a), ux = (-b - sqrt(b*b - 4.0*a*c)) / (2.0*a);
 				double fl = function(x + (dx + lx*v1)), fu = function(x + (dx + ux*v1));
 				double e;
 
@@ -52,7 +68,7 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 			v = gx;
 			u = -dx;
 
-			//DB("AAA");
+			//db("AAA");
 		}
 
 		else
@@ -67,40 +83,88 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 		g(1) = u.dot(gx);
 		
 		Matrix2d h;
-		h(0, 0) = 2*v.transpose() * hx * v;
-		h(1, 1) = 2*u.transpose() * hx * u;
-		h(0, 1) = h(1, 0) = 2*v.transpose() * hx * u;
+		h(0, 0) = 2.0*v.transpose() * hx * v;
+		h(1, 1) = 2.0*u.transpose() * hx * u;
+		h(0, 1) = h(1, 0) = 2.0*v.transpose() * hx * u;
 		
 
 		Vec dir = -h.inverse() * g;
 
 		dir = dir(0) * v + dir(1) * u;
 
-		//db("\n\n LEL    ", dir.norm(), "  ", delta, "   ", dir.norm() <= delta, "\n\n");
+
 		
 		if(dir.norm() <= delta)
 			return dir;
 
 		
 
-		//DB("CCC");
+		//db("CCC");
 
-		Matrix2d a;
-		a(0, 0) = v.dot(v);
-		a(1, 1) = u.dot(u);
-		a(0, 1) = a(1, 0) = v.dot(u);
 		
-		dir = -(h + a).inverse() * g;
-
-		dir = dir(0) * v + dir(1) * u;
-
-		return dir * (delta / dir.norm());
+		return findRoot(function, gradient, hessian, fx, x, gx, hx, delta);
 	}
 
 	template <class Function, class Gradient, class Hessian>
 	Vec direction (Function function, Gradient gradient, Hessian hessian, Vec x, double delta)
 	{
 		return this->operator()(function, gradient, hessian, x, delta, function(x), gradient(x), hessian(x));
+	}
+
+
+	template <class F, class G, class H>
+	Vec findRoot (F f, G g, H h, double fx, const Vec& x, const Vec& gx, const Mat& hx, double delta)
+	{
+		std::complex<double> a = delta*delta;
+		std::complex<double> b = 2.0 * a * hx.trace();
+		std::complex<double> c = (a * pow(hx.trace(), 2.0) + 2.0 * a * hx.determinant() - gx.dot(gx));
+		std::complex<double> d = (2.0 * a * hx.determinant() * hx.trace() - 2.0 * (gx.transpose() * hx.adjoint().transpose()).dot(gx));
+		std::complex<double> e = (a * pow(hx.determinant(), 2.0) - (gx.transpose() * hx.adjoint().transpose()).dot(hx.adjoint() * gx));
+
+		std::complex<double> p1 = 2.0*pow(c, 3.0) - 9.0*b*c*d + 27.0*a*pow(d, 2.0) + 27.0*pow(b, 2.0)*e - 72.0*a*c*e;
+		std::complex<double> p2 = p1 + sqrt(-4.0*pow(pow(c, 2.0) -3.0*b*d + 12.0*a*e, 3.0) + pow(p1, 2.0));
+		std::complex<double> p3 = ((pow(c, 2.0) - 3.0*b*d + 12.0*a*e) / (3.0*a*pow(p2/2.0, 1.0/3.0))) + ((pow(p2/2.0, 1.0/3.0)) / (3.0*a));
+		std::complex<double> p4 = sqrt((pow(b, 2.0) / (4.0*pow(a, 2.0))) - ((2.0*c) / (3.0*a)) + p3);
+		std::complex<double> p5 = (pow(b, 2.0) / (2.0*pow(a, 2.0))) - ((4.0*c) / (3.0*a)) - p3;
+		std::complex<double> p6 = ((-pow(b, 3.0) / pow(a, 3.0)) + ((4.0*b*c) / pow(a, 2.0)) - ((8.0*d) / a)) / (4.0*p4);
+
+
+		vector<std::complex<double>> roots(4);
+		roots[0] = (-b / (4.0*a)) - (p4 / 2.0) - (sqrt(p5 - p6) / 2.0);
+		roots[1] = (-b / (4.0*a)) - (p4 / 2.0) + (sqrt(p5 - p6) / 2.0);
+		roots[2] = (-b / (4.0*a)) + (p4 / 2.0) - (sqrt(p5 + p6) / 2.0);
+		roots[3] = (-b / (4.0*a)) + (p4 / 2.0) + (sqrt(p5 + p6) / 2.0);
+
+
+		Vec dir = Vec::Constant(x.rows(), 0.0);
+		double bestF = f(x + dir);
+
+		for(int i = 0; i < roots.size(); ++i)
+		{
+			Vec aux = -(hx + roots[i].real() * Mat::Identity(hx.rows(), hx.rows())).inverse() * gx;
+
+			//if(aux.norm() > delta)
+			aux *= (delta / aux.norm());
+
+
+			double faux = f(x + aux);
+
+			if(faux < bestF)
+				bestF = faux, dir = aux;
+		}
+
+		if(dir.norm() == 0.0)
+		{
+			//db("DDD");
+
+			if(hx.llt().info() == Eigen::Success)
+				return DogLeg().direction(f, g, h, x, delta, fx, gx, hx);
+			
+			return CauchyPoint().direction(f, g, h, x, delta, fx, gx, hx);
+		}
+
+
+		return dir;
 	}
 };
 

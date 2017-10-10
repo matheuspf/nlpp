@@ -31,16 +31,22 @@ struct TrustRegion
 			double fy = function(y);	/// and its fitness
 
 			double aRed = (fx - fy);	/// Actual reduction 
-			double pRed = (-gx.dot(dir) - 0.5 * dir.transpose() * hx * dir);	/// Predicted reduction
+			double pRed = -(gx.dot(dir) + 0.5 * dir.transpose() * hx * dir);	/// Predicted reduction
 
 			/** Ratio between actual and predicted reduction. 'pRed' SHOULD always be positive, but I am also 
 			 *  handling the case where the trust region direction fails miserably and returns a worst solution.
 			 *  That 'abs' actually should not be there.
 			**/
-			double rho = aRed / abs(pRed);
+			double rho = aRed / max(EPS, abs(pRed));
+
+			if(isnan(rho))
+			{
+				db(fx, "     ", fy, "          ", gx.transpose(), "          ", dir, "\n\n");
+				db(hx); exit(0);
+			}
 
 
-			//db(delta, "       ", function(x), "      ", aRed, "      ", pRed, "       ", rho, "       ", x.transpose(), "     ", dir.transpose(), "\n\n\n");
+			//db(delta, "       ", function(x), "      ", aRed, "      ", pRed, "       ", rho, "       ", x.transpose(), "         ", dir.transpose(), "\n\n\n");
 			//db((fx - fy), "      ", (-gx.dot(dir) - 0.5 * dir.transpose() * hx * dir), "       ", x.transpose(), "     ", dir.transpose(), "\n\n\n");
 
 
@@ -105,8 +111,8 @@ struct TrustRegion
 
 private:
 
-	TrustRegion (double delta0 = 1.0, double alpha = 0.25, double beta = 2.0,
-			 double eta = 0.1, int maxIter = 1e4, double maxDelta = 1e2) :
+	TrustRegion (double delta0 = 10.0, double alpha = 0.25, double beta = 2.0,
+			 double eta = 0.1, int maxIter = 1e5, double maxDelta = 1e2) :
 			 delta0(delta0), alpha(alpha), beta(beta), eta(eta),
 			 maxIter(maxIter), maxDelta(maxDelta) {}
 
