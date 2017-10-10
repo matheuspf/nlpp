@@ -3,6 +3,8 @@
 
 #include "../TrustRegion.h"
 
+#include "../../SpectraHelpers.h"
+
 
 struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 {
@@ -29,8 +31,6 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 			
 			Vec v1 = es.eigenvectors().real().col(pos);
 			alpha = 2*abs(alpha);
-
-			//db("\n", (hx + alpha * Mat::Identity(N, N)).inverse(), "\n");
 
 			Vec dx = -(hx + alpha * Mat::Identity(N, N)).inverse() * gx;
 
