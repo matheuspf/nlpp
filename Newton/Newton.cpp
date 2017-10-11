@@ -24,10 +24,10 @@ struct Rosenbrock
 
 int main ()
 {
-	Newton<Backtracking, IndefiniteFactorization> newton;
+	Newton<StrongWolfe, CholeskyIdentity> newton(StrongWolfe(1.0, 0.2));;
 
 
-	Vec x = Vec::Constant(20, 5.0);
+	Vec x = Vec::Constant(500, 5.0);
 
 	x = newton(Rosenbrock(), x);
 

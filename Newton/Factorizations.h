@@ -38,7 +38,7 @@ struct SmallIdentity
 
 struct CholeskyIdentity
 {
-	CholeskyIdentity (double beta = 1e-3, double c = 2.0, double maxTau = 1e5) : beta(beta), c(c), maxTau(maxTau) {}
+	CholeskyIdentity (double beta = 1e-3, double c = 2.0, double maxTau = 1e8) : beta(beta), c(c), maxTau(maxTau) {}
 
 
 	Vec operator () (const Vec& grad, Mat hess)
@@ -81,7 +81,7 @@ struct CholeskyIdentity
 
 struct CholeskyFactorization
 {
-	CholeskyFactorization (double delta = 1e-2) : delta(delta) {}
+	CholeskyFactorization (double delta = 1e-3) : delta(delta) {}
 
 
 	Vec operator () (const Vec& grad, Mat hess)
@@ -94,20 +94,19 @@ struct CholeskyFactorization
 		{
 			maxDiag = max(maxDiag, abs(hess(i, i)));
 
-			for(int j = 0; j < N; ++j)
+			for(int j = 0; j < N; ++j) if(i != j)
 				maxOffDiag = max(maxOffDiag, abs(hess(i, j)));
 		}
-
 
 		double beta = max(EPS, max(maxDiag, maxOffDiag / max(1.0, sqrt(N*N - 1.0))));
 
 
 		Mat L = Mat::Identity(N, N);
 		Mat C = Mat::Identity(N, N);
-		//Vec D = Vec::Constant(N, 0.0);
 		Mat D = Mat::Constant(N, N, 0.0);
 		Mat E = Mat::Constant(N, N, 0.0);
 		Mat Q = Mat::Identity(N, N);
+		Mat O = Mat::Identity(N, N);
 
 
 		for(int i = 0; i < N; ++i)
@@ -131,47 +130,41 @@ struct CholeskyFactorization
 
 				hess = P * hess * P.transpose();
 
-				Q = Q * P;
+				Q = P * Q;
+				O = O * P.transpose();
 			}
 
 
 
-			C(i, i) = abs(hess(i, i));
-
 			double phi = -1e20;
 
-			for(int j = i + 1; j < N; ++j)
+			for(int j = 0; j < i; ++j)
+				L(i, j) = C(i, j) / D(j, j);
+
+			for(int j = i+1; j < N; ++j)
 			{
-				C(j, i) = hess(i, j);
+				C(j, i) = hess(j, i);
 
 				for(int k = 0; k < i; ++k)
-					C(j, i) -= D(k, k) * L(j, k) * L(i, k);
-
+					C(j, i) -= L(i, k) * C(j, k);
+				
 				phi = max(phi, abs(C(j, i)));
 			}
 
 			if(i == N-1)
 				phi = 0.0;
 
-
-			D(i, i) = max(C(i, i), max(pow(phi, 2) / beta, delta));
-
-			for(int j = i + 1; j < N; ++j)
-				L(j, i) = C(j, i) / D(i, i);
+			D(i, i) = max(delta, max(abs(C(i, i)), pow(phi, 2) / beta));
 
 			E(i, i) = D(i, i) - C(i, i);
 
 
-			for(int j = i + 1; j < N; ++j)
+			for(int j = i+1; j < N; ++j)
 				C(j, j) = C(j, j) - pow(C(j, i), 2) / D(i, i);
 		}
 
-		Q = Q.inverse();
 
-		hess = hess + E;
-		//hess = L * D * L.transpose();
-		//hess = Q * (L * D * L.transpose()) * Q.transpose();
-		//hess = Q * (L * D * L.transpose() - E) * Q.transpose();
+		hess = Q.inverse() * (hess + E) * O.inverse();
 
 		return -hess.colPivHouseholderQr().solve(grad);
 	}

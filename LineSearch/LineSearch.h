@@ -1,7 +1,7 @@
 #ifndef OPT_LINE_SEARCH_H
 #define OPT_LINE_SEARCH_H
 
-#include "../../Modelo.h"
+#include "../Modelo.h"
 
 #include "../FiniteDifference.h"
 

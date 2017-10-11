@@ -84,7 +84,7 @@ struct Newton
 	Inversion inversion;
 
 
-	int maxIterations = 1e2;
+	int maxIterations = 1e3;
 
 	double xTol = 1e-6;
 
