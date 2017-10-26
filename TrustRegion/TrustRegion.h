@@ -39,15 +39,15 @@ struct TrustRegion
 			**/
 			double rho = aRed / max(EPS, abs(pRed));
 
+			//db(delta, "       ", function(x), "      ", aRed, "      ", pRed, "       ", rho, "       ", x.transpose(), "         ", dir.transpose(), "\n\n\n");
+			//db((fx - fy), "      ", (-gx.dot(dir) - 0.5 * dir.transpose() * hx * dir), "       ", x.transpose(), "     ", dir.transpose(), "\n\n\n");
+
 			if(isnan(rho))
 			{
-				db(fx, "     ", fy, "          ", gx.transpose(), "          ", dir, "\n\n");
+				db("\n\n\n", fx, "     ", fy, "          ", gx.transpose(), "          ", dir, "\n\n");
 				db(hx); exit(0);
 			}
 
-
-			//db(delta, "       ", function(x), "      ", aRed, "      ", pRed, "       ", rho, "       ", x.transpose(), "         ", dir.transpose(), "\n\n\n");
-			//db((fx - fy), "      ", (-gx.dot(dir) - 0.5 * dir.transpose() * hx * dir), "       ", x.transpose(), "     ", dir.transpose(), "\n\n\n");
 
 
 			/// If this is the maximum allowed value for delta and we had this small improvement, theres nothing else to do
