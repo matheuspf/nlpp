@@ -22,7 +22,7 @@ int main ()
     bfgs.gTol = 1e-4;
 
 
-    Vec x = Vec::Constant(500, 5.0);
+    Vec x = Vec::Constant(1000, 5.0);
 
     //Vec x(2); x << -1.2, 1;
 

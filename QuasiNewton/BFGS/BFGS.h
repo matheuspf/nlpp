@@ -2,8 +2,8 @@
 #define OPT_BFGS_H
 
 #include "../../Modelo.h"
-#include "../FiniteDifference.h"
-#include "../LineSearch/StrongWolfe/StrongWolfe.h"
+#include "../../FiniteDifference.h"
+#include "../../LineSearch/StrongWolfe/StrongWolfe.h"
 
 
 
@@ -16,7 +16,7 @@ struct BFGS
 {
     //template <class T = LineSearch, class U = InitialHessian, 
     //          enable_if_t<is_same_v<T, StrongWolfe> && is_same_v<U, BFGS_Constant>, int> = 0>
-    BFGS (LineSearch lineSearch = LineSearch(), InitialHessian initialHessian = InitialHessian()) :
+    BFGS (const LineSearch& lineSearch = LineSearch(), const InitialHessian& initialHessian = InitialHessian()) :
           lineSearch(lineSearch), initialHessian(initialHessian) {}
 
     
@@ -94,15 +94,12 @@ struct BFGS
 
 struct BFGS_Diagonal
 {
-    BFGS_Diagonal (double h0 = 1e-8) : h0(h0) {}
+    BFGS_Diagonal (double h = 1e-4) : h(h) {}
 
     template <class Function, class Gradient>
     Mat operator () (Function function, Gradient gradient, Vec x)
     {
-        double fx = function(x), h = h0;
-
-        if(fx < 1e-6 || fx > 1e-6)
-            h = 1e-4;
+        double fx = function(x);
 
         Mat hess = Mat::Constant(x.rows(), x.rows(), 0.0);
 
@@ -112,10 +109,9 @@ struct BFGS_Diagonal
 
         return hess;
     }
-
     
 
-    double h0;
+    double h;
 };
 
 
