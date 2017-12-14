@@ -1,7 +1,7 @@
 #ifndef OPT_CG_H
 #define OPT_CG_H
 
-#include "../../Modelo.h"
+#include "../Modelo.h"
 
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 

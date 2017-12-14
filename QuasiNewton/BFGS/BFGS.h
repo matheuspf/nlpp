@@ -14,8 +14,6 @@ struct BFGS_Diagonal;
 template <class LineSearch = StrongWolfe, class InitialHessian = BFGS_Diagonal>
 struct BFGS
 {
-    //template <class T = LineSearch, class U = InitialHessian, 
-    //          enable_if_t<is_same_v<T, StrongWolfe> && is_same_v<U, BFGS_Constant>, int> = 0>
     BFGS (const LineSearch& lineSearch = LineSearch(), const InitialHessian& initialHessian = InitialHessian()) :
           lineSearch(lineSearch), initialHessian(initialHessian) {}
 
@@ -28,13 +26,9 @@ struct BFGS
         Mat In = Mat::Identity(N, N);
 
         Mat hess = initialHessian(function, gradient, x0);
-        //Mat hess = hessianFD(function)(x0);
 
         Vec g0 = gradient(x0);
         Vec x1, g1, dir, s, y;
-
-        // db(g0, "\n\n");
-        // db(hess); exit(0);
 
 
         for(int iter = 0; iter < maxIter; ++iter)
@@ -42,10 +36,6 @@ struct BFGS
             dir = -hess * g0;
 
             double alpha = lineSearch(function, gradient, x0, dir);
-
-            // db(iter, "      ", alpha, "      ", function(x0), '\n');
-            // db(x0.transpose(), "      ", dir.transpose(), "\n\n\n");
-            // FOR(i, N) if(isnan(x0(i))) exit(0);
 
 
             x1 = x0 + alpha * dir;
@@ -56,14 +46,11 @@ struct BFGS
             y = g1 - g0;
 
 
-            // if(s.dot(y) <= 0.0 || g1.norm() < gTol)
-            //    break;
-
             if(g1.norm() < gTol)
                 break;
 
 
-            double rho = 1.0 / y.dot(s);
+            double rho = 1.0 / std::max(y.dot(s), EPS);
 
             hess = (In - rho * s * y.transpose()) * hess * (In - rho * y * s.transpose()) + rho * s * s.transpose();
 
@@ -105,8 +92,6 @@ struct BFGS_Diagonal
 
         hess.diagonal() = (2*h) / (gradient((x.array() + h).matrix()) - gradient((x.array() - h).matrix())).array();
 
-        //DB(hess.diagonal()); exit(0);
-
         return hess;
     }
     
@@ -131,8 +116,6 @@ struct BFGS_Constant
 
         Mat hess = (y.dot(s) / y.dot(y)) * Mat::Identity(x0.rows(), x0.rows());
 
-        DB(hess);
-
         return hess;
     }
 
@@ -140,6 +123,15 @@ struct BFGS_Constant
     double alpha;
 };
 
+
+struct BFGS_Identity
+{
+    template <class Function, class Gradient>
+    Mat operator () (Function, Gradient, const Vec& x)
+    {
+        return Mat::Identity(x.rows(), x.rows());
+    }
+};
 
 
 #endif // OPT_BFGS_H

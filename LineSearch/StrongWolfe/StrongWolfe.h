@@ -6,15 +6,15 @@
 
 struct StrongWolfe : public LineSearch<StrongWolfe>
 {
-	StrongWolfe (double a0 = 1.0, double c1 = 1e-4, double c2 = 0.9, double aMax = 10.0, 
+	StrongWolfe (double a0 = 1.0, double c1 = 1e-4, double c2 = 0.9, double aMaxC = 100.0, 
 				 double rho = goldenRatio, int maxIterBrack = 20, int maxIterInt = 1e2, double tol = EPS) :
-				 a0(a0), c1(c1), c2(c2), aMax(aMax), rho(rho), 
+				 a0(a0), c1(c1), c2(c2), aMaxC(aMaxC), rho(rho), 
 				 maxIterBrack(maxIterBrack), maxIterInt(maxIterInt), tol(tol)
 	{
 		assert(a0 > 0.0 && "a0 must be positive");
 		assert(c1 > 0.0  && c2 > 0.0 && "c1 and c2 must be positive");
 		assert(c1 < c2 && "c1 must be smaller than c2");
-		assert(a0 < aMax && "a0 must be smaller than aMax");
+		assert(a0 < aMaxC && "a0 must be smaller than aMaxC");
 	}
 
 
@@ -31,6 +31,7 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 
 		int iter = 0;
 
+		double aMax = aMaxC * std::max(xNorm, double(N));
 
 		while(iter++ < maxIterBrack && b + tol < aMax)
 		{
@@ -122,7 +123,7 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 
 	double a0;
 	double c1, c2;
-	double aMax;
+	double aMaxC;
 	double rho;
 	int maxIterBrack, maxIterInt;
 	double tol;

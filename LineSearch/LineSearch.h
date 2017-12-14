@@ -20,6 +20,9 @@ public:
 	template <class Function, class Gradient>
 	double operator () (Function f, Gradient g, double x, double dir = 1.0)
 	{
+		N = 1;
+		xNorm = std::abs(x);
+
 		return this->operator()([&](double a){ return f(x + a * dir); },
 								[&](double a){ return g(x + a * dir) * dir; });
 	}
@@ -27,6 +30,9 @@ public:
 	template <class Function, class Gradient>
 	double operator () (Function f, Gradient g, const Vec& x, const Vec& dir)
 	{
+		N = x.rows();
+		xNorm = x.norm();
+
 		return this->operator()([&](double a){ return f(x + a * dir); },
 								[&](double a){ return g(x + a * dir).dot(dir); });
 	}
@@ -50,6 +56,10 @@ private:
 	LineSearch () {}
 
 	friend Impl;
+
+	int N;
+
+	double xNorm;
 };
 
 
