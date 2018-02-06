@@ -1,0 +1,3 @@
+[submodule "include/Handy"]
+	path = include/Handy
+	url = https://github.com/matheuspf/Handy.git
