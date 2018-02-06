@@ -6,7 +6,7 @@
 #include "../Handy/include/Handy.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 template <typename T>
@@ -59,13 +59,13 @@ constexpr double phi = phi_<double>;
 
 
 template <typename T>
-constexpr decltype(auto) shift (T&& x)
+inline constexpr decltype(auto) shift (T&& x)
 {
 	return std::forward<T>(x);
 }
 
 template <typename T, typename U, typename... Args>
-constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args)
+inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args)
 {
 	x = std::forward<U>(y);
 
@@ -73,5 +73,11 @@ constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args)
 }
 
 
+template <typename T>
+inline constexpr int sign (T t)
+{
+    return (T{0} < t) - (t < T{0});
+}
 
-} // namespace cppnl
+
+} // namespace cppnlp

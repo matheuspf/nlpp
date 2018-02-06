@@ -3,7 +3,7 @@
 #include "../LineSearch.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 struct StrongWolfe : public LineSearch<StrongWolfe>
@@ -47,7 +47,7 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 			safeGuard = b;
 
 
-			if(abs(gb) < c2 * abs(g0))
+			if(std::abs(gb) < c2 * std::abs(g0))
 				return b;
 
 			else if(gb > 0.0)
@@ -79,7 +79,7 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 		{
 			double next = interpolate(l, fl, gl, u, fu, gu);
 
-			if(a - tol <= l || a + tol >= u || abs(next - a) < tol)
+			if(a - tol <= l || a + tol >= u || std::abs(next - a) < tol)
 				a = (u + l) / 2.0;
 
 			else
@@ -95,7 +95,7 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 
 			else
 			{
-				if(abs(ga) < c2 * abs(g0))
+				if(std::abs(ga) < c2 * std::abs(g0))
 					break;
 
 				if(ga * (u - l) > 0.0)
@@ -115,7 +115,7 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 	double interpolate (double a, double fa, double ga, double b, double fb, double gb)
 	{
 		double d1 = ga + gb - 3 * ((fa - fb) / (a - b));
-		double d2 = SIGN(b - a) * sqrt(d1 * d1 - ga * gb);
+		double d2 = sign(b - a) * std::sqrt(d1 * d1 - ga * gb);
 
 		return b - (b - a) * ((gb + d2 - d1) / (gb - ga + 2 * d2));
 	}
@@ -131,5 +131,5 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 	double tol;
 };
 
-} // namespace cppnl
+} // namespace cppnlp
 

@@ -10,7 +10,7 @@ double func1 (double x)
 
 int main ()
 {
-	cppnl::Brents br;
+	cppnlp::Brents br;
 
 	double x = br(func1, 0.0, 7.0);
 

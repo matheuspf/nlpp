@@ -3,15 +3,14 @@
 #include "../LineSearch.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 struct Goldstein : public LineSearch<Goldstein>
 {
-	Goldstein (double a0 = 1.0, double c = 0.2, double rho1 = 0.5,
-			   double rho2 = 1.5, double aMin = EPS, int maxIter = 100) : 
-			   a0(a0), mu1(c), mu2(1.0 - c), rho1(rho1), 
-			   rho2(rho2), aMin(aMin), maxIter(maxIter)
+	Goldstein (double a0 = 1.0, double c = 0.2, double rho1 = 0.5, double rho2 = 1.5, 
+			   double aMin = constants::eps, int maxIter = 100) : 
+			   a0(a0), mu1(c), mu2(1.0 - c), rho1(rho1), rho2(rho2), aMin(aMin), maxIter(maxIter)
 	{
 		assert(a0 > 1e-5 && "a0 must be positive");
 		assert(c < 0.5 && "c must be smaller than 0.5");
@@ -68,4 +67,4 @@ struct Goldstein : public LineSearch<Goldstein>
 	int maxIter;
 };
 
-} // namespace cppnl
+} // namespace cppnlp

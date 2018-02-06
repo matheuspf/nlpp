@@ -3,7 +3,7 @@
 #include "../LineSearch.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 struct GoldenSection
@@ -21,18 +21,18 @@ struct GoldenSection
 		double y, fy, fx = f(x);
 
 
-		if(abs(b - x) > abs(x - a))
+		if(std::abs(b - x) > std::abs(x - a))
 			y = x + q * (b - x), fy = f(y);
 
 		else
 		{
 			y = x - q * (x - a), fy = f(x);
-			swap(x, y), swap(fx, fy);
+			std::swap(x, y), std::swap(fx, fy);
 		}
 
 
-		//while(abs(b - a) > tol * (abs(x) + abs(y)) && ++iter < maxIter)
-		while(abs(b - x) > 2 * tol && abs(x - a) > 2 * tol && ++iter < maxIter)
+		//while(std::abs(b - a) > tol * (std::abs(x) + std::abs(y)) && ++iter < maxIter)
+		while(std::abs(b - x) > 2 * tol && std::abs(x - a) > 2 * tol && ++iter < maxIter)
 		{
 			if(fx < fy)
 			{
@@ -47,7 +47,7 @@ struct GoldenSection
 			}
 		}
 
-		return min(x, y, [&](double x, double y){ return f(x) < f(y); });
+		return std::min(x, y, [&](double x, double y){ return f(x) < f(y); });
 	}
 
 
@@ -95,4 +95,4 @@ struct GoldenSection
 	static constexpr double q = 1.0 - r;
 };
 
-} // namespace cppnl
+} // namespace cppnlp

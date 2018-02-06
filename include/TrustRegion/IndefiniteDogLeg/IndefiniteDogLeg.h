@@ -1,5 +1,4 @@
-#ifndef OPT_TR_INDEFINITE_DOGLEG_H
-#define OPT_TR_INDEFINITE_DOGLEG_H
+#pragma once
 
 #include "../TrustRegion.h"
 
@@ -7,8 +6,11 @@
 
 #include "../DogLeg/DogLeg.h"
 
-#include "../../SpectraHelpers.h"
+#include "../../Helpers/SpectraHelpers.h"
 
+
+namespace cppnlp
+{
 
 struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 {
@@ -20,11 +22,11 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 
 		Vec v, u;
 
-		LLT<Mat> llt(hx);
+		Eigen::LLT<Mat> llt(hx);
 
-		if(llt.info() == NumericalIssue)
+		if(llt.info() == Eigen::NumericalIssue)
 		{
-			EigenSolver<Mat> es(hx);
+			Eigen::EigenSolver<Mat> es(hx);
 
 			double alpha = 1e20;
 			int pos = 0;
@@ -37,7 +39,7 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 			alpha = 2.0*abs(alpha);
 
 
-			if(alpha < EPS)
+			if(alpha < constants::eps)
 			{
 				//db("DDD");
 
@@ -56,7 +58,7 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 				double b = 2.0*dx.dot(v1);
 				double c = dx.dot(dx) - delta*delta;
 
-				double lx = (-b + sqrt(b*b - 4.0*a*c)) / (2.0*a), ux = (-b - sqrt(b*b - 4.0*a*c)) / (2.0*a);
+				double lx = (-b + std::sqrt(b*b - 4.0*a*c)) / (2.0*a), ux = (-b - std::sqrt(b*b - 4.0*a*c)) / (2.0*a);
 				double fl = function(x + (dx + lx*v1)), fu = function(x + (dx + ux*v1));
 				double e;
 
@@ -78,11 +80,11 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 		}
 
 
-		Vector2d g;
+		Eigen::Vector2d g;
 		g(0) = v.dot(gx);
 		g(1) = u.dot(gx);
 		
-		Matrix2d h;
+		Eigen::Matrix2d h;
 		h(0, 0) = 2.0*v.transpose() * hx * v;
 		h(1, 1) = 2.0*u.transpose() * hx * u;
 		h(0, 1) = h(1, 0) = 2.0*v.transpose() * hx * u;
@@ -117,23 +119,24 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 	{
 		std::complex<double> a = delta*delta;
 		std::complex<double> b = 2.0 * a * hx.trace();
-		std::complex<double> c = (a * pow(hx.trace(), 2.0) + 2.0 * a * hx.determinant() - gx.dot(gx));
+		std::complex<double> c = (a * std::pow(hx.trace(), 2.0) + 2.0 * a * hx.determinant() - gx.dot(gx));
 		std::complex<double> d = (2.0 * a * hx.determinant() * hx.trace() - 2.0 * (gx.transpose() * hx.adjoint().transpose()).dot(gx));
-		std::complex<double> e = (a * pow(hx.determinant(), 2.0) - (gx.transpose() * hx.adjoint().transpose()).dot(hx.adjoint() * gx));
+		std::complex<double> e = (a * std::pow(hx.determinant(), 2.0) - (gx.transpose() * hx.adjoint().transpose()).dot(hx.adjoint() * gx));
 
-		std::complex<double> p1 = 2.0*pow(c, 3.0) - 9.0*b*c*d + 27.0*a*pow(d, 2.0) + 27.0*pow(b, 2.0)*e - 72.0*a*c*e;
-		std::complex<double> p2 = p1 + sqrt(-4.0*pow(pow(c, 2.0) -3.0*b*d + 12.0*a*e, 3.0) + pow(p1, 2.0));
-		std::complex<double> p3 = ((pow(c, 2.0) - 3.0*b*d + 12.0*a*e) / (3.0*a*pow(p2/2.0, 1.0/3.0))) + ((pow(p2/2.0, 1.0/3.0)) / (3.0*a));
-		std::complex<double> p4 = sqrt((pow(b, 2.0) / (4.0*pow(a, 2.0))) - ((2.0*c) / (3.0*a)) + p3);
-		std::complex<double> p5 = (pow(b, 2.0) / (2.0*pow(a, 2.0))) - ((4.0*c) / (3.0*a)) - p3;
-		std::complex<double> p6 = ((-pow(b, 3.0) / pow(a, 3.0)) + ((4.0*b*c) / pow(a, 2.0)) - ((8.0*d) / a)) / (4.0*p4);
+		std::complex<double> p1 = 2.0*std::pow(c, 3.0) - 9.0*b*c*d + 27.0*a*std::pow(d, 2.0) + 27.0*std::pow(b, 2.0)*e - 72.0*a*c*e;
+		std::complex<double> p2 = p1 + std::sqrt(-4.0*std::pow(std::pow(c, 2.0) -3.0*b*d + 12.0*a*e, 3.0) + std::pow(p1, 2.0));
+		std::complex<double> p3 = ((std::pow(c, 2.0) - 3.0*b*d + 12.0*a*e) / (3.0*a*std::pow(p2/2.0, 1.0/3.0))) + ((std::pow(p2/2.0, 1.0/3.0)) / (3.0*a));
+		std::complex<double> p4 = std::sqrt((std::pow(b, 2.0) / (4.0*std::pow(a, 2.0))) - ((2.0*c) / (3.0*a)) + p3);
+		std::complex<double> p5 = (std::pow(b, 2.0) / (2.0*std::pow(a, 2.0))) - ((4.0*c) / (3.0*a)) - p3;
+		std::complex<double> p6 = ((-std::pow(b, 3.0) / std::pow(a, 3.0)) + ((4.0*b*c) / std::pow(a, 2.0)) - ((8.0*d) / a)) / (4.0*p4);
 
 
-		vector<std::complex<double>> roots(4);
-		roots[0] = (-b / (4.0*a)) - (p4 / 2.0) - (sqrt(p5 - p6) / 2.0);
-		roots[1] = (-b / (4.0*a)) - (p4 / 2.0) + (sqrt(p5 - p6) / 2.0);
-		roots[2] = (-b / (4.0*a)) + (p4 / 2.0) - (sqrt(p5 + p6) / 2.0);
-		roots[3] = (-b / (4.0*a)) + (p4 / 2.0) + (sqrt(p5 + p6) / 2.0);
+		std::vector<std::complex<double>> roots(4);
+		
+		roots[0] = (-b / (4.0*a)) - (p4 / 2.0) - (std::sqrt(p5 - p6) / 2.0);
+		roots[1] = (-b / (4.0*a)) - (p4 / 2.0) + (std::sqrt(p5 - p6) / 2.0);
+		roots[2] = (-b / (4.0*a)) + (p4 / 2.0) - (std::sqrt(p5 + p6) / 2.0);
+		roots[3] = (-b / (4.0*a)) + (p4 / 2.0) + (std::sqrt(p5 + p6) / 2.0);
 
 
 		Vec dir = Vec::Constant(x.rows(), 0.0);
@@ -168,7 +171,4 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 	}
 };
 
-
-
-
-#endif // OPT_TR_INDEFINITE_DOGLEG_H
+} // namespace cppnlp

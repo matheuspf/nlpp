@@ -1,8 +1,10 @@
-#ifndef OPT_TR_DOGLEG_H
-#define OPT_TR_DOGLEG_H
+#pragma once
 
 #include "../TrustRegion.h"
 
+
+namespace cppnlp
+{
 
 struct DogLeg : public TrustRegion<DogLeg>
 {
@@ -25,9 +27,9 @@ struct DogLeg : public TrustRegion<DogLeg>
 
 		double b = 2 * (pu.dot(diff) - a);
 
-		double c = a - pow(delta, 2) - 2 * pu.dot(diff) + pu.dot(pu);
+		double c = a - std::pow(delta, 2) - 2 * pu.dot(diff) + pu.dot(pu);
 
-		double d = sqrt(b*b - 4 * a * c);
+		double d = std::sqrt(b*b - 4 * a * c);
 
 
 		
@@ -53,7 +55,4 @@ struct DogLeg : public TrustRegion<DogLeg>
 	}
 };
 
-
-
-
-#endif // OPT_TR_DOGLEG_H
+} // namespace cppnlp

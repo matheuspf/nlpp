@@ -16,13 +16,17 @@ struct __VA_ARGS__ \
 };
 
 
+
+namespace cppnlp
+{
+
 BUILD_CG_STRUCT(return fb.dot(fb) / fa.dot(fa), FR);
 
 BUILD_CG_STRUCT(return fb.dot(fb - fa) / fa.dot(fa), PR);
 
-BUILD_CG_STRUCT(return abs(PR::operator()(fa, fb)), PR_Abs : PR);
+BUILD_CG_STRUCT(return std::abs(PR::operator()(fa, fb)), PR_Abs : PR);
 
-BUILD_CG_STRUCT(return max(0.0, PR::operator()(fa, fb)), PR_Plus : PR);
+BUILD_CG_STRUCT(return std::max(0.0, PR::operator()(fa, fb)), PR_Plus : PR);
 
 BUILD_CG_STRUCT(return fb.dot(fb - fa) / dir.dot(fb - fa), HS);
 
@@ -42,7 +46,7 @@ BUILD_CG_STRUCT(double fr = FR::operator()(fa, fb);
 
 				if(pr < -fr) return -fr;
 
-				if(abs(pr) <= fr) return pr;
+				if(std::abs(pr) <= fr) return pr;
 
 				return fr;,
 
@@ -65,7 +69,7 @@ struct CG
 	{
 		Vec fa = gradient(x), fb, dir = -fa;
 
-		for(int iter = 0; iter < maxIterations * x.rows() && norm(dir) > xTol; ++iter)
+		for(int iter = 0; iter < maxIterations * x.rows() && dir.norm() > xTol; ++iter)
 		{
 			double alpha = lineSearch(function, gradient, x, dir);
 
@@ -113,15 +117,4 @@ struct CG
 };
 
 
-
-
-
-
-
-
-
-
-
-
-
-#endif // endif OPT_CG_H
+} // namespace cppnlp

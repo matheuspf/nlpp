@@ -1,14 +1,16 @@
-#ifndef OPT_TREE_BAR_TRUSS
-#define OPT_TREE_BAR_TRUSS
+#pragma once
 
-#include "../Modelo.h"
+#include "../Helpers/Helpers.h"
 
+
+namespace cppnlp
+{
 
 struct TreeBarTruss
 {
     static double func (const Vec& x)
     {
-        return (2.0 * sqrt(2.0) * x(0) + x(1)) * 100.0;
+        return (2.0 * std::sqrt(2.0) * x(0) + x(1)) * 100.0;
     }
 
     static const Vec& cons (const Vec& x)
@@ -24,17 +26,15 @@ struct TreeBarTruss
         double P = 2.0;
         double sig = 2.0;
 
-        r(4) = ((sqrt(2) * x(0) + x(1)) / (sqrt(2) * pow(x(0), 2) + 2 * x(0) * x(1))) * P - sig;
+        r(4) = ((std::sqrt(2) * x(0) + x(1)) / (std::sqrt(2) * std::pow(x(0), 2) + 2 * x(0) * x(1))) * P - sig;
 
-        r(5) = (x(1) / (sqrt(2) * pow(x(0), 2) + 2 * x(0) * x(1))) * P - sig;
+        r(5) = (x(1) / (std::sqrt(2) * std::pow(x(0), 2) + 2 * x(0) * x(1))) * P - sig;
 
-        r(6) = (1.0 / (x(0) + sqrt(2) * x(1))) * P - sig;
+        r(6) = (1.0 / (x(0) + std::sqrt(2) * x(1))) * P - sig;
         
 
         return r;
     }
 };
 
-
-
-#endif // OPT_TREE_BAR_TRUSS
+} // namespace cppnlp

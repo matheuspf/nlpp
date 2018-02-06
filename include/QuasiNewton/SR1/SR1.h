@@ -1,14 +1,18 @@
-#ifndef OPT_SR1_H
-#define OPT_SR1_H
+#pragma once
 
-#include "../../Modelo.h"
-#include "../../FiniteDifference.h"
+#include "../../Helpers/Helpers.h"
+
+#include "../../Helpers/FiniteDifference.h"
+
 #include "../../TrustRegion/TrustRegion.h"
+
 #include "../../TrustRegion/IndefiniteDogLeg/IndefiniteDogLeg.h"
 
 #include "../BFGS/BFGS.h"
 
 
+namespace cppnlp
+{
 
 template <class TR = IndefiniteDogLeg, class InitialHessian = BFGS_Diagonal>
 struct SR1 : public TrustRegion<SR1<TR, InitialHessian>>
@@ -49,7 +53,7 @@ struct SR1 : public TrustRegion<SR1<TR, InitialHessian>>
 
         double sd = s.dot(d);
 
-        if(abs(sd) >= mag)
+        if(std::abs(sd) >= mag)
         {
             B = B + (d * d.transpose()) / sd;
             
@@ -78,7 +82,4 @@ struct SR1 : public TrustRegion<SR1<TR, InitialHessian>>
     double r = 1e-8;
 };
 
-
-
-
-#endif // OPT_SR1_H
+} // namespace cppnlp

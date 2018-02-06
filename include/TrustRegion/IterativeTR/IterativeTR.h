@@ -1,10 +1,12 @@
-#ifndef OPT_ITERATIVE_TR_H
-#define OPT_ITERATIVE_TR_H
+#pragma once
 
 #include "../TrustRegion.h"
 
-#include "../../SpectraHelpers.h"
+#include "../../Helpers/SpectraHelpers.h"
 
+
+namespace cppnlp
+{
 
 struct IterativeTR : public TrustRegion<IterativeTR>
 {
@@ -31,7 +33,7 @@ struct IterativeTR : public TrustRegion<IterativeTR>
         Vec v1 = topEigen.eigenvectors().col(0);
 
 
-        if(abs(gx.dot(v1)) < 1e-4)
+        if(std::abs(gx.dot(v1)) < 1e-4)
         {
             Eigen::LLT<Mat> llt(hx + std::abs(topEigen.eigenvalues()(0)) * In);
 
@@ -59,13 +61,13 @@ struct IterativeTR : public TrustRegion<IterativeTR>
 
             p = -llt.solve(gx);
 
-            if(abs(p.norm() - delta) <= 1e-4)
+            if(std::abs(p.norm() - delta) <= 1e-4)
                 return p;
 
 
             Mat L = llt.matrixL();
 
-            q = L.triangularView<Lower>().solve(p);
+            q = L.triangularView<Eigen::Lower>().solve(p);
             
             
             lambda = lambda + (p.squaredNorm() / q.squaredNorm()) * ((p.norm() - delta) / delta);
@@ -95,6 +97,4 @@ struct IterativeTR : public TrustRegion<IterativeTR>
     }
 };
 
-
-
-#endif // OPT_ITERATIVE_TR_H
+} // namespace cppnlp

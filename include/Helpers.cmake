@@ -5,8 +5,7 @@ function(iterateChildren CUR_PATH)
     foreach(CHILD ${CHILDREN})
         set(CHILD_DIR ${PROJECT_SOURCE_DIR}/${CHILD})
 
-        #if(IS_DIRECTORY ${CHILD_DIR} AND NOT ${CHILD} STREQUAL "build")
-        if(IS_DIRECTORY ${CHILD_DIR} AND ${CHILD} STREQUAL "LineSearch")
+        if(IS_DIRECTORY ${CHILD_DIR} AND NOT ${CHILD} STREQUAL "build")
 
             if(EXISTS ${CHILD_DIR}/CMakeLists.txt)
                 add_subdirectory(${CHILD_DIR})

@@ -3,7 +3,7 @@
 #include "../../Helpers/Helpers.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 struct Bracketing
@@ -41,4 +41,4 @@ struct Bracketing
 	double r;
 };
 
-} // namespace cppnl
+} // namespace cppnlp

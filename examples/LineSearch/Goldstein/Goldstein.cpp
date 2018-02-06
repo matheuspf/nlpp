@@ -1,8 +1,11 @@
-#include "Goldstein.h"
+#include "LineSearch/Goldstein/Goldstein.h"
 
-#include "../../GradientDescent/GradientDescent.h"
+#include "GradientDescent/GradientDescent.h"
 
-#include "../../Newton/Newton.h"
+#include "Newton/Newton.h"
+
+
+using namespace cppnlp;
 
 
 double senoid (double x)
@@ -14,20 +17,6 @@ double bowl (double x)
 {
 	return pow(x - 3, 2);
 }
-
-
-struct Rosenbrock
-{
-	double operator () (const VectorXd& x) const
-	{
-		double r = 0.0;
-
-        for(int i = 0; i < x.rows() - 1; ++i)
-        	r += 100.0 * pow(x(i+1) - pow(x(i), 2), 2) + pow(x(i) - 1.0, 2);
-
-        return r;
-	}
-};
 
 
 struct Bowl
@@ -53,7 +42,7 @@ int main ()
 
 	x += ls(bowl, x);
 
-	DB(x << "     " << bowl(x));
+	handy::print(x, "    ", bowl(x));
 
 
 

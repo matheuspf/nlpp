@@ -1,10 +1,14 @@
-#ifndef OPT_HYPERBOLIC_PENALTY_H
-#define OPT_HYPERBOLIC_PENALTY_H
+#pragma once
 
-#include "../Modelo.h"
-#include "../FiniteDifference.h"
+#include "../Helpers/Helpers.h"
+
+#include "../Helpers/FiniteDifference.h"
+
 #include "../QuasiNewton/BFGS/BFGS.h"
 
+
+namespace cppnlp
+{
 
 template <class Optimizer = BFGS<StrongWolfe, BFGS_Constant>>
 struct HyperbolicPenalty
@@ -26,9 +30,9 @@ struct HyperbolicPenalty
 
         auto penalFunc = [&](const Vec& x) -> double
         {
-            const ArrayXd& ineq = -inequalities(x).array();
+            const Eigen::ArrayXd& ineq = -inequalities(x).array();
 
-            return function(x) + (-lambda * ineq + sqrt(pow(lambda, 2) * pow(ineq, 2) + pow(tau, 2))).sum();
+            return function(x) + (-lambda * ineq + Eigen::sqrt(std::pow(lambda, 2) * Eigen::pow(ineq, 2) + std::pow(tau, 2))).sum();
         };
 
         auto penalGrad = gradientFD(penalFunc);
@@ -62,7 +66,4 @@ struct HyperbolicPenalty
     double gTol;
 };
 
-
-
-
-#endif // OPT_HYPERBOLIC_PENALTY_H
+} // namespace cppnlp

@@ -1,6 +1,9 @@
-#include "SR1.h"
+#include "QuasiNewton/SR1/SR1.h"
 
-#include "../../TestFunctions/Rosenbrock.h"
+#include "TestFunctions/Rosenbrock.h"
+
+
+using namespace cppnlp;
 
 
 int main ()
@@ -12,7 +15,7 @@ int main ()
 
     x = sr1(Rosenbrock(), x);
 
-    DB(x.transpose());
+    handy::print(x.transpose());
 
     return 0;
 }

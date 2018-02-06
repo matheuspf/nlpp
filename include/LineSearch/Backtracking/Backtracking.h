@@ -3,7 +3,7 @@
 #include "../LineSearch.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 struct Backtracking : public LineSearch<Backtracking>
@@ -39,4 +39,4 @@ struct Backtracking : public LineSearch<Backtracking>
 	double rho;
 };
 
-} // namespace cppnl
+} // namespace cppnlp

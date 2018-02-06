@@ -3,7 +3,7 @@
 #include "Helpers.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 struct Forward
@@ -129,4 +129,4 @@ auto hessianFD (F f, double h = 1e-8)
     };
 }
 
-} // namespace cppnl
+} // namespace cppnlp

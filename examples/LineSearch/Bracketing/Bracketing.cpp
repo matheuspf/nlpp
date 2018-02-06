@@ -10,7 +10,7 @@ double func1 (double x)
 
 int main ()
 {
-	cppnl::Bracketing bc;
+	cppnlp::Bracketing bc;
 
 	auto [x, y, z] = bc(func1, 0, 3);
 

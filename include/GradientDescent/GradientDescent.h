@@ -1,14 +1,14 @@
-#ifndef OPT_GRADIENT_DESCENT_H
-#define OPT_GRADIENT_DESCENT_H
+#pragma once
 
-#include "../../Modelo.h"
+#include "../Helpers/Helpers.h"
 
-#include "../FiniteDifference.h"
+#include "../Helpers/FiniteDifference.h"
 
 #include "../LineSearch/Goldstein/Goldstein.h"
 
 
-
+namespace cppnlp
+{
 
 template <class LineSearch = Goldstein>
 struct GradientDescent
@@ -23,7 +23,7 @@ struct GradientDescent
 
 		Type ret = x;
 
-		for(int iter = 0; iter < maxIterations && norm(direction) > xTol; ++iter)
+		for(int iter = 0; iter < maxIterations && direction.norm() > xTol; ++iter)
 		{
 			double alpha = lineSearch(function, gradient, x, direction);
 
@@ -57,7 +57,4 @@ struct GradientDescent
 	double fTol = 1e-7;
 };
 
-
-
-
-#endif // endif OPT_GRADIENT_DESCENT_H
+} // namespace cppnlp

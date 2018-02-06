@@ -1,18 +1,8 @@
-#include "DogLeg.h"
+#include "TrustRegion/DogLeg/DogLeg.h"
 
+#include "TestFunctions/Rosenbrock.h"
 
-struct Rosenbrock
-{
-	double operator () (const Vec& x) const
-	{
-		double r = 0.0;
-
-        for(int i = 0; i < x.rows() - 1; ++i)
-        	r += 100.0 * pow(x(i+1) - pow(x(i), 2), 2) + pow(x(i) - 1.0, 2);
-
-        return r;
-	}
-};
+using namespace cppnlp;
 
 
 
@@ -27,7 +17,7 @@ int main ()
 
 	x = cp(Rosenbrock{}, x);
 
-	DB(x.transpose());
+	handy::print(x.transpose());
 
 
 	return 0;

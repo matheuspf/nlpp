@@ -1,8 +1,10 @@
-#ifndef OPT_TEST_FUNCTIONS_H
-#define OPT_TEST_FUNCTIONS_H
+#pragma once
 
-#include "../Modelo.h"
+#include "../Helpers/Helpers.h"
 
+
+namespace cppnlp
+{
 
 struct Rosenbrock
 {
@@ -11,11 +13,10 @@ struct Rosenbrock
 		double r = 0.0;
 
         for(int i = 0; i < x.rows() - 1; ++i)
-        	r += 100.0 * pow(x(i+1) - pow(x(i), 2), 2) + pow(x(i) - 1.0, 2);
+        	r += 100.0 * std::pow(x(i+1) - std::pow(x(i), 2), 2) + std::pow(x(i) - 1.0, 2);
 
         return r;
 	}
 };
 
-
-#endif // OPT_TEST_FUNCTIONS_H
+} // namespace cppnlp

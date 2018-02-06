@@ -1,9 +1,11 @@
-#ifndef OPT_FACTORIZATIONS_H
-#define OPT_FACTORIZATIONS_H
+#pragma once
 
-#include "../Modelo.h"
+#include "../Helpers/Helpers.h"
 
 
+
+namespace cppnlp
+{
 
 struct SimplyInvert
 {
@@ -43,7 +45,7 @@ struct CholeskyIdentity
 
 	Vec operator () (const Vec& grad, Mat hess)
 	{
-		ArrayXd orgDiag = hess.diagonal().array();
+		Eigen::ArrayXd orgDiag = hess.diagonal().array();
 
 		double minDiag = orgDiag.minCoeff();
 
@@ -62,7 +64,7 @@ struct CholeskyIdentity
 
 			hess.diagonal().array() = orgDiag + tau;
 
-			tau = max(c * tau, beta);
+			tau = std::max(c * tau, beta);
 		}
 
 
@@ -92,13 +94,13 @@ struct CholeskyFactorization
 
 		for(int i = 0; i < N; ++i)
 		{
-			maxDiag = max(maxDiag, abs(hess(i, i)));
+			maxDiag = std::max(maxDiag, std::abs(hess(i, i)));
 
 			for(int j = 0; j < N; ++j) if(i != j)
-				maxOffDiag = max(maxOffDiag, abs(hess(i, j)));
+				maxOffDiag = std::max(maxOffDiag, std::abs(hess(i, j)));
 		}
 
-		double beta = max(EPS, max(maxDiag, maxOffDiag / max(1.0, sqrt(N*N - 1.0))));
+		double beta = std::max(constants::eps, std::max(maxDiag, maxOffDiag / std::max(1.0, sqrt(N*N - 1.0))));
 
 
 		Mat L = Mat::Identity(N, N);
@@ -118,8 +120,8 @@ struct CholeskyFactorization
 			double val = -1e20;
 			int p = 0;
 
-			for(int j = i; j < N; ++j) if(abs(hess(j, j)) > val)
-				val = abs(hess(j, j)), p = j;
+			for(int j = i; j < N; ++j) if(std::abs(hess(j, j)) > val)
+				val = std::abs(hess(j, j)), p = j;
 
 			if(p != i)
 			{
@@ -148,13 +150,13 @@ struct CholeskyFactorization
 				for(int k = 0; k < i; ++k)
 					C(j, i) -= L(i, k) * C(j, k);
 				
-				phi = max(phi, abs(C(j, i)));
+				phi = std::max(phi, std::abs(C(j, i)));
 			}
 
 			if(i == N-1)
 				phi = 0.0;
 
-			D(i, i) = max(delta, max(abs(C(i, i)), pow(phi, 2) / beta));
+			D(i, i) = std::max(delta, std::max(std::abs(C(i, i)), pow(phi, 2) / beta));
 
 			E(i, i) = D(i, i) - C(i, i);
 
@@ -210,5 +212,4 @@ struct IndefiniteFactorization
 };
 
 
-
-#endif // OPT_FACTORIZATIONS_H
+} // namespace cppnlp

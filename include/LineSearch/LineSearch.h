@@ -4,7 +4,7 @@
 
 #include "../Helpers/FiniteDifference.h"
 
-namespace cppnl
+namespace cppnlp
 {
 
 template <class Impl>
@@ -63,4 +63,4 @@ private:
 	double xNorm;
 };
 
-} // namespace cppnl
+} // namespace cppnlp

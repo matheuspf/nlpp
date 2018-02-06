@@ -1,8 +1,10 @@
-#ifndef OPT_TR_CAUCHY_POINT_H
-#define OPT_TR_CAUCHY_POINT_H
+#pragma once
 
 #include "../TrustRegion.h"
 
+
+namespace cppnlp
+{
 
 struct CauchyPoint : public TrustRegion<CauchyPoint>
 {
@@ -20,7 +22,7 @@ struct CauchyPoint : public TrustRegion<CauchyPoint>
 		if(quad <= 0.0)
 			return dir;
 
-		return min(1.0, pow(gxNorm, 3) / (delta * quad)) * dir;
+		return std::min(1.0, std::pow(gxNorm, 3) / (delta * quad)) * dir;
 	}
 
 
@@ -31,7 +33,4 @@ struct CauchyPoint : public TrustRegion<CauchyPoint>
 	}
 };
 
-
-
-
-#endif // OPT_TR_CAUCHY_POINT_H
+} // namespace cppnlp

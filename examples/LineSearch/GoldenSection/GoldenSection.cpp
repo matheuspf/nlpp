@@ -1,4 +1,4 @@
-#include "GoldenSection.h"
+#include "LineSearch/GoldenSection/GoldenSection.h"
 
 
 double func1 (double x)
@@ -10,11 +10,11 @@ double func1 (double x)
 
 int main ()
 {
-	GoldenSection gs;
+	cppnlp::GoldenSection gs;
 
-	double x = gs.lineSearch(func1, 0.0, 4.0);
+	double x = gs(func1, 0.0, 4.0);
 
-	DB(x << "      " << func1(x));
+	handy::print(x, "      ", func1(x));
 
 
 

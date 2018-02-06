@@ -4,13 +4,13 @@
 #include <Spectra/SymEigsSolver.h>
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 template <Spectra::SELECT_EIGENVALUE Rule = Spectra::SELECT_EIGENVALUE::LARGEST_ALGE>
 struct TopEigen
 {
-    TopEigen (const Mat& X, int K) : operation(X), solver(&operation, K, min(int(X.rows()), 2*K))
+    TopEigen (const Mat& X, int K) : operation(X), solver(&operation, K, std::min(int(X.rows()), 2*K))
     {
         solver.init();
         solver.compute();
@@ -32,4 +32,4 @@ struct TopEigen
     Spectra::SymEigsSolver<double, Rule, Spectra::DenseSymMatProd<double>> solver;
 };
 
-} // namespace cppnl
+} // namespace cppnlp

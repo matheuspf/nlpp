@@ -3,7 +3,7 @@
 #include "../LineSearch.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 struct Brents
@@ -143,4 +143,4 @@ struct Brents
 	static constexpr double q = 1.0 - r;
 };
 
-} // namespace cppnl
+} // namespace cppnlp

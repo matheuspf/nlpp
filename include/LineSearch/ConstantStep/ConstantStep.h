@@ -3,7 +3,7 @@
 #include "../LineSearch.h"
 
 
-namespace cppnl
+namespace cppnlp
 {
 
 struct ConstantStep : public LineSearch<ConstantStep>
@@ -29,4 +29,4 @@ struct ConstantStep : public LineSearch<ConstantStep>
 	double rho;
 };
 
-}// namespace cppnl
+}// namespace cppnlp

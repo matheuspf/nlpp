@@ -1,11 +1,15 @@
-#ifndef OPT_BFGS_H
-#define OPT_BFGS_H
+#pragma once
 
-#include "../../Modelo.h"
-#include "../../FiniteDifference.h"
+#include "../../Helpers/Helpers.h"
+
+#include "../../Helpers/FiniteDifference.h"
+
 #include "../../LineSearch/StrongWolfe/StrongWolfe.h"
 
 
+
+namespace cppnlp
+{
 
 struct BFGS_Constant;
 struct BFGS_Diagonal;
@@ -50,7 +54,7 @@ struct BFGS
                 break;
 
 
-            double rho = 1.0 / std::max(y.dot(s), EPS);
+            double rho = 1.0 / std::max(y.dot(s), constants::eps);
 
             hess = (In - rho * s * y.transpose()) * hess * (In - rho * y * s.transpose()) + rho * s * s.transpose();
 
@@ -134,4 +138,4 @@ struct BFGS_Identity
 };
 
 
-#endif // OPT_BFGS_H
+} // namespace cppnlp

@@ -1,7 +1,6 @@
-#ifndef OPT_NEWTON_H
-#define OPT_NEWTON_H
+#pragma once
 
-#include "../Modelo.h"
+#include "../Helpers/Helpers.h"
 
 #include "../LineSearch/Goldstein/Goldstein.h"
 
@@ -9,10 +8,11 @@
 
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
-//#include "../Parameters.h"
-
 #include "Factorizations.h"
 
+
+namespace cppnlp
+{
 
 template <class LineSearch = ConstantStep, class Inversion = SmallIdentity>
 struct Newton
@@ -27,7 +27,7 @@ struct Newton
 		Type dir = direction(gradient(x), hessian(x));
 
 
-		for(int iter = 0; iter < maxIterations && norm(dir) > xTol; ++iter)
+		for(int iter = 0; iter < maxIterations && dir.norm() > xTol; ++iter)
 		{
 			double alpha = lineSearch(function, gradient, x, dir);
 
@@ -59,7 +59,7 @@ struct Newton
 	{
 		if(abs(hx) < 1e-8)
 		{
-			DB("Second derivative is very close to 0. Making a small correction.\n");
+			handy::print("Second derivative is very close to 0. Making a small correction.\n");
 
 			hx = 1e-5;
 		}
@@ -92,16 +92,5 @@ struct Newton
 
 };
 
+} // namespace cppnlp
 
-
-
-
-
-
-
-
-
-
-
-
-#endif // endif OPT_NEWTON_H
