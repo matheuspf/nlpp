@@ -26,6 +26,24 @@ struct ForwardDifference;
 
 
 
+namespace impl
+{
+
+template <class Function, class Scalar, std::enable_if_t<std::is_fundamental<std::decay_t<Scalar>>::value, int> = 0>
+void changeEval (Function f, const Scalar& x, Scalar val)
+{
+    auto temp = x;
+
+    const_cast<Scalar&>(x) = val;
+
+    f();
+
+    const_cast<Scalar&>(x) = temp;
+}
+
+} // namespace impl
+
+
 
 namespace traits
 {
@@ -99,20 +117,21 @@ struct ForwardDifference : public FiniteDifference<ForwardDifference<Function, S
 
 
     template <class Derived>
-    auto gradient (const Eigen::MatrixBase<Derived>& x, std::result_of_t<Function(Derived)> fx) const
+    Derived gradient (const Eigen::MatrixBase<Derived>& x, std::result_of_t<Function(Derived)> fx) const
     {
         Float h = step(f, x);
         Float temp;
 
-        Eigen::Matrix<Float, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime> ret(x.rows(), x.cols());
+        return Derived::NullaryExpr(x.rows(), x.cols(), [&](int i)
+        {
+            impl::changeEval([&]{ temp = (f(x) - fx) / h; }, x(i), x(i) + h);
 
-        changeEval([&](const auto& x, int i){ ret(i) = (f(x) - fx) / h; }, x, h);
-
-        return ret;
+            return temp;
+        });
     }
 
     template <class Derived>
-    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e,
+    std::result_of_t<Function(Derived)> gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e,
                                                   std::result_of_t<Function(Derived)> fx) const
     {
         return directional(x, e, fx);
@@ -120,26 +139,38 @@ struct ForwardDifference : public FiniteDifference<ForwardDifference<Function, S
     
     
     template <class Derived, std::enable_if_t<std::is_fundamental<std::decay_t<std::result_of_t<Function(Derived)>>>::value, int> = 0>
-    auto hessian (const Eigen::MatrixBase<Derived>& x, std::result_of_t<Function(Derived)> fx) const
+    MatX<Float> hessian (const Eigen::MatrixBase<Derived>& x, std::result_of_t<Function(Derived)> fx) const
     {
+        MatX<Float> hess(x.size(), x.size());
+
         Float temp1, temp2;
         Float h = step(f, x);
         Float h2 = h * h;
 
-        Eigen::Matrix<Float, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime> fxi(x.rows(), x.cols());
-        MatX<Float> hess(x.size(), x.size());
+        Derived fxi = Derived::NullaryExpr(x.rows(), x.cols(), [&](int i)
+        {
+            impl::changeEval([&]{ temp1 = f(x); }, x(i), x(i) + h);
 
-        changeEval([&](const auto& x, int i){ fxi(i) = f(x); }, x, h);
+            return temp1;
+        });
+        
 
-        changeEval([&](const auto& x, int i){
-            changeEval([&](const auto& y, int j){ hess(i, j) = (f(x) - fxi(i) - fxi(j) + fx) / h2; }, x, h);
-        }, x, h);
+        for(int i = 0; i < x.size(); ++i)
+        {
+            impl::changeEval([&]
+            {
+                for(int j = i; j < x.size(); ++j)
+                    impl::changeEval([&]{ hess(i, j) = (f(x) - fxi(i) - fxi(j) + fx) / h2; }, x(j), x(j) + h);
+
+            }, x(i), x(i) + h);
+        }
+
 
         return hess;
     }
 
     template <class Derived, std::enable_if_t<!std::is_fundamental<std::decay_t<std::result_of_t<Function(Derived)>>>::value, int> = 0>
-    auto hessian (const Eigen::MatrixBase<Derived>& x, const std::result_of_t<Function(Derived)>& fx) const
+    MatX<Float> hessian (const Eigen::MatrixBase<Derived>& x, const std::result_of_t<Function(Derived)>& fx) const
     {
         MatX<Float> hess(fx.rows(), x.rows());
 
@@ -147,7 +178,7 @@ struct ForwardDifference : public FiniteDifference<ForwardDifference<Function, S
         Float h = step(f, x);
 
         for(int i = 0; i < hess.cols(); ++i)
-            changeEval([&]{ hess.col(i) = (f(x) - fx) / h; }, x(i), x(i) + h);
+            impl::changeEval([&]{ hess.col(i) = (f(x) - fx) / h; }, x(i), x(i) + h);
 
         return hess;
     }
@@ -180,33 +211,6 @@ struct ForwardDifference : public FiniteDifference<ForwardDifference<Function, S
                       const std::result_of_t<Function(Derived)>& fx, Float h) const
     {
         return (f(x + h * e) - fx) / h;
-    }
-
-
-    
-    template <class F, class Matrix, std::enable_if_t<impl::IsMat<std::decay_t<Matrix>>::value, int> = 0>
-    static void changeEval (F f, const Matrix& x, typename Matrix::Scalar inc)
-    {
-        using Scalar = typename Matrix::Scalar;
-
-        Scalar temp;
-
-        for(int i = 0; i < x.size(); ++i)
-        {
-            temp = x(i);
-
-            const_cast<Scalar&>(x(i)) = x(i) + inc;
-
-            f(x, i);
-
-            const_cast<Scalar&>(x(i)) = temp;
-        }
-    }
-
-    template <class F, class Matrix, std::enable_if_t<!impl::IsMat<std::decay_t<Matrix>>::value, int> = 0>
-    static void changeEval (F f, const Matrix& x, typename Matrix::Scalar inc)
-    {
-        changeEval(f, x.eval(), inc);
     }
 };
 

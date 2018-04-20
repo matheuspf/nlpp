@@ -13,12 +13,14 @@ using namespace cppnlp;
 
 int main ()
 {
-	Newton<StrongWolfe, CholeskyIdentity> newton(StrongWolfe(1.0, 0.2));;
+	Newton<StrongWolfe, CholeskyIdentity> newton(StrongWolfe(1.0, 0.2));
 
 
-	Vec x = Vec::Constant(500, 5.0);
+	Vec x = Vec::Constant(50, 5.0);
 
-	x = newton(Rosenbrock(), x);
+	handy::print(handy::benchmark([&]{
+		x = newton(Rosenbrock(), x);
+	}), "\n\n");
 
 
 	handy::print(x.transpose());
