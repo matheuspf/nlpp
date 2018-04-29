@@ -19,7 +19,8 @@ int main ()
 	Vec x = Vec::Constant(50, 5.0);
 
 	handy::print(handy::benchmark([&]{
-		x = newton(Rosenbrock(), x);
+		x = newton(Rosenbrock(), gradientFD(Rosenbrock()), hessianFD(Rosenbrock()), x);
+		//x = newton(Rosenbrock(), gradientFD(Rosenbrock()), hessianFD(gradientFD(Rosenbrock())), x);
 	}), "\n\n");
 
 
