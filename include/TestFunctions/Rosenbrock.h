@@ -8,7 +8,8 @@ namespace cppnlp
 
 struct Rosenbrock
 {
-	double operator () (const Vec& x) const
+	template <class Derived>
+	double operator () (const Eigen::DenseBase<Derived>& x) const
 	{
 		double r = 0.0;
 
