@@ -42,13 +42,13 @@ public:
 	template <class Function>
 	double operator () (Function f, double x, double dir = 1.0)
 	{
-		return this->operator()(f, gradientFD(f), x, dir);
+		return this->operator()(f, fd::gradient(f), x, dir);
 	}
 
 	template <class Function>
 	double operator () (Function f, const Vec& x, const Vec& dir)
 	{
-		return this->operator()(f, gradientFD(f), x, dir);
+		return this->operator()(f, fd::gradient(f), x, dir);
 	}
 
 

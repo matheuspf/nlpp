@@ -69,7 +69,7 @@ struct BFGS
     template <class Function>
     Vec operator () (Function function, const Vec& x)
     {
-        return this->operator()(function, gradientFD(function), x);
+        return this->operator()(function, fd::gradient(function), x);
     }
 
 

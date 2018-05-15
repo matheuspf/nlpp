@@ -35,7 +35,7 @@ struct SR1 : public TrustRegion<SR1<TR, InitialHessian>>
 	template <class Function>
 	Vec operator () (Function f, const Vec& x)
 	{
-		return this->operator()(f, gradientFD(f), x);
+		return this->operator()(f, fd::gradient(f), x);
 	}
 
 

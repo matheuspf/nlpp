@@ -21,9 +21,9 @@ int main ()
     // };
 
 
-    HessianFD<decltype(func), BackwardDifference> diff(func);
-    //auto diff = hessianFD(func);
-    //auto diff = hessianFD(gradientFD(func), SimpleStep<double>{1e-2});
+    fd::Hessian<decltype(func), fd::Backward> diff(func);
+    //auto diff = fd::hessian(func);
+    //auto diff = fd::hessian(fd::gradient(func), SimpleStep<double>{1e-2});
 
 
     Vec x(2); x << 3.0, 2.0;

@@ -95,7 +95,7 @@ struct CG
 	template <class Function>
 	Vec operator () (Function function, Vec x)
 	{
-		return this->operator()(function, gradientFD(function), x);
+		return this->operator()(function, fd::gradient(function), x);
 	}
 
 

@@ -23,14 +23,8 @@ int main ()
 
 	Rosenbrock func;
 
-	GradientFD<Rosenbrock, BackwardDifference> grad(func);
-	HessianFD<Rosenbrock, BackwardDifference> hess(func);
-
-
-
 	handy::print(handy::benchmark([&]{
-		x = newton(Rosenbrock(), grad, hess, x);
-		//x = newton(Rosenbrock(), gradientFD(Rosenbrock()), hessianFD(gradientFD(Rosenbrock())), x);
+		x = newton(func, fd::gradient<fd::Backward>(func), fd::hessian<fd::Backward>(func), x);
 	}), "\n\n");
 
 

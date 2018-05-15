@@ -68,7 +68,7 @@ int main ()
 
 	// DB(x.transpose() << "         " << Rosenbrock()(x) << "\n");
 
-	// DB(gradientFD(Rosenbrock())(x).transpose());
+	// DB(fd::gradient(Rosenbrock())(x).transpose());
 
 
 

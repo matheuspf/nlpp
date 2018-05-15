@@ -43,13 +43,13 @@ struct Newton
 	template <class Function, class Gradient, typename Type>
 	Type operator () (Function function, Gradient gradient, Type x)
 	{
-		return this->operator()(function, gradient, hessianFD(function), x);
+		return this->operator()(function, gradient, fd::hessian(function), x);
 	}
 
 	template <class Function, typename Type>
 	Type operator () (Function function, Type x)
 	{
-		return this->operator()(function, gradientFD(function), x);
+		return this->operator()(function, fd::gradient(function), x);
 	}
 
 

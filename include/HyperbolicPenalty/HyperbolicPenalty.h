@@ -35,7 +35,7 @@ struct HyperbolicPenalty
             return function(x) + (-lambda * ineq + Eigen::sqrt(std::pow(lambda, 2) * Eigen::pow(ineq, 2) + std::pow(tau, 2))).sum();
         };
 
-        auto penalGrad = gradientFD(penalFunc);
+        auto penalGrad = fd::gradient(penalFunc);
         
         
         for(int iter = 0; iter < maxIter && penalGrad(x).norm() > gTol; ++iter)

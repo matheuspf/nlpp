@@ -1,8 +1,27 @@
+/** @file
+    
+    @brief Finite differencing calculation for scalar multivariate functions
+
+    @details Simple and efficient automatic calculations of derivatives by using finite difference.
+             Also, very easy to use:
+
+    @snippet Helpers/FiniteDifference.cpp FiniteDifference class snippet
+**/
+
+
+
 #pragma once
 
 #include "Helpers.h"
 
 
+/** @defgroup FiniteDifferenceGroup Finite Difference
+    @copydoc FiniteDifference.h
+*/
+
+//@{
+
+/// Base definitions for CRTP
 #define USING_FINITE_DIFFERENCE(...) using Base = __VA_ARGS__;  \
                                      using Base::Base;          \
                                      using Base::gradient;      \
@@ -14,6 +33,11 @@
 namespace cppnlp
 {
 
+/// Finite Difference namespace
+namespace fd
+{
+
+
 template <typename>
 struct SimpleStep;
 
@@ -22,13 +46,13 @@ struct NormalizedStep;
 
 
 template <class, template <typename> class, typename>
-struct ForwardDifference;
+struct Forward;
 
 template <class, template <typename> class, typename>
-struct BackwardDifference;
+struct Backward;
 
 template <class, template <typename> class, typename>
-struct CentralDifference;
+struct Central;
 
 
 
@@ -39,7 +63,7 @@ template <class>
 struct FiniteDifference;
 
 template <class _Function, template <typename> class _Step, typename _Float>
-struct FiniteDifference<ForwardDifference<_Function, _Step, _Float>>
+struct FiniteDifference<Forward<_Function, _Step, _Float>>
 {
     using Function = _Function;
     using Float = _Float;
@@ -47,7 +71,7 @@ struct FiniteDifference<ForwardDifference<_Function, _Step, _Float>>
 };
 
 template <class _Function, template <typename> class _Step, typename _Float>
-struct FiniteDifference<BackwardDifference<_Function, _Step, _Float>>
+struct FiniteDifference<Backward<_Function, _Step, _Float>>
 {
     using Function = _Function;
     using Float = _Float;
@@ -56,7 +80,7 @@ struct FiniteDifference<BackwardDifference<_Function, _Step, _Float>>
 
 
 template <class _Function, template <typename> class _Step, typename _Float>
-struct FiniteDifference<CentralDifference<_Function, _Step, _Float>>
+struct FiniteDifference<Central<_Function, _Step, _Float>>
 {
     using Function = _Function;
     using Float = _Float;
@@ -129,9 +153,9 @@ struct FiniteDifference
 
 
 template <class Function, template <typename> class Step = SimpleStep, typename Float = types::Float>
-struct ForwardDifference : public FiniteDifference<ForwardDifference<Function, Step, Float>>
+struct Forward : public FiniteDifference<Forward<Function, Step, Float>>
 {
-    USING_FINITE_DIFFERENCE(FiniteDifference<ForwardDifference<Function, Step, Float>>);
+    USING_FINITE_DIFFERENCE(FiniteDifference<Forward<Function, Step, Float>>);
 
 
     template <typename Fx>
@@ -186,7 +210,7 @@ struct ForwardDifference : public FiniteDifference<ForwardDifference<Function, S
         {
             changeEval([&](const auto& y, int j)
             {
-                hess(i, j) = (this->f(y) - fxi(i) - fxi(j) + fx) / h2;
+                hess(i, j) = hess(j, i) = (this->f(y) - fxi(i) - fxi(j) + fx) / h2;
                 
             }, x, h, handy::range(0, x.size()));
         }, x, h);
@@ -248,9 +272,9 @@ struct ForwardDifference : public FiniteDifference<ForwardDifference<Function, S
 
 
 template <class Function, template <typename> class Step = SimpleStep, typename Float = types::Float>
-struct BackwardDifference : public FiniteDifference<BackwardDifference<Function, Step, Float>>
+struct Backward : public FiniteDifference<Backward<Function, Step, Float>>
 {
-    USING_FINITE_DIFFERENCE(FiniteDifference<BackwardDifference<Function, Step, Float>>);
+    USING_FINITE_DIFFERENCE(FiniteDifference<Backward<Function, Step, Float>>);
 
 
     template <typename Fx>
@@ -305,7 +329,7 @@ struct BackwardDifference : public FiniteDifference<BackwardDifference<Function,
         {
             changeEval([&](const auto& y, int j)
             {
-                hess(i, j) = (fx - fxi(i) - fxi(j) - this->f(y)) / h2;
+                hess(i, j) = hess(j, i) = (fx - fxi(i) - fxi(j) + this->f(y)) / h2;
 
             }, x, h, handy::range(i, x.size()));
         }, x, h);
@@ -371,9 +395,9 @@ struct BackwardDifference : public FiniteDifference<BackwardDifference<Function,
 
 
 template <class Function, template <typename> class Step = SimpleStep, typename Float = types::Float>
-struct CentralDifference : public FiniteDifference<CentralDifference<Function, Step, Float>>
+struct Central : public FiniteDifference<Central<Function, Step, Float>>
 {
-    USING_FINITE_DIFFERENCE(FiniteDifference<CentralDifference<Function, Step, Float>>);
+    USING_FINITE_DIFFERENCE(FiniteDifference<Central<Function, Step, Float>>);
 
     
     auto gradient (Float x) const
@@ -515,9 +539,9 @@ struct CentralDifference : public FiniteDifference<CentralDifference<Function, S
 
 
 
-template <class Function, template <class, template <typename> class, typename> class Difference = CentralDifference,
+template <class Function, template <class, template <typename> class, typename> class Difference = Central,
           template <typename> class Step = SimpleStep, typename Float = types::Float>
-struct GradientFD : public Difference<Function, Step, Float>
+struct Gradient : public Difference<Function, Step, Float>
 {
     USING_FINITE_DIFFERENCE(Difference<Function, Step, Float>);
 
@@ -530,13 +554,15 @@ struct GradientFD : public Difference<Function, Step, Float>
 };
 
 
-template <class Function, template <class, template <typename> class, typename> class Difference = CentralDifference,
+template <class Function, template <class, template <typename> class, typename> class Difference = Central,
           template <typename> class Step = SimpleStep, typename Float = types::Float>
-struct HessianFD : public Difference<Function, Step, Float>
+struct Hessian : public Difference<Function, Step, Float>
 {
     USING_FINITE_DIFFERENCE(Difference<Function, Step, Float>);
 
-    HessianFD (const Function& f, const Step<Float>& step = { std::pow(constants::eps_<Float>, 3.0 / 4) }) : Base(f, step) {}
+    Hessian (const Function& f) : Hessian(f, std::pow(constants::eps_<Float>, 3.0 / 4)) {}
+
+    Hessian (const Function& f, const Step<Float>& step) : Base(f, step) {}
 
 
     template <typename... Args>
@@ -545,7 +571,6 @@ struct HessianFD : public Difference<Function, Step, Float>
         return hessian(std::forward<Args>(args)...);
     }
 };
-
 
 
 
@@ -597,39 +622,37 @@ struct NormalizedStep
 
 
 
-
-template <class Function, template <typename> class Step = SimpleStep,
-          template <class, template <typename> class, typename> class Difference = CentralDifference,
-          typename Float = types::Float>
-auto gradientFD (const Function& f)
+template <template <class, template <typename> class, typename> class Difference = Central,
+          class Function = void, template <typename> class Step = SimpleStep, typename Float = types::Float>
+auto gradient (const Function& f)
 {
-    return GradientFD<Function, Difference, Step, Float>(f);
+    return Gradient<Function, Difference, Step, Float>(f);
 }
 
-template <class Function, template <typename> class Step = SimpleStep,
-          template <class, template <typename> class, typename> class Difference = CentralDifference,
-          typename Float = types::Float>
-auto gradientFD (const Function& f, const Step<Float>& step)
+template <template <class, template <typename> class, typename> class Difference = Central,
+          class Function = void, template <typename> class Step = SimpleStep, typename Float = types::Float>
+auto gradient (const Function& f, const Step<Float>& step)
 {
-    return GradientFD<Function, Difference, Step, Float>(f, step);
+    return Gradient<Function, Difference, Step, Float>(f, step);
 }
 
 
-template <class Function, template <typename> class Step = SimpleStep,
-          template <class, template <typename> class, typename> class Difference = CentralDifference,
-          typename Float = types::Float>
-auto hessianFD (const Function& f)
+template <template <class, template <typename> class, typename> class Difference = Central,
+          class Function = void, template <typename> class Step = SimpleStep, typename Float = types::Float>
+auto hessian (const Function& f)
 {
-    return HessianFD<Function, Difference, Step, Float>(f);
+    return Hessian<Function, Difference, Step, Float>(f);
 }
 
-template <class Function, template <typename> class Step = SimpleStep,
-          template <class, template <typename> class, typename> class Difference = CentralDifference,
-          typename Float = types::Float>
-auto hessianFD (const Function& f, const Step<Float>& step)
+template <template <class, template <typename> class, typename> class Difference = Central,
+          class Function = void, template <typename> class Step = SimpleStep, typename Float = types::Float>
+auto hessian (const Function& f, const Step<Float>& step)
 {
-    return HessianFD<Function, Difference, Step, Float>(f, step);
+    return Hessian<Function, Difference, Step, Float>(f, step);
 }
 
+//@}
+
+} // namespace fd
 
 } // namespace cppnlp

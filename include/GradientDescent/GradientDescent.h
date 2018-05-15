@@ -42,7 +42,7 @@ struct GradientDescent
 	template <class Function, typename Type>
 	Type operator () (Function function, const Type& x)
 	{
-		return this->operator()(function, gradientFD(function), x);
+		return this->operator()(function, fd::gradient(function), x);
 	}
 
 

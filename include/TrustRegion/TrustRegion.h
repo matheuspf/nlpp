@@ -92,13 +92,13 @@ struct TrustRegion
 	template <class Function, class Gradient>
 	Vec operator () (Function f, Gradient g, const Vec& x)
 	{
-		return this->operator()(f, g, hessianFD(f), x);
+		return this->operator()(f, g, fd::hessian(f), x);
 	}
 
 	template <class Function>
 	Vec operator () (Function f, const Vec& x)
 	{
-		return this->operator()(f, gradientFD(f), x);
+		return this->operator()(f, fd::gradient(f), x);
 	}
 
 
