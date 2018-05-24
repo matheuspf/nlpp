@@ -79,8 +79,7 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&) must be defined
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value &&
-                                          !HasOp<Impl, const Vec&, Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         return Impl::operator()(x);
@@ -236,19 +235,19 @@ struct FunctionGradient<Func, Grad> : public Func, public Gradient<Grad>
     template <class Vec>
     auto function (const Eigen::MatrixBase<Vec>& x)
     {
-        return Func::operator()(x);
+        return Func::operator()(x.eval());
     }
 
     template <class Vec>
     auto gradient (const Eigen::MatrixBase<Vec>& x)
     {
-        return Gradient<Grad>::operator()(x);
+        return Gradient<Grad>::operator()(x.eval());
     }
 
     template <class Vec>
     void gradient (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
-        Gradient<Grad>::operator()(x, g);
+        Gradient<Grad>::operator()(x.eval(), g);
     }
     //@}
 };
@@ -275,16 +274,28 @@ struct FunctionGradient<FuncGrad> : public Gradient<FuncGrad>
      *  @param g The reference where we are going to store the gradient
     */
     //@{
-    template <class Vec>
-    auto operator () (const Eigen::MatrixBase<Vec>& x)
+    template <typename Float, int Rows, int Cols>
+    auto operator () (const Eigen::Matrix<Float, Rows, Cols>& x)
     {
         return Gradient<FuncGrad>::operator()(x);
     }
 
     template <class Vec>
-    auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
+    auto operator () (const Eigen::MatrixBase<Vec>& x)
+    {
+        return operator()(x.eval());
+    }
+
+    template <typename Float, int Rows, int Cols>
+    auto operator () (const Eigen::Matrix<Float, Rows, Cols>& x, Eigen::Matrix<Float, Rows, Cols>& g)
     {
         return Gradient<FuncGrad>::operator()(x, g);
+    }
+
+    template <class Vec>
+    auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
+    {
+        return operator()(x.eval(), g);
     }
     //@}
 
@@ -306,39 +317,39 @@ struct FunctionGradient<FuncGrad> : public Gradient<FuncGrad>
     template <class Vec, std::enable_if_t<HasFunc<FuncGrad, const Vec&>::value, int> = 0>
     auto function (const Eigen::MatrixBase<Vec>& x)
     {
-        return Gradient<FuncGrad>::function(x);
+        return Gradient<FuncGrad>::function(x.eval());
     }
 
     template <class Vec, std::enable_if_t<!HasFunc<FuncGrad, const Vec&>::value, int> = 0>
     auto function (const Eigen::MatrixBase<Vec>& x)
     {
-        return std::get<0>(Gradient<FuncGrad>::operator()(x));
+        return std::get<0>(Gradient<FuncGrad>::operator()(x.eval()));
     }
 
 
     template <class Vec, std::enable_if_t<HasGrad<FuncGrad, const Vec&>::value, int> = 0>
     auto gradient (const Eigen::MatrixBase<Vec>& x)
     {
-        return Gradient<FuncGrad>::gradient(x);
+        return Gradient<FuncGrad>::gradient(x.eval());
     }
 
     template <class Vec, std::enable_if_t<!HasGrad<FuncGrad, const Vec&>::value, int> = 0>
     auto gradient (const Eigen::MatrixBase<Vec>& x)
     {
-        return std::get<1>(Gradient<FuncGrad>::operator()(x));
+        return std::get<1>(Gradient<FuncGrad>::operator()(x.eval()));
     }
 
 
     template <class Vec, std::enable_if_t<HasGrad<FuncGrad, const Vec&, Vec&>::value, int> = 0>
     void gradient (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
-        Gradient<FuncGrad>::gradient(x, g);
+        Gradient<FuncGrad>::gradient(x.eval(), g);
     }
 
     template <class Vec, std::enable_if_t<!HasGrad<FuncGrad, const Vec&, Vec&>::value, int> = 0>
     void gradient (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
-        Gradient<FuncGrad>::operator()(x, g);
+        Gradient<FuncGrad>::operator()(x.eval(), g);
     }
     //@}
 };

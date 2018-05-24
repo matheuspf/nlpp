@@ -26,7 +26,6 @@ struct GradientOptimizer
     static constexpr bool TestRet = std::is_same<decltype(testRet(std::declval<T>())), int>::value;
     
 
-
     
     template <class Function, class Gradient, class Vec, typename... Args>
     Vec operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<Vec>& x, Args&&... args)
@@ -41,13 +40,14 @@ struct GradientOptimizer
     {
         return static_cast<Impl&>(*this).optimize(wrap::functionGradient(funcGrad), x.eval(), std::forward<Args>(args)...);
     }
+    
 
-    // template <class Function, class Vec, typename... Args, 
-    //           std::enable_if_t<!TestRet<Function> && !wrap::HasOp<Function, const Vec&, Vec&>::value, int> = 0>
-    // Vec operator () (const Function& func, const Eigen::MatrixBase<Vec>& x, Args&&... args)
-    // {
-    //     return operator()(func, fd::gradient(func), x, std::forward<Args>(args)...);
-    // }
+    template <class Function, class Vec, typename... Args, 
+              std::enable_if_t<!TestRet<Function> && !wrap::HasOp<Function, const Vec&, Vec&>::value, int> = 0>
+    Vec operator () (const Function& func, const Eigen::MatrixBase<Vec>& x, Args&&... args)
+    {
+        return operator()(func, fd::gradient(func), x, std::forward<Args>(args)...);
+    }
 };
 
 } // namespace cppnlp

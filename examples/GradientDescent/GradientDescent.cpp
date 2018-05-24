@@ -5,6 +5,7 @@
 using namespace cppnlp;
 
 
+
 int main ()
 {
 	GradientDescent<> gd;
@@ -15,16 +16,13 @@ int main ()
 
 	auto grad = fd::gradient(func);
 
-	//x = gd(func, x);
-	//x = gd(func, grad, x);
-	//x = gd([&](const auto& x){ return std::make_pair(func(x), grad(x)); }, x);
-	x = gd([&](const Eigen::Vector2d& x, Eigen::Vector2d& g) { g = grad(x); return func(x); }, x);
+
+	// x = gd(func, x);
+	// x = gd(func, grad, x);
+	// x = gd([&](const auto& x){ return std::make_pair(func(x), grad(x)); }, x);
+	x = gd([&](const auto& x, auto& g) { g = grad(x); return func(x); }, x);
 
 	handy::print(x.transpose());
-
-	// auto gw = wrap::functionGradient([&](const Eigen::Vector2d& x, Eigen::Vector2d& g){ g = grad(x); return func(x); });
-	
-	// auto ff = gw.gradient(x);
 
 
 	return 0;
