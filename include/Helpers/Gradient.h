@@ -79,7 +79,8 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&) must be defined
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value &&
+                                          !HasOp<Impl, const Vec&, Vec&>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         return Impl::operator()(x);
@@ -90,7 +91,7 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined and returns nothing
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value &&
+    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value && !HasOp<Impl, const Vec&>::value &&
                                           std::is_same<std::result_of_t<Impl(const Vec&, Vec&)>, void>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
@@ -106,7 +107,7 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined and returns something (it does not need to be a scalar)
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value &&
+    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value && !HasOp<Impl, const Vec&>::value &&
                                           !std::is_same<std::result_of_t<Impl(const Vec&, Vec&)>, void>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
@@ -124,7 +125,7 @@ struct Gradient : public Impl
      *        - auto Impl::operator()(const Vec&) must be defined and returns the gradient of a matrix type
     */
     template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value && 
-                                          ::cppnlp::impl::isMat<std::result_of_t<Impl(const Vec&)>> int> = 0>
+                                          ::cppnlp::impl::isMat<std::result_of_t<Impl(const Vec&)>>, int> = 0>
     void operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         g = Impl::operator()(x);
@@ -136,7 +137,7 @@ struct Gradient : public Impl
      *        - auto Impl::operator()(const Vec&) must be defined and returns the gradient of a scalar type
     */
     template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value && 
-                                          ::cppnlp::impl::isScalar<std::result_of_t<Impl(const Vec&)>> int> = 0>
+                                          ::cppnlp::impl::isScalar<std::result_of_t<Impl(const Vec&)>>, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         auto [f, g_] = Impl::operator()(x);
@@ -152,7 +153,8 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value && 
+                                          !HasOp<Impl, const Vec&>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         return Impl::operator()(x, static_cast<Vec&>(g));
@@ -301,39 +303,39 @@ struct FunctionGradient<FuncGrad> : public Gradient<FuncGrad>
      *  @param g The reference where we are going to store the gradient
     */
     //@{
-    template <class Vec, std::enable_if_t<!HasFunc<Func, const Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<HasFunc<FuncGrad, const Vec&>::value, int> = 0>
     auto function (const Eigen::MatrixBase<Vec>& x)
     {
         return Gradient<FuncGrad>::function(x);
     }
 
-    template <class Vec, std::enable_if_t<!HasFunc<Func, const Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<!HasFunc<FuncGrad, const Vec&>::value, int> = 0>
     auto function (const Eigen::MatrixBase<Vec>& x)
     {
         return std::get<0>(Gradient<FuncGrad>::operator()(x));
     }
 
 
-    template <class Vec, std::enable_if_t<HasGrad<Grad, const Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<HasGrad<FuncGrad, const Vec&>::value, int> = 0>
     auto gradient (const Eigen::MatrixBase<Vec>& x)
     {
         return Gradient<FuncGrad>::gradient(x);
     }
 
-    template <class Vec, std::enable_if_t<!HasGrad<Grad, const Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<!HasGrad<FuncGrad, const Vec&>::value, int> = 0>
     auto gradient (const Eigen::MatrixBase<Vec>& x)
     {
         return std::get<1>(Gradient<FuncGrad>::operator()(x));
     }
 
 
-    template <class Vec, std::enable_if_t<HasGrad<Grad, const Vec&, Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<HasGrad<FuncGrad, const Vec&, Vec&>::value, int> = 0>
     void gradient (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         Gradient<FuncGrad>::gradient(x, g);
     }
 
-    template <class Vec, std::enable_if_t<!HasGrad<Grad, const Vec&, Vec&>::value, int> = 0>
+    template <class Vec, std::enable_if_t<!HasGrad<FuncGrad, const Vec&, Vec&>::value, int> = 0>
     void gradient (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         Gradient<FuncGrad>::operator()(x, g);

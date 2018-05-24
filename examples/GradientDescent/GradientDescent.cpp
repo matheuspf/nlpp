@@ -9,17 +9,22 @@ int main ()
 {
 	GradientDescent<> gd;
 
-	Eigen::Vector3d x(1.2, 1.2, 1.2);
+	Eigen::Vector2d x(1.2, 1.2);
 
 	Rosenbrock func;
 
 	auto grad = fd::gradient(func);
 
 	//x = gd(func, x);
+	//x = gd(func, grad, x);
 	//x = gd([&](const auto& x){ return std::make_pair(func(x), grad(x)); }, x);
-	x = gd([&](const Eigen::Vector3d& x, Eigen::Vector3d& g){ g = grad(x); return func(x); }, x);
+	x = gd([&](const Eigen::Vector2d& x, Eigen::Vector2d& g) { g = grad(x); return func(x); }, x);
 
 	handy::print(x.transpose());
+
+	// auto gw = wrap::functionGradient([&](const Eigen::Vector2d& x, Eigen::Vector2d& g){ g = grad(x); return func(x); });
+	
+	// auto ff = gw.gradient(x);
 
 
 	return 0;

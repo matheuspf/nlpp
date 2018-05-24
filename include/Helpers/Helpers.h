@@ -42,17 +42,19 @@ struct NullFunctor
 };
 
 
+
+
 template <typename T>
 struct IsMatImpl
 {
-	enum { value = false };
+	template <class U>
+	static constexpr int impl (const Eigen::EigenBase<U>&);
+
+	static constexpr void impl (...);
+
+	enum { value = std::is_same<decltype(impl(std::declval<std::decay_t<T>>())), int>::value };
 };
 
-template <typename T>
-struct IsMatImpl<Eigen::EigenBase<T>>
-{
-	enum { value = true };
-};
 
 template <typename T>
 struct IsMat : public IsMatImpl<std::decay_t<T>> {};
@@ -68,7 +70,7 @@ template <typename T>
 constexpr bool isMat = IsMat<T>::value;
 
 template <typename T>
-constexpr bool isScalar = isScalar<T>::value;
+constexpr bool isScalar = IsScalar<T>::value;
 
 
 // template <typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
