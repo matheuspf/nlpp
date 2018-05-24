@@ -2,6 +2,8 @@
 
 #include "../Helpers/Helpers.h"
 
+#include "../Helpers/Optimizer.h"
+
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
 
@@ -55,27 +57,33 @@ BUILD_CG_STRUCT(double fr = FR::operator()(fa, fb);
 
 
 
+template <class> class PRTT;
 
 
 
 template <class CGType = PR_FR, class LineSearch = StrongWolfe>
-struct CG
+struct CG : public GradientOptimizer<CG<CGType, StrongWolfe>>
 {
 	CG(LineSearch lineSearch = StrongWolfe(1e-2, 1e-4, 0.1)) : lineSearch(lineSearch) {}
 
+	using Base = GradientOptimizer<CG<CGType, LineSearch>>;
+	using Base::Base;
+	using Base::operator();
 
-	template <class Function, class Gradient>
-	Vec operator () (Function function, Gradient gradient, Vec x)
+
+	template <class Function, class Float, int Rows, int Cols>
+	Vec optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
 	{
-		Vec fa = gradient(x), fb, dir = -fa;
-
+		Eigen::Matrix<Float, Rows, Cols> fa = f.gradient(x), fb, dir = -fa;
+	
 		for(int iter = 0; iter < maxIterations * x.rows() && dir.norm() > xTol; ++iter)
 		{
-			double alpha = lineSearch(function, gradient, x, dir);
-
+			double alpha = lineSearch([&](const auto& x){ return f.function(x); }, 
+									  [&](const auto& x){ return f.gradient(x); }, x, dir);
+			
 			x = x + alpha * dir;
 
-			fb = gradient(x);
+			fb = f.gradient(x);
 
 
 			if((fa.dot(fb) / fb.dot(fb)) >= v)
@@ -90,14 +98,6 @@ struct CG
 
 		return x;
 	}
-
-
-	template <class Function>
-	Vec operator () (Function function, Vec x)
-	{
-		return this->operator()(function, fd::gradient(function), x);
-	}
-
 
 
 

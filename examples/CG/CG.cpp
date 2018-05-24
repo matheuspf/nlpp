@@ -9,12 +9,14 @@ int main ()
 {
 	CG<PR_FR> cg;
 
-	Vec x = Vec::Constant(100, 5.0);
+	Eigen::VectorXd x = Eigen::VectorXd::Constant(10, 5.0);
 
-	x = cg(Rosenbrock(), x);
+	handy::print(handy::benchmark([&]
+	{
+		x = cg(Rosenbrock(), x);
+	}), "\n");
 
-
-	handy::print(x.transpose());
+	handy::print("x: ", x.transpose());
 
 
 
