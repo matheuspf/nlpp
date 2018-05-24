@@ -36,17 +36,46 @@ using Mati = MatX<types::Int>;
 namespace impl
 {
 
+struct NullFunctor
+{
+	void operator () (...) {}
+};
+
+
 template <typename T>
-struct IsMat
+struct IsMatImpl
 {
 	enum { value = false };
 };
 
-template <typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
-struct IsMat<Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>>
+template <typename T>
+struct IsMatImpl<Eigen::EigenBase<T>>
 {
 	enum { value = true };
 };
+
+template <typename T>
+struct IsMat : public IsMatImpl<std::decay_t<T>> {};
+
+template <typename T>
+struct IsScalar
+{
+	enum{ value = !IsMat<T>::value };
+};
+
+
+template <typename T>
+constexpr bool isMat = IsMat<T>::value;
+
+template <typename T>
+constexpr bool isScalar = isScalar<T>::value;
+
+
+// template <typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
+// struct IsMat<Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>>
+// {
+// 	enum { value = true };
+// };
 
 
 } // namespace impl

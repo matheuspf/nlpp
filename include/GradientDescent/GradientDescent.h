@@ -2,7 +2,7 @@
 
 #include "../Helpers/Helpers.h"
 
-#include "../Helpers/FiniteDifference.h"
+#include "../Helpers/Optimizer.h"
 
 #include "../LineSearch/Goldstein/Goldstein.h"
 
@@ -11,39 +11,45 @@ namespace cppnlp
 {
 
 template <class LineSearch = Goldstein>
-struct GradientDescent
+struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch>>
 {
-	GradientDescent (LineSearch lineSearch = LineSearch{}) : lineSearch(lineSearch) {}
+	using Base = GradientOptimizer<GradientDescent<LineSearch>>;
+	using Base::Base;
+	using Base::operator();
+
+	GradientDescent (const LineSearch& lineSearch = LineSearch{}) : lineSearch(lineSearch) {}
 
 
-	template <class Function, class Gradient, typename Type>
-	Type operator () (Function function, Gradient gradient, Type x)
+	template <class Function, typename Float, int Rows, int Cols>
+	Vec optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
 	{
-		Type direction = -gradient(x);
+		auto [fx, gx] = f(x);
 
-		Type ret = x;
+		Eigen::Matrix<Float, Rows, Cols> best = x;
+
+		auto fBest = fx;
+
+		Eigen::Matrix<Float, Rows, Cols> direction = -gx;
+
 
 		for(int iter = 0; iter < maxIterations && direction.norm() > xTol; ++iter)
 		{
-			double alpha = lineSearch(function, gradient, x, direction);
+			double alpha = lineSearch([&](const auto& x){ return f.function(x); }, 
+									  [&](const auto& x){ return f.gradient(x); }, x, direction);
 
 			x = x + alpha * direction;
 
-			if(function(x) < function(ret))
-				ret = x;
+			fx = f(x, gx);
 
-			direction = -gradient(x);
+			if(fx < fBest)
+				best = x;
+
+			direction = -gx;
 		}
 
-		return ret;
+		return best;
 	}
 
-
-	template <class Function, typename Type>
-	Type operator () (Function function, const Type& x)
-	{
-		return this->operator()(function, fd::gradient(function), x);
-	}
 
 
 
