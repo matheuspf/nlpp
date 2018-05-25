@@ -8,7 +8,11 @@ using namespace cppnlp;
 
 int main ()
 {
-	GradientDescent<> gd;
+	using LS = Goldstein;
+
+	params::GradientDescent<LS> params(LS(), 10000, 1e-8, 1e-8, 1e-8);
+
+	GradientDescent<> gd(params);
 
 	Eigen::Vector2d x(1.2, 1.2);
 

@@ -7,13 +7,60 @@
 
 #include "Gradient.h"
 
+#include "../LineSearch/StrongWolfe/StrongWolfe.h"
+
+
+#define CPPOPT_USING_PARAMS(TYPE, ...) using TYPE = __VA_ARGS__;    \
+                                       using TYPE::maxIterations;   \
+                                       using TYPE::xTol;            \
+                                       using TYPE::fTol;            \
+                                       using TYPE::gTol;            \
+                                       using TYPE::lineSearch;
+
+
+
 
 namespace cppnlp
 {
 
-template <class Impl>
+
+namespace params
+{
+
+
+template <class LineSearch = StrongWolfe>
 struct GradientOptimizer
 {
+    GradientOptimizer(int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, 
+                      double gTol = 1e-4, const LineSearch& lineSearch = LineSearch()) :
+                      maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
+
+    GradientOptimizer(const LineSearch& lineSearch, int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) :
+                    maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
+
+    int maxIterations;
+
+	double xTol;
+
+	double fTol;
+
+    double gTol;
+
+
+    LineSearch lineSearch;
+};
+
+
+} // namespace params
+
+
+
+template <class Impl, class Parameters = params::GradientOptimizer<>>
+struct GradientOptimizer : public Parameters
+{
+    GradientOptimizer(const Parameters& params = Parameters()) : Parameters(params) {}
+
+
     template <class T, std::enable_if_t<!std::is_fundamental<std::result_of_t<T(const Vec&)>>::value, int> = 0>
     static constexpr int testRet (T);
 
@@ -49,5 +96,8 @@ struct GradientOptimizer
         return operator()(func, fd::gradient(func), x, std::forward<Args>(args)...);
     }
 };
+
+
+
 
 } // namespace cppnlp

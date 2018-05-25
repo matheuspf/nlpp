@@ -10,15 +10,25 @@
 namespace cppnlp
 {
 
-template <class LineSearch = Goldstein>
-struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch>>
+namespace params
 {
-	using Base = GradientOptimizer<GradientDescent<LineSearch>>;
-	using Base::Base;
-	using Base::operator();
 
-	GradientDescent (const LineSearch& lineSearch = LineSearch{}) : lineSearch(lineSearch) {}
+template <class LineSearch = Goldstein>
+struct GradientDescent : public GradientOptimizer<LineSearch>
+{
+	using GradientOptimizer<LineSearch>::GradientOptimizer;
+};
 
+} // namespace params
+
+
+template <class LineSearch = Goldstein>
+struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch>, params::GradientDescent<LineSearch>>
+{
+	CPPOPT_USING_PARAMS(Params, GradientOptimizer<GradientDescent<LineSearch>, params::GradientDescent<LineSearch>>);
+	
+	using Params::Params;
+	
 
 	template <class Function, typename Float, int Rows, int Cols>
 	Vec optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
@@ -49,18 +59,7 @@ struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch>>
 
 		return best;
 	}
-
-
-
-
-	LineSearch lineSearch;
-
-
-	int maxIterations = 1e3;
-
-	double xTol = 1e-6;
-
-	double fTol = 1e-7;
 };
+
 
 } // namespace cppnlp

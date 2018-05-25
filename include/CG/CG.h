@@ -7,6 +7,11 @@
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
 
+#define CPPOPT_USING_PARAMS_CG(...) CPPOPT_USING_PARAMS(__VA_ARGS__);	\
+									using Params::cg;					\
+									using Params::v;
+
+
 #define BUILD_CG_STRUCT(Op, ...) \
 \
 struct __VA_ARGS__ \
@@ -57,25 +62,57 @@ BUILD_CG_STRUCT(double fr = FR::operator()(fa, fb);
 
 
 
-template <class> class PRTT;
+
+
+namespace params
+{
+
+template <class CGType = PR_FR, class LineSearch = StrongWolfe>
+struct CG : public GradientOptimizer<LineSearch>
+{
+	using Params = GradientOptimizer<LineSearch>;
+
+	template <typename... Args, class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, StrongWolfe>::value, int> = 0>
+	CG(const LineSearch& lineSearch = StrongWolfe(1e-2, 1e-4, 0.1), Args&&... args) : Params(lineSearch, std::forward<Args>(args)...)
+	{	
+	}
+
+	template <typename... Args, class LS = std::decay_t<LineSearch>, std::enable_if_t<!std::is_same<LS, StrongWolfe>::value, int> = 0>
+	CG(const LineSearch& lineSearch = LineSearch{}, Args&&... args) : Params(lineSearch, std::forward<Args>(args)...) 
+	{
+	}
+
+
+	CGType cg;
+
+	double v = 0.1;
+};
+
+
+} // namespace params
 
 
 
 template <class CGType = PR_FR, class LineSearch = StrongWolfe>
-struct CG : public GradientOptimizer<CG<CGType, StrongWolfe>>
+struct CG : public GradientOptimizer<CG<CGType, LineSearch>, params::CG<CGType, LineSearch>>
 {
-	CG(LineSearch lineSearch = StrongWolfe(1e-2, 1e-4, 0.1)) : lineSearch(lineSearch) {}
+	CPPOPT_USING_PARAMS_CG(Params, GradientOptimizer<CG<CGType, LineSearch>, params::CG<CGType, LineSearch>>);
 
-	using Base = GradientOptimizer<CG<CGType, LineSearch>>;
-	using Base::Base;
-	using Base::operator();
+	using Params::Params;
 
 
 	template <class Function, class Float, int Rows, int Cols>
 	Vec optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
 	{
-		Eigen::Matrix<Float, Rows, Cols> fa = f.gradient(x), fb, dir = -fa;
-	
+		Eigen::Matrix<Float, Rows, Cols> fa, dir, fb(x.rows(), x.cols());
+
+		Float fxOld;
+
+		std::tie(fxOld, fa) = f(x);
+
+		dir = -fa;
+
+
 		for(int iter = 0; iter < maxIterations * x.rows() && dir.norm() > xTol; ++iter)
 		{
 			double alpha = lineSearch([&](const auto& x){ return f.function(x); }, 
@@ -83,37 +120,26 @@ struct CG : public GradientOptimizer<CG<CGType, StrongWolfe>>
 			
 			x = x + alpha * dir;
 
-			fb = f.gradient(x);
+			Float fx = f(x, fb);
+			
 
+			if((fxOld - fx) < fTol)
+				break;
 
 			if((fa.dot(fb) / fb.dot(fb)) >= v)
 				dir = -fb;
 
 			else
 				dir = -fb + cg(fa, fb, dir) * dir;
-		
+
+
+			fxOld = fx;
 
 			fa = fb;
 		}
 
 		return x;
 	}
-
-
-
-	CGType cg;
-
-	LineSearch lineSearch;
-
-
-	double v = 0.1;
-
-	int maxIterations = 1e3;
-
-	double xTol = 1e-6;
-
-	double fTol = 1e-7;
-
 };
 
 
