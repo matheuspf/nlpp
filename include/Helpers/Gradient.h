@@ -38,6 +38,110 @@ HAS_OVERLOADED_FUNC(gradient, HasGrad);
 //@}
 
 
+template <class T, class Vec>
+struct IsFunction
+{
+    template <class U = T>
+    static constexpr bool impl (std::decay_t<decltype(std::declval<U>()(Vec()), void())>*)
+    { 
+        return std::is_floating_point<decltype(std::declval<U>()(Vec()))>::value;
+    }
+
+    static constexpr bool impl (...)
+    {
+        return false;
+    }
+    
+
+    enum{ value = impl(nullptr) };
+};
+
+
+template <class T, class Vec>
+struct IsGradient
+{
+    static Vec ref;
+
+    template <class U = T>
+    static constexpr bool impl (decltype(std::declval<U>()(Vec()), void())*)
+    { 
+        return ::cppnlp::impl::IsMat<decltype(std::declval<U>()(Vec()))>::value;
+    }
+
+    template <class U = T>
+    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), int())*)
+    { 
+        return std::is_same<decltype(std::declval<U>()(Vec(), ref)), void>::value;
+    }
+
+    static constexpr bool impl (...)
+    {
+        return false;
+    }
+    
+
+    enum{ value = impl(nullptr) };
+};
+
+template <class T, class Vec>
+Vec IsGradient<T, Vec>::ref;
+
+
+template <class T, class Vec>
+struct IsFunctionGradient
+{
+    static Vec ref;
+
+
+    template <class U>
+    struct IsPair
+    {
+        enum { value = false };
+    };
+
+    template <typename U, typename V>
+    struct IsPair<std::pair<U, V>>
+    {
+        enum { value = true };
+    };
+
+
+    template <class U = T>
+    static constexpr bool impl (decltype(std::declval<U>()(Vec()), void())*)
+    { 
+        return IsPair<decltype(std::declval<U>()(Vec()))>::value;
+    }
+
+    template <class U = T>
+    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), int())*)
+    { 
+        return std::is_floating_point<decltype(std::declval<U>()(Vec(), ref))>::value;
+    }
+
+    static constexpr bool impl (...)
+    {
+        return false;
+    }
+    
+
+    enum{ value = impl(nullptr) };
+};
+
+template <class T, class Vec>
+Vec IsFunctionGradient<T, Vec>::ref;
+
+
+
+
+
+
+
+
+
+
+
+
+
 /** @brief Gradient wrapper for user defined gradient or function/gradient calculation
  * 
  *  @details Given an user defined gradient or function/gradient functor, given by Impl, it returns an object that
@@ -79,7 +183,7 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&) must be defined
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value, int> = 0>
+    template <class Vec, class Impl_ = Impl, std::enable_if_t<HasOp<Impl_, const Vec&>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         return Impl::operator()(x);
@@ -90,8 +194,8 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined and returns nothing
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value && !HasOp<Impl, const Vec&>::value &&
-                                          std::is_same<std::result_of_t<Impl(const Vec&, Vec&)>, void>::value, int> = 0>
+    template <class Vec, class Impl_ = Impl, 
+              std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value && IsGradient<Impl_, Vec>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         Eigen::Matrix<Float, Vec::RowsAtCompileTime, Vec::ColsAtCompileTime> g(x.rows(), x.cols());
@@ -106,8 +210,8 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined and returns something (it does not need to be a scalar)
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value && !HasOp<Impl, const Vec&>::value &&
-                                          !std::is_same<std::result_of_t<Impl(const Vec&, Vec&)>, void>::value, int> = 0>
+    template <class Vec, class Impl_ = Impl, 
+              std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value && IsFunctionGradient<Impl_, Vec>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         Eigen::Matrix<Float, Vec::RowsAtCompileTime, Vec::ColsAtCompileTime> g(x.rows(), x.cols());
@@ -123,8 +227,8 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&) must be defined and returns the gradient of a matrix type
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value && 
-                                          ::cppnlp::impl::isMat<std::result_of_t<Impl(const Vec&)>>, int> = 0>
+    template <class Vec, class Impl_ = Impl, 
+              std::enable_if_t<HasOp<Impl_, const Vec&>::value && IsGradient<Impl_, Vec>::value, int> = 0>
     void operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         g = Impl::operator()(x);
@@ -135,8 +239,8 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&) must be defined and returns the gradient of a scalar type
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&>::value && 
-                                          ::cppnlp::impl::isScalar<std::result_of_t<Impl(const Vec&)>>, int> = 0>
+    template <class Vec, class Impl_ = Impl, 
+              std::enable_if_t<HasOp<Impl, const Vec&>::value && IsFunctionGradient<Impl_, Vec>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         auto [f, g_] = Impl::operator()(x);
@@ -152,8 +256,7 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined
     */
-    template <class Vec, std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value && 
-                                          !HasOp<Impl, const Vec&>::value, int> = 0>
+    template <class Vec, class Impl_ = Impl, std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         return Impl::operator()(x, static_cast<Vec&>(g));
