@@ -64,7 +64,7 @@ int main ()
     handy::print(f12, "   ", g12.transpose());
 
 
-    auto func2 = wrap::functionGradient(FuncGrad{});
+    auto func2 = wrap::functionGradient(wrap::functionGradient(FuncGrad{}));
 
     auto [f21, g21] = func2(x);
 
@@ -72,6 +72,10 @@ int main ()
 
     handy::print(f21, "   ", g21.transpose());
     handy::print(f22, "   ", g22.transpose());
+
+
+
+
 
 
     // auto func = [](const Vec& x){ return 10.0; };

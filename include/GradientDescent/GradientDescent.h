@@ -44,8 +44,7 @@ struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch>, p
 
 		for(int iter = 0; iter < maxIterations && direction.norm() > xTol; ++iter)
 		{
-			double alpha = lineSearch([&](const auto& x){ return f.function(x); }, 
-									  [&](const auto& x){ return f.gradient(x); }, x, direction);
+			double alpha = lineSearch(f, x, direction);
 
 			x = x + alpha * direction;
 

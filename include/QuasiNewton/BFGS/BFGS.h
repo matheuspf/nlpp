@@ -2,9 +2,15 @@
 
 #include "../../Helpers/Helpers.h"
 
+#include "../../Helpers/Optimizer.h"
+
 #include "../../Helpers/FiniteDifference.h"
 
 #include "../../LineSearch/StrongWolfe/StrongWolfe.h"
+
+
+#define CPPOPT_USING_PARAMS_BFGS(...) CPPOPT_USING_PARAMS(__VA_ARGS__);  \
+									  using Params::initialHessian;	
 
 
 
@@ -15,40 +21,60 @@ struct BFGS_Constant;
 struct BFGS_Diagonal;
 
 
-template <class LineSearch = StrongWolfe, class InitialHessian = BFGS_Diagonal>
-struct BFGS
+namespace params
 {
-    BFGS (const LineSearch& lineSearch = LineSearch(), const InitialHessian& initialHessian = InitialHessian()) :
-          lineSearch(lineSearch), initialHessian(initialHessian) {}
 
-    
-    template <class Function, class Gradient>
-    Vec operator () (Function function, Gradient gradient, Vec x0)
+template <class LineSearch = StrongWolfe, class InitialHessian = BFGS_Diagonal>
+struct BFGS : public GradientOptimizer<LineSearch>
+{
+    using GradientOptimizer<LineSearch>::GradientOptimizer;
+
+    InitialHessian initialHessian;
+};
+
+
+} // namespace params
+
+
+
+template <class LineSearch = StrongWolfe, class InitialHessian = BFGS_Diagonal>
+struct BFGS : public GradientOptimizer<BFGS<LineSearch, InitialHessian>, params::BFGS<LineSearch, InitialHessian>>
+{   
+    CPPOPT_USING_PARAMS_BFGS(Params, GradientOptimizer<BFGS<LineSearch, InitialHessian>, params::BFGS<LineSearch, InitialHessian>>);
+
+    using Params::Params;
+
+
+    template <class Function, typename Float, int Rows, int Cols>
+    auto optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x0)
     {
-        int N = x0.rows();
+        constexpr int Size = Rows * Cols;
 
-        Mat In = Mat::Identity(N, N);
+        int rows = x0.rows(), cols = x0.cols(), size = rows * cols;
 
-        Mat hess = initialHessian(function, gradient, x0);
+        Eigen::Matrix<Float, Size, Size> In = Eigen::Matrix<Float, Size, Size>::Identity(size, size);
 
-        Vec g0 = gradient(x0);
-        Vec x1, g1, dir, s, y;
+        auto hess = initialHessian([&](const auto& x){ return f.function(x); },
+                                   [&](const auto& x){ return f.gradient(x); }, x0);
 
 
-        for(int iter = 0; iter < maxIter; ++iter)
+        Eigen::Matrix<Float, Rows, Cols> x1, g0(rows, cols), g1(rows, cols), dir, s, y;
+
+        Float f0 = f(x0, g0);
+
+
+        for(int iter = 0; iter < maxIterations; ++iter)
         {
             dir = -hess * g0;
 
-            double alpha = lineSearch(function, gradient, x0, dir);
-
+            double alpha = lineSearch(f, x0, dir);
 
             x1 = x0 + alpha * dir;
 
-            g1 = gradient(x1);
+            Float f1 = f(x1, g1);
 
             s = x1 - x0;
             y = g1 - g0;
-
 
             if(g1.norm() < gTol)
                 break;
@@ -64,20 +90,6 @@ struct BFGS
 
         return x1;
     }
-
-
-    template <class Function>
-    Vec operator () (Function function, const Vec& x)
-    {
-        return this->operator()(function, fd::gradient(function), x);
-    }
-
-
-    LineSearch lineSearch;
-    InitialHessian initialHessian;
-
-    double gTol = 1e-8;
-    int maxIter = 1e3;
 };
 
 

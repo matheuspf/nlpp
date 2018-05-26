@@ -2,6 +2,8 @@
 
 #include "../Helpers/Helpers.h"
 
+#include "../Helpers/Gradient.h"
+
 #include "../Helpers/FiniteDifference.h"
 
 namespace cppnlp
@@ -12,11 +14,41 @@ class LineSearch
 {
 public:
 
-	template <class Function, class Gradient>
-	double operator () (Function f, Gradient g)
+	template <class Function, class Vec>
+	double lineSearch (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
-		return static_cast<Impl&>(*this).lineSearch(f, g);
+		N = x.rows();
+		xNorm = x.norm();
+
+		return static_cast<Impl&>(*this).lineSearch([&](double a)
+		{
+			static Vec gx(x.rows(), x.cols());
+
+			auto fx = f(x + a * dir, static_cast<Vec&>(gx));
+
+			return std::make_pair(fx, gx.dot(dir));
+		});
 	}
+
+
+	template <class FunctionGradient, class Vec, std::enable_if_t<wrap::IsFunctionGradient<FunctionGradient, Vec>::value, int> = 0>
+	double operator () (const FunctionGradient& f, const Eigen::DenseBase<Vec>& x, const Eigen::DenseBase<Vec>& dir)
+	{
+		return lineSearch(wrap::functionGradient(f), x.eval(), dir.eval());
+	}
+
+	template <class Function, class Gradient, class Vec>
+	double operator () (Function f, Gradient g, const Eigen::DenseBase<Vec>& x, const Eigen::DenseBase<Vec>& dir)
+	{
+		return lineSearch(wrap::functionGradient(f, g), x.eval(), dir.eval());
+	}
+
+	template <class Function, class Vec, std::enable_if_t<wrap::IsFunction<Function, Vec>::value, int> = 0>
+	double operator () (Function f, const Eigen::DenseBase<Vec>& x, const Eigen::DenseBase<Vec>& dir)
+	{
+		return this->operator()(f, fd::gradient(f), x, dir);
+	}
+
 
 	template <class Function, class Gradient>
 	double operator () (Function f, Gradient g, double x, double dir = 1.0)
@@ -28,25 +60,8 @@ public:
 								[&](double a){ return g(x + a * dir) * dir; });
 	}
 
-	template <class Function, class Gradient>
-	double operator () (Function f, Gradient g, const Vec& x, const Vec& dir)
-	{
-		N = x.rows();
-		xNorm = x.norm();
-
-		return this->operator()([&](double a){ return f(x + a * dir); },
-								[&](double a){ return g(x + a * dir).dot(dir); });
-	}
-
-
 	template <class Function>
 	double operator () (Function f, double x, double dir = 1.0)
-	{
-		return this->operator()(f, fd::gradient(f), x, dir);
-	}
-
-	template <class Function>
-	double operator () (Function f, const Vec& x, const Vec& dir)
 	{
 		return this->operator()(f, fd::gradient(f), x, dir);
 	}

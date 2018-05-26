@@ -36,7 +36,7 @@ struct GradientOptimizer
                       maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
 
     GradientOptimizer(const LineSearch& lineSearch, int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) :
-                    maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
+                      maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
 
     int maxIterations;
 

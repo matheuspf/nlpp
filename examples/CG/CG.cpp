@@ -11,11 +11,11 @@ using namespace cppnlp;
 
 int main ()
 {
-	params::CG<PR_FR, Goldstein> params;
+	params::CG<PR_FR, StrongWolfe> params(StrongWolfe{});
 
 	params.fTol = 0.0;
 
-	CG<PR_FR, Goldstein> cg(params);
+	CG<PR_FR, StrongWolfe> cg(params);
 
 	Rosenbrock func;
 

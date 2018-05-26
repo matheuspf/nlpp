@@ -20,23 +20,21 @@ struct Goldstein : public LineSearch<Goldstein>
 	}
 
 
-	template <class Function, class Gradient>
-	double lineSearch (Function f, Gradient g)
+	template <class Function>
+	double lineSearch (Function f)
 	{
-		double a = a0;
+		double f0, g0, a = a0, safeGuard = a0;
+		
+		std::tie(f0, g0) = f(0.0);
 
-		double f0 = f(0.0);
-		double g0 = g(0.0);
-
-		double safeGuard = a0;
 
 		int iter = 0;
 
-
 		while(a > aMin && ++iter < maxIter)
 		{
-			double fa = f(a);
-			double ga = g(a);
+			double fa, ga;
+
+			std::tie(fa, ga) = f(a);
 
 			if(fa > f0 + mu1 * a * g0)
 			{

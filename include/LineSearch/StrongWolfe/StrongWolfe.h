@@ -20,11 +20,12 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 	}
 
 
-	template <class Function, class Gradient>
-	double lineSearch (Function f, Gradient g)
+	template <class Function>
+	double lineSearch (Function f)
 	{
-		double f0 = f(0);
-		double g0 = g(0);
+		double f0, g0;
+		
+		std::tie(f0, g0) = f(0.0);
 
 		double a = 0.0, fa = f0, ga = g0;
 		double b = a0, fb, gb;
@@ -37,11 +38,10 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 
 		while(iter++ < maxIterBrack && b + tol < aMax)
 		{
-			fb = f(b);
-			gb = g(b);
+			std::tie(fb, gb) = f(b);
 
 			if(fb > f0 + b * c1 * g0 || (iter > 1 && fb > fa))
-				return zoom(f, g, a, fa, ga, b, fb, gb, f0, g0);
+				return zoom(f, a, fa, ga, b, fb, gb, f0, g0);
 
 
 			safeGuard = b;
@@ -51,7 +51,7 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 				return b;
 
 			else if(gb > 0.0)
-				return zoom(f, g, b, fb, gb, a, fa, ga, f0, g0);
+				return zoom(f, b, fb, gb, a, fa, ga, f0, g0);
 
 
 			double next = interpolate(a, fa, ga, b, fb, gb);
@@ -66,9 +66,8 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 	}
 
 
-	template <class Function, class Gradient>
-	double zoom (Function f, Gradient g, double l, double fl, double gl,
-				 double u, double fu, double gu, double f0, double g0)
+	template <class Function>
+	double zoom (Function f, double l, double fl, double gl, double u, double fu, double gu, double f0, double g0)
 	{
 		double a = l, fa, ga;
 
@@ -86,8 +85,7 @@ struct StrongWolfe : public LineSearch<StrongWolfe>
 				a = next;
 
 
-			fa = f(a);
-			ga = g(a);
+			std::tie(fa, ga) = f(a);
 
 
 			if(fa > f0 + a * c1 * g0 || fa > fl)

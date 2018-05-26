@@ -63,13 +63,13 @@ struct IsGradient
     static Vec ref;
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec()), void())*)
+    static constexpr bool impl (decltype(std::declval<U>()(Vec()), int())*)
     { 
         return ::cppnlp::impl::IsMat<decltype(std::declval<U>()(Vec()))>::value;
     }
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), int())*)
+    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), void())*)
     { 
         return std::is_same<decltype(std::declval<U>()(Vec(), ref)), void>::value;
     }
@@ -80,7 +80,7 @@ struct IsGradient
     }
     
 
-    enum{ value = impl(nullptr) };
+    enum{ value = impl((int*)0) };
 };
 
 template <class T, class Vec>
@@ -107,13 +107,13 @@ struct IsFunctionGradient
 
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec()), void())*)
+    static constexpr bool impl (decltype(std::declval<U>()(Vec()), int())*)
     { 
         return IsPair<decltype(std::declval<U>()(Vec()))>::value;
     }
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), int())*)
+    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), void())*)
     { 
         return std::is_floating_point<decltype(std::declval<U>()(Vec(), ref))>::value;
     }
@@ -124,7 +124,7 @@ struct IsFunctionGradient
     }
     
 
-    enum{ value = impl(nullptr) };
+    enum{ value = impl((int*)0) };
 };
 
 template <class T, class Vec>
@@ -195,7 +195,8 @@ struct Gradient : public Impl
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined and returns nothing
     */
     template <class Vec, class Impl_ = Impl, 
-              std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value && IsGradient<Impl_, Vec>::value, int> = 0>
+              std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value &&
+                               !HasOp<Impl_, const Vec&>::value && IsGradient<Impl_, Vec>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         Eigen::Matrix<Float, Vec::RowsAtCompileTime, Vec::ColsAtCompileTime> g(x.rows(), x.cols());
@@ -240,7 +241,8 @@ struct Gradient : public Impl
      *        - auto Impl::operator()(const Vec&) must be defined and returns the gradient of a scalar type
     */
     template <class Vec, class Impl_ = Impl, 
-              std::enable_if_t<HasOp<Impl, const Vec&>::value && IsFunctionGradient<Impl_, Vec>::value, int> = 0>
+              std::enable_if_t<HasOp<Impl, const Vec&>::value && IsFunctionGradient<Impl_, Vec>::value
+                               && !IsGradient<Impl_, Vec>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         auto [f, g_] = Impl::operator()(x);
@@ -256,7 +258,8 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined
     */
-    template <class Vec, class Impl_ = Impl, std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value, int> = 0>
+    template <class Vec, class Impl_ = Impl, std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value &&
+                                                              !HasOp<Impl, const Vec&>::value, int> = 0>
     auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         return Impl::operator()(x, static_cast<Vec&>(g));
@@ -315,15 +318,15 @@ struct FunctionGradient<Func, Grad> : public Func, public Gradient<Grad>
     template <class Vec>
     auto operator () (const Vec& x)
     {
-        return std::make_pair(Func::operator()(x), Gradient<Grad>::operator()(x));
+        return std::make_pair(Func::operator()(x.eval()), Gradient<Grad>::operator()(x.eval()));
     }
 
-    template <class Vec>
-    auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
+    template <class X, class G>
+    auto operator () (const Eigen::MatrixBase<X>& x, Eigen::MatrixBase<G>& g)
     {
-        Gradient<Grad>::operator()(x, g);
+        Gradient<Grad>::operator()(x.eval(), g);
 
-        return Func::operator()(x);
+        return Func::operator()(x.eval());
     }
     //@}
 
@@ -377,28 +380,16 @@ struct FunctionGradient<FuncGrad> : public Gradient<FuncGrad>
      *  @param g The reference where we are going to store the gradient
     */
     //@{
-    template <typename Float, int Rows, int Cols>
-    auto operator () (const Eigen::Matrix<Float, Rows, Cols>& x)
+    template <class X>
+    auto operator () (const Eigen::MatrixBase<X>& x)
     {
-        return Gradient<FuncGrad>::operator()(x);
+        return Gradient<FuncGrad>::operator()(x.eval());
     }
 
-    template <class Vec>
-    auto operator () (const Eigen::MatrixBase<Vec>& x)
+    template <class X, class G>
+    auto operator () (const Eigen::MatrixBase<X>& x, Eigen::MatrixBase<G>& g)
     {
-        return operator()(x.eval());
-    }
-
-    template <typename Float, int Rows, int Cols>
-    auto operator () (const Eigen::Matrix<Float, Rows, Cols>& x, Eigen::Matrix<Float, Rows, Cols>& g)
-    {
-        return Gradient<FuncGrad>::operator()(x, g);
-    }
-
-    template <class Vec>
-    auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
-    {
-        return operator()(x.eval(), g);
+        return Gradient<FuncGrad>::operator()(x.eval(), g);
     }
     //@}
 
@@ -457,6 +448,29 @@ struct FunctionGradient<FuncGrad> : public Gradient<FuncGrad>
     //@}
 };
 //@}
+
+
+
+template <class Func, class Grad>
+struct FunctionGradient<FunctionGradient<Func, Grad>> : FunctionGradient<Func, Grad>
+{
+    using Base = FunctionGradient<Func, Grad>;
+
+    //using Base::Base;
+    using Base::operator();
+
+    // using Base = FunctionGradient<Func, Grad>;
+
+    FunctionGradient(const Base& base) : Base(base) {}
+
+    FunctionGradient (const Func& func, const Grad& grad) : Base(func, grad) {}
+};
+
+template <class FuncGrad>
+struct FunctionGradient<FunctionGradient<FuncGrad>> : FunctionGradient<FuncGrad>
+{
+    using FunctionGradient<FuncGrad>::FunctionGradient;
+};
 
 
 /** @name 
