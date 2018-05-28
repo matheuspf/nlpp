@@ -63,13 +63,13 @@ struct IsGradient
     static Vec ref;
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec()), int())*)
+    static constexpr bool impl (decltype(std::declval<U>()(Vec()), void())*)
     { 
         return ::cppnlp::impl::IsMat<decltype(std::declval<U>()(Vec()))>::value;
     }
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), void())*)
+    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), int())*)
     { 
         return std::is_same<decltype(std::declval<U>()(Vec(), ref)), void>::value;
     }
@@ -107,13 +107,13 @@ struct IsFunctionGradient
 
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec()), int())*)
+    static constexpr bool impl (decltype(std::declval<U>()(Vec()), void())*)
     { 
         return IsPair<decltype(std::declval<U>()(Vec()))>::value;
     }
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), void())*)
+    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), int())*)
     { 
         return std::is_floating_point<decltype(std::declval<U>()(Vec(), ref))>::value;
     }
@@ -129,14 +129,6 @@ struct IsFunctionGradient
 
 template <class T, class Vec>
 Vec IsFunctionGradient<T, Vec>::ref;
-
-
-
-
-
-
-
-
 
 
 
