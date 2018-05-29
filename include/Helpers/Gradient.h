@@ -23,8 +23,16 @@
 namespace cppnlp
 {
 
+/// Wrap namespace
 namespace wrap
 {
+
+
+/** @defgroup GradientBaseGroup Gradient Base
+    @copydoc Helpers/Gradient.h
+*/
+//@{
+
 
 /** @name
  *  @brief Decides whether a given function has or has not a overloaded member functions taking the given parameters
@@ -38,6 +46,14 @@ HAS_OVERLOADED_FUNC(gradient, HasGrad);
 //@}
 
 
+/** @name
+ *  @brief Check if the class @c T is a function, gradient or function/gradient functor, taking parameters of type @c Vec
+ * 
+ *  @tparam T The class to check
+ *  @tparam Vec The type of vector that @c T takes as argument
+*/
+//@{
+ 
 template <class T, class Vec>
 struct IsFunction
 {
@@ -55,7 +71,6 @@ struct IsFunction
 
     enum{ value = impl(nullptr) };
 };
-
 
 template <class T, class Vec>
 struct IsGradient
@@ -129,7 +144,7 @@ struct IsFunctionGradient
 
 template <class T, class Vec>
 Vec IsFunctionGradient<T, Vec>::ref;
-
+//@}
 
 
 
@@ -175,7 +190,9 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&) must be defined
     */
-    template <class Vec, class Impl_ = Impl, std::enable_if_t<HasOp<Impl_, const Vec&>::value, int> = 0>
+    template <class Vec, class Impl_ = Impl,
+              std::enable_if_t<HasOp<Impl_, const Vec&>::value, int> = 0>
+
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         return Impl::operator()(x);
@@ -187,8 +204,10 @@ struct Gradient : public Impl
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined and returns nothing
     */
     template <class Vec, class Impl_ = Impl, 
-              std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value &&
-                               !HasOp<Impl_, const Vec&>::value && IsGradient<Impl_, Vec>::value, int> = 0>
+              std::enable_if_t<IsGradient<Impl_, Vec>::value && 
+                               HasOp<Impl_, const Vec&, Vec&>::value &&
+                               !HasOp<Impl_, const Vec&>::value, int> = 0>
+
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         Eigen::Matrix<Float, Vec::RowsAtCompileTime, Vec::ColsAtCompileTime> g(x.rows(), x.cols());
@@ -203,8 +222,11 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&, Vec&) must be defined and returns something (it does not need to be a scalar)
     */
-    template <class Vec, class Impl_ = Impl, 
-              std::enable_if_t<HasOp<Impl, const Vec&, Vec&>::value && IsFunctionGradient<Impl_, Vec>::value, int> = 0>
+    template <class Vec, class Impl_ = Impl,
+              std::enable_if_t<IsFunctionGradient<Impl_, Vec>::value && 
+                               HasOp<Impl_, const Vec&, Vec&>::value &&
+                               !HasOp<Impl_, const Vec&>::value, int> = 0>
+
     auto operator () (const Eigen::MatrixBase<Vec>& x)
     {
         Eigen::Matrix<Float, Vec::RowsAtCompileTime, Vec::ColsAtCompileTime> g(x.rows(), x.cols());
@@ -213,7 +235,22 @@ struct Gradient : public Impl
         
         return std::make_pair(f, g);
     }
-    
+
+
+
+    /** @Simply delegate the call to Impl::operator()(x, g), where the gradient value will be saved in @c g, and
+     *          returns the function value.
+     * 
+     *  @note Requirements:
+     *        - auto Impl::operator()(const Vec&, Vec&) must be defined
+    */
+    template <class Vec, class Impl_ = Impl,
+              std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value, int> = 0>
+              
+    auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
+    {
+        return Impl::operator()(x, static_cast<Vec&>(g));
+    }
 
     /** @brief Set the value of the reference @c g to the return of @c Impl::operator()(x) when it returns the gradient.
      *         For gradient only wrapping, when the return is the actual gradient.
@@ -221,7 +258,10 @@ struct Gradient : public Impl
      *        - auto Impl::operator()(const Vec&) must be defined and returns the gradient of a matrix type
     */
     template <class Vec, class Impl_ = Impl, 
-              std::enable_if_t<HasOp<Impl_, const Vec&>::value && IsGradient<Impl_, Vec>::value, int> = 0>
+              std::enable_if_t<HasOp<Impl_, const Vec&>::value &&
+                               IsGradient<Impl_, Vec>::value &&
+                               !HasOp<Impl_, const Vec&, Vec&>::value, int> = 0>
+
     void operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         g = Impl::operator()(x);
@@ -233,8 +273,10 @@ struct Gradient : public Impl
      *        - auto Impl::operator()(const Vec&) must be defined and returns the gradient of a scalar type
     */
     template <class Vec, class Impl_ = Impl, 
-              std::enable_if_t<HasOp<Impl, const Vec&>::value && IsFunctionGradient<Impl_, Vec>::value
-                               && !IsGradient<Impl_, Vec>::value, int> = 0>
+              std::enable_if_t<HasOp<Impl_, const Vec&>::value &&
+                               IsFunctionGradient<Impl_, Vec>::value &&
+                               !HasOp<Impl_, const Vec&, Vec&>::value, int> = 0>
+
     auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
         auto [f, g_] = Impl::operator()(x);
@@ -242,19 +284,6 @@ struct Gradient : public Impl
         g = g_;
 
         return f;
-    }
-
-    /** @Simply delegate the call to Impl::operator()(x, g), where the gradient value will be saved in @c g, and
-     *          returns the function value.
-     * 
-     *  @note Requirements:
-     *        - auto Impl::operator()(const Vec&, Vec&) must be defined
-    */
-    template <class Vec, class Impl_ = Impl, std::enable_if_t<HasOp<Impl_, const Vec&, Vec&>::value &&
-                                                              !HasOp<Impl, const Vec&>::value, int> = 0>
-    auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
-    {
-        return Impl::operator()(x, static_cast<Vec&>(g));
     }
     //@}
 };
@@ -269,10 +298,7 @@ struct Gradient : public Impl
  *  
  *  @details This class provides the uniform interface where, given an user defined function/gradient functor or
  *           both function and gradient functors separated, you can call for function/gradient, function only pr
- *           gradient only, always avoiding to execute additional function calls when possible. 
- *  
- *  
- *  
+ *           gradient only, always avoiding to execute additional function calls when possible.
 */
 //@{
 
@@ -499,6 +525,8 @@ auto functionGradient (const FuncGrad& funcGrad)
 {
     return FunctionGradient<FuncGrad>(funcGrad);
 }
+//@}
+
 //@}
 
 } // namespace wrap

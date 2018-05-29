@@ -115,8 +115,7 @@ struct CG : public GradientOptimizer<CG<CGType, LineSearch>, params::CG<CGType, 
 
 		for(int iter = 0; iter < maxIterations * x.rows() && dir.norm() > xTol; ++iter)
 		{
-			double alpha = lineSearch([&](const auto& x){ return f.function(x); }, 
-									  [&](const auto& x){ return f.gradient(x); }, x, dir);
+			double alpha = lineSearch(f, x, dir);
 			
 			x = x + alpha * dir;
 

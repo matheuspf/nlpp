@@ -1,3 +1,6 @@
+/** @file
+ *  @brief Some basic definitions and includes used by other files
+*/
 #pragma once
 
 
@@ -9,16 +12,18 @@
 namespace cppnlp
 {
 
-namespace types
+
+namespace types /// Types namespace
 {
 	using Float = double;
 	using Int = int;
 }
 
 
-
-
-
+/** @name
+ *  @brief Some useful typedefs
+*/
+//@{
 template <typename T>
 using VecX = Eigen::Matrix<T, Eigen::Dynamic, 1>;
 
@@ -30,10 +35,11 @@ using Mat = MatX<types::Float>;
 
 using Veci = VecX<types::Int>;
 using Mati = MatX<types::Int>;
+//@}
 
 
 
-namespace impl
+namespace impl /// Impl namespace
 {
 
 struct NullFunctor
@@ -42,8 +48,10 @@ struct NullFunctor
 };
 
 
-
-
+/** @name
+ *  @brief Tells if @c T is an Eigen::EigenBase (a vector/matrix) or an scalar (a float or int)
+*/
+//@{
 template <typename T>
 struct IsMatImpl
 {
@@ -62,7 +70,10 @@ struct IsMat : public IsMatImpl<std::decay_t<T>> {};
 template <typename T>
 struct IsScalar
 {
-	enum{ value = !IsMat<T>::value };
+	enum
+	{
+		value = (std::is_floating_point<std::decay_t<T>>::value || std::is_integral<std::decay_t<T>>::value)
+	};
 };
 
 
@@ -71,13 +82,7 @@ constexpr bool isMat = IsMat<T>::value;
 
 template <typename T>
 constexpr bool isScalar = IsScalar<T>::value;
-
-
-// template <typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
-// struct IsMat<Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>>
-// {
-// 	enum { value = true };
-// };
+//@}
 
 
 } // namespace impl

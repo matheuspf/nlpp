@@ -16,15 +16,17 @@ int main ()
 
     auto grad = fd::gradient(func);
 
-    auto hess = fd::hessian(func);
+    //auto hess = fd::hessian(func);
 
-    VectorXd x(2);
+    VectorXd x(2), g(2);
     x << 3.0, 2.0;
 
 
-    handy::print(grad(x).transpose());
+    grad(x, g);
 
-    handy::print(hess(x));
+    handy::print(g);
+
+    //handy::print(hess(x));
 
 
     return 0;   
