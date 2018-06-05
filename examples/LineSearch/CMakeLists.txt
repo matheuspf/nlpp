@@ -1,5 +1,0 @@
-cmake_minimum_required(VERSION 3.5)
-
-project(LineSearch)
-
-iterateChildren(${PROJECT_SOURCE_DIR})
