@@ -30,11 +30,18 @@ project(${lib_name} VERSION ${lib_name_version} LANGUAGES CXX)
 
 ### Options
 option(EIGEN_INCLUDE_LOCAL "If Eigen will be included from a submodule" OFF)
+option(HANDY_INCLUDE_LOCAL "If Eigen will be included from a submodule" ON)
 
 if(${EIGEN_INCLUDE_LOCAL})
     set(_eigen_include_local 1)
 else()
     set(_eigen_include_local 0)
+endif()
+
+if(${HANDY_INCLUDE_LOCAL})
+    set(_handy_include_local 1)
+else()
+    set(_handy_include_local 0)
 endif()
     
 
@@ -63,7 +70,6 @@ target_compile_definitions(${lib_name} INTERFACE EIGEN_INCLUDE_LOCAL=${_eigen_in
 
 ###
 
-
 if(${lib_name}_BuildTests)
     add_subdirectory(tests)
 endif()
@@ -76,8 +82,7 @@ if(${lib_name}_BuildDocs)
     add_subdirectory(doc)
 endif()
 
-#add_subdirectory(include)
-
+add_subdirectory(include/${lib_name})
 
 # include(CMakePackageConfigHelpers)
 
@@ -90,8 +95,3 @@ endif()
 #     ${NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE}
 #     INSTALL_DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
 # )
-
-install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/include/${lib_name}/
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${lib_name}
-)

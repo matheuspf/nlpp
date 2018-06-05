@@ -7,12 +7,12 @@
 
 
 
-#define EIGEN_INCLUDE_LOCAL 0
+#define EIGEN_INCLUDE_LOCAL @_eigen_include_local@
 #define EIGEN_INCLUDE_LOCAL_RELEASE 0
 #define EIGEN_INCLUDE_GLOBAL 1
 
 
-#define HANDY_INCLUDE_LOCAL 1
+#define HANDY_INCLUDE_LOCAL @_handy_include_local@
 #define HANDY_INCLUDE_LOCAL_RELEASE 0
 #define HANDY_INCLUDE_GLOBAL 0
 
