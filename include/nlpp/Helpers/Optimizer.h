@@ -23,13 +23,20 @@
                                        using TYPE::xTol;            \
                                        using TYPE::fTol;            \
                                        using TYPE::gTol;            \
-                                       using TYPE::lineSearch;
+                                       using TYPE::lineSearch;      \
+                                       using TYPE::output;
 
 
 
 
 namespace nlpp
 {
+
+namespace out
+{
+    struct GradientOptimizer;
+} // namespace out
+
 
 /// Parameters namespace
 namespace params
@@ -46,7 +53,7 @@ namespace params
  * 
  *  @details Define the basic variables used by any gradient based optimizer
 */
-template <class LineSearch = StrongWolfe>
+template <class LineSearch = StrongWolfe, class Output = out::GradientOptimizer>
 struct GradientOptimizer
 {
     /** @name
@@ -56,8 +63,12 @@ struct GradientOptimizer
                       double gTol = 1e-4, const LineSearch& lineSearch = LineSearch()) :
                       maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
 
-    GradientOptimizer(const LineSearch& lineSearch, int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) :
+    GradientOptimizer(const LineSearch& lineSearch,int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) :
                       maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
+
+    GradientOptimizer(const LineSearch& lineSearch, const Output& output, 
+                        int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) :
+                        maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch), output(output) {}
     //@}
 
 
@@ -72,10 +83,56 @@ struct GradientOptimizer
 
 
     LineSearch lineSearch;  ///< The line search method to be used
+
+    Output output;  ///< The output callback
 };
 
 
 } // namespace params
+
+
+
+namespace out
+{
+
+struct GradientOptimizer
+{
+    template <class LineSearch>
+    void init (const params::GradientOptimizer<LineSearch>& optimizer)
+    {
+    }
+
+    template <class LineSearch>
+    void init (const params::GradientOptimizer<LineSearch>& optimizer, double fx) 
+
+    {
+    }
+
+    template <class LineSearch>
+    void operator () (const params::GradientOptimizer<LineSearch>& optimizer, double fx)
+    {
+    }
+
+    
+
+    template <class LineSearch>
+    void finish (const params::GradientOptimizer<LineSearch>& optimizer, double fx)
+    {
+    }
+
+
+
+
+
+    int iter;
+    int maxIterations;
+
+    nlpp::Vec vfx;
+};
+
+
+
+} // namespace out
 
 
 

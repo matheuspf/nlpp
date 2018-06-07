@@ -13,19 +13,20 @@ namespace nlpp
 namespace params
 {
 
-template <class LineSearch = Goldstein>
-struct GradientDescent : public GradientOptimizer<LineSearch>
+template <class LineSearch = Goldstein, class Output = out::GradientOptimizer>
+struct GradientDescent : public GradientOptimizer<LineSearch, Output>
 {
-	using GradientOptimizer<LineSearch>::GradientOptimizer;
+	using GradientOptimizer<LineSearch, Output>::GradientOptimizer;
 };
 
 } // namespace params
 
 
-template <class LineSearch = Goldstein>
-struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch>, params::GradientDescent<LineSearch>>
+template <class LineSearch = Goldstein, class Output = out::GradientOptimizer>
+struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch, Output>,
+								params::GradientDescent<LineSearch, Output>>
 {
-	CPPOPT_USING_PARAMS(Params, GradientOptimizer<GradientDescent<LineSearch>, params::GradientDescent<LineSearch>>);
+	CPPOPT_USING_PARAMS(Params, GradientOptimizer<GradientDescent<LineSearch, Output>, params::GradientDescent<LineSearch, Output>>);
 	
 	using Params::Params;
 	
@@ -41,6 +42,8 @@ struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch>, p
 
 		Eigen::Matrix<Float, Rows, Cols> direction = -gx;
 
+		output.init(*this, fx);
+
 
 		for(int iter = 0; iter < maxIterations && direction.norm() > xTol; ++iter)
 		{
@@ -54,7 +57,11 @@ struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch>, p
 				best = x;
 
 			direction = -gx;
+
+			output(*this, fx);
 		}
+
+		output.finish(*this, fx);
 
 		return best;
 	}
