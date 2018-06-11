@@ -1,3 +1,17 @@
+/** @file
+ *  @brief Nonlinear Conjugate Gradient
+ * 
+ *  @details An implementation of the nonlinear CG algorithm, described in chapter 5 of NOCEDAL.
+ * 
+ * 	The nonlinear version of the CG algorithms does not make any assumption about the objective function 
+ * 	(it only needs to be smooth). Also, it has a quite concise structure, only changing the way to calculate
+ *  the scalar factor of the previous directions that should be added to the current gradient.
+ * 
+ *  The methods implemented are: Fletcher-Reeves (FR), Polak-Ribière and variants (PR, PR_abs, PR_Plus, FR_PR),
+ * 	Hestenes-Stiefel (HS)
+*/
+
+
 #pragma once
 
 #include "../Helpers/Helpers.h"
@@ -7,11 +21,13 @@
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
 
+/// Macro aliases
 #define CPPOPT_USING_PARAMS_CG(...) CPPOPT_USING_PARAMS(__VA_ARGS__);	\
 									using Params::cg;					\
 									using Params::v;
 
 
+/// Builds a functor, to avoid a lot of copy/paste
 #define BUILD_CG_STRUCT(Op, ...) \
 \
 struct __VA_ARGS__ \
@@ -27,6 +43,10 @@ struct __VA_ARGS__ \
 namespace nlpp
 {
 
+/** @name
+ *  @brief The choice of the factor
+*/
+//@{
 BUILD_CG_STRUCT(return fb.dot(fb) / fa.dot(fa), FR);
 
 BUILD_CG_STRUCT(return fb.dot(fb - fa) / fa.dot(fa), PR);
@@ -57,8 +77,8 @@ BUILD_CG_STRUCT(double fr = FR::operator()(fa, fb);
 
 				return fr;,
 
-				PR_FR : FR, PR);
-
+				FR_PR : FR, PR);
+//@}
 
 
 
@@ -67,10 +87,11 @@ BUILD_CG_STRUCT(double fr = FR::operator()(fa, fb);
 namespace params
 {
 
-template <class CGType = PR_FR, class LineSearch = StrongWolfe>
-struct CG : public GradientOptimizer<LineSearch>
+
+template <class CGType = FR_PR, class LineSearch = StrongWolfe, class Output = out::GradientOptimizer>
+struct CG : public GradientOptimizer<LineSearch, Output>
 {
-	using Params = GradientOptimizer<LineSearch>;
+	using Params = GradientOptimizer<LineSearch, Output>;
 
 	template <typename... Args, class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, StrongWolfe>::value, int> = 0>
 	CG(const LineSearch& lineSearch = StrongWolfe(1e-2, 1e-4, 0.1), Args&&... args) : Params(lineSearch, std::forward<Args>(args)...)
@@ -93,16 +114,16 @@ struct CG : public GradientOptimizer<LineSearch>
 
 
 
-template <class CGType = PR_FR, class LineSearch = StrongWolfe>
-struct CG : public GradientOptimizer<CG<CGType, LineSearch>, params::CG<CGType, LineSearch>>
+template <class CGType = FR_PR, class LineSearch = StrongWolfe, class Output = out::GradientOptimizer>
+struct CG : public GradientOptimizer<CG<CGType, LineSearch, Output>, params::CG<CGType, LineSearch, Output>>
 {
-	CPPOPT_USING_PARAMS_CG(Params, GradientOptimizer<CG<CGType, LineSearch>, params::CG<CGType, LineSearch>>);
+	CPPOPT_USING_PARAMS_CG(Params, GradientOptimizer<CG<CGType, LineSearch, Output>, params::CG<CGType, LineSearch, Output>>);
 
 	using Params::Params;
 
 
 	template <class Function, class Float, int Rows, int Cols>
-	Vec optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
+	auto optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
 	{
 		Eigen::Matrix<Float, Rows, Cols> fa, dir, fb(x.rows(), x.cols());
 
@@ -113,7 +134,7 @@ struct CG : public GradientOptimizer<CG<CGType, LineSearch>, params::CG<CGType, 
 		dir = -fa;
 
 
-		for(int iter = 0; iter < maxIterations * x.rows() && dir.norm() > xTol; ++iter)
+		for(int iter = 0; iter < maxIterations && dir.norm() > xTol; ++iter)
 		{
 			double alpha = lineSearch(f, x, dir);
 			
@@ -122,7 +143,7 @@ struct CG : public GradientOptimizer<CG<CGType, LineSearch>, params::CG<CGType, 
 			Float fx = f(x, fb);
 			
 
-			if((fxOld - fx) < fTol)
+			if(std::abs(fxOld - fx) < fTol)
 				break;
 
 			if((fa.dot(fb) / fb.dot(fb)) >= v)

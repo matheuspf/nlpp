@@ -11,11 +11,11 @@ using namespace nlpp;
 
 int main ()
 {
-	params::CG<PR_FR, StrongWolfe> params(StrongWolfe{});
+	params::CG<FR_PR, StrongWolfe> params(StrongWolfe{});
 
 	params.fTol = 0.0;
 
-	CG<PR_FR, StrongWolfe> cg(params);
+	CG<FR_PR, StrongWolfe> cg(params);
 
 	Rosenbrock func;
 

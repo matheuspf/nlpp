@@ -4,3 +4,6 @@
 [submodule "include/nlpp/external/handy"]
 	path = include/nlpp/external/handy
 	url = https://github.com/matheuspf/handy
+[submodule "tests/external/googletest"]
+	path = tests/external/googletest
+	url = https://github.com/google/googletest
