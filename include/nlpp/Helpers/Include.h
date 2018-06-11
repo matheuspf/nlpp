@@ -5,7 +5,7 @@
 
 #if EIGEN_INCLUDE_LOCAL
 
-    #include "external/Eigen/Eigen/Dense"
+    #include "../external/Eigen/Eigen/Dense"
 
 #elif EIGEN_INCLUDE_LOCAL_RELEASE
 
@@ -28,6 +28,6 @@
 
 #elif HANDY_INCLUDE_LOCAL
 
-    #include "external/handy/include/Handy.h"
+    #include "../external/handy/include/Handy.h"
 
 #endif
