@@ -75,7 +75,7 @@ struct LBFGS : public GradientOptimizer<LBFGS<Vec, InitialHessian, LineSearch, O
             vs.push_back(s);
             vy.push_back(y);
 
-            if(iter > m)
+            if(iter > std::min(m, (int)x0.size()))
             {
                 vs.pop_front();
                 vy.pop_front();
