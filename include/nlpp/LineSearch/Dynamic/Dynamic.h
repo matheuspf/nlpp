@@ -17,7 +17,7 @@ struct DynamicLineSearch : public LineSearch<DynamicLineSearch<Function_>>
 	using Function = wrap::LineSearch<wrap::FunctionGradient<Function_, fd::Gradient<Function_, fd::Forward>>, Vec>;
 
 
-	DynamicLineSearch (std::string lsName = "Goldstein") : ls(std::make_unique<poly::Goldstein<Function>>())
+	DynamicLineSearch (std::string lsName = "StrongWolfe")
 	{
 		if(lsName == "Goldstein")
 			ls = std::make_unique<poly::Goldstein<Function>>();

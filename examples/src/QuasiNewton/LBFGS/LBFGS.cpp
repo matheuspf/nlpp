@@ -1,5 +1,7 @@
 #include "QuasiNewton/LBFGS/LBFGS.h"
 
+#include "LineSearch/Dynamic/Dynamic.h"
+
 #include "TestFunctions/Rosenbrock.h"
 
 
@@ -8,8 +10,9 @@ using namespace nlpp;
 
 int main ()
 {
+    using Func = Rosenbrock;
     using IH = BFGS_Diagonal;
-    using LS = StrongWolfe;
+    using LS = DynamicLineSearch<Func>;
     using Out = out::GradientOptimizer<0>;
 
     params::LBFGS<IH, LS, Out> params;
@@ -21,11 +24,12 @@ int main ()
 
     LBFGS<Vec, IH, LS, Out> lbfgs(params);
 
+    Func func;
     Vec x = Vec::Constant(500, 1.2);
 
     handy::benchmark([&]
     {
-        x = lbfgs(Rosenbrock{}, x);
+        x = lbfgs(func, x);
     });
 
     handy::print(x.transpose());
