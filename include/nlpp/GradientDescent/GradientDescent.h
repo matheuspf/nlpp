@@ -13,7 +13,7 @@ namespace nlpp
 namespace params
 {
 
-template <class LineSearch = Goldstein, class Output = out::GradientOptimizer>
+template <class LineSearch = Goldstein, class Output = out::GradientOptimizer<0>>
 struct GradientDescent : public GradientOptimizer<LineSearch, Output>
 {
 	using GradientOptimizer<LineSearch, Output>::GradientOptimizer;
@@ -22,7 +22,7 @@ struct GradientDescent : public GradientOptimizer<LineSearch, Output>
 } // namespace params
 
 
-template <class LineSearch = Goldstein, class Output = out::GradientOptimizer>
+template <class LineSearch = Goldstein, class Output = out::GradientOptimizer<0>>
 struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch, Output>,
 								params::GradientDescent<LineSearch, Output>>
 {

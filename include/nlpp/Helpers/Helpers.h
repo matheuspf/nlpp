@@ -7,6 +7,7 @@
 #include "Include.h"
 
 #include <memory>
+#include <deque>
 
 
 namespace nlpp

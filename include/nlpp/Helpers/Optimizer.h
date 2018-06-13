@@ -40,7 +40,10 @@ struct Goldstein;
 
 namespace out
 {
-    struct GradientOptimizer;
+
+template <int>
+struct GradientOptimizer;
+
 } // namespace out
 
 
@@ -59,7 +62,7 @@ namespace params
  * 
  *  @details Define the basic variables used by any gradient based optimizer
 */
-template <class LineSearch = Goldstein, class Output = out::GradientOptimizer>
+template <class LineSearch = Goldstein, class Output = out::GradientOptimizer<0>>
 struct GradientOptimizer
 {
     /** @name
@@ -101,7 +104,13 @@ struct GradientOptimizer
 namespace out
 {
 
-struct GradientOptimizer
+
+template <int Level>
+struct GradientOptimizer;
+
+
+template <>
+struct GradientOptimizer<0>
 {
     template <class LineSearch, class Output>
     void init (const params::GradientOptimizer<LineSearch, Output>& optimizer)
@@ -110,7 +119,6 @@ struct GradientOptimizer
 
     template <class LineSearch, class Output>
     void init (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx) 
-
     {
     }
 
@@ -119,7 +127,6 @@ struct GradientOptimizer
     {
     }
 
-    
 
     template <class LineSearch, class Output>
     void finish (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
@@ -128,12 +135,34 @@ struct GradientOptimizer
 
 
 
-
-
     int iter;
     int maxIterations;
 
     nlpp::Vec vfx;
+};
+
+
+template <>
+struct GradientOptimizer<1> : public GradientOptimizer<0>
+{
+    template <class LineSearch, class Output>
+    void init (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx) 
+    {
+        handy::print("init fx: ", fx);
+    }
+
+    template <class LineSearch, class Output>
+    void operator () (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
+    {
+        handy::print("fx: ", fx);        
+    }
+
+
+    template <class LineSearch, class Output>
+    void finish (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
+    {
+        handy::print("finish fx: ", fx);        
+    }
 };
 
 
