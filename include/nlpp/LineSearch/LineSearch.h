@@ -10,9 +10,38 @@
 
 #include "../Helpers/FiniteDifference.h"
 
+#include "../Helpers/Optimizer.h"
+
 
 namespace nlpp
 {
+
+namespace wrap
+{
+
+template <class FunctionGradient, class Vec>
+struct LineSearch
+{
+	LineSearch (FunctionGradient f, const Vec& x, const Vec& d) : f(f), x(x), d(d) {}
+
+	auto operator () (double a)
+	{
+		static Vec gx(x.rows(), x.cols());
+
+		auto fx = f(x + a * d, static_cast<Vec&>(gx));
+
+		return std::make_pair(fx, gx.dot(d));
+	}
+
+	FunctionGradient f;
+
+	Vec x;
+	Vec d;
+};
+
+} // namespace wrap
+
+
 
 /** @brief Line search base class for CRTP
  *  
@@ -28,23 +57,15 @@ namespace nlpp
  *  @tparam Impl The actual line search implementation
  * 	@tparam Whether we must save the norm of the given vector before delegating the calls
 */
-template <class Impl, bool CalcNorm = false>
-class LineSearch
+template <class Impl, bool CalcNorm = true>
+struct LineSearchBase
 {
-public:
-
-	
 	template <class Function, class Vec>
 	double impl (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
-		return static_cast<Impl&>(*this).lineSearch([&](double a)
-		{
-			static Vec gx(x.rows(), x.cols());
+		wrap::LineSearch<Function, Vec> ls(f, x, dir);
 
-			auto fx = f(x + a * dir, static_cast<Vec&>(gx));
-
-			return std::make_pair(fx, gx.dot(dir));
-		});
+		return static_cast<Impl&>(*this).lineSearch(ls);
 	}
 
 
@@ -106,9 +127,9 @@ public:
 	}
 
 
-private:
+//private:
 
-	LineSearch () {}
+	LineSearchBase () {}
 
 	friend Impl;
 
@@ -116,5 +137,44 @@ private:
 
 	double xNorm;
 };
+
+
+
+
+template <class Impl>
+struct LineSearch : public LineSearchBase<LineSearch<Impl>>
+{
+	template <class Function>
+	double lineSearch (Function f)
+	{
+		return static_cast<Impl&>(*this).lineSearch(f);
+	}
+};
+
+
+namespace poly
+{
+
+template <class Function>
+struct LineSearch : public LineSearchBase<LineSearch<Function>>
+{
+	virtual ~LineSearch () {}
+
+	virtual double lineSearch (Function f) = 0;
+
+	virtual LineSearch* clone () const = 0;
+};
+
+
+
+
+} // namespace poly
+
+
+
+template <class Impl, bool Polymorphic, typename... Args>
+using LineSearchPick = std::conditional_t<Polymorphic, poly::LineSearch<Args...>, LineSearch<Impl>>;
+
+
 
 } // namespace nlpp

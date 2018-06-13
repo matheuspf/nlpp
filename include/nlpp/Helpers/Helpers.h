@@ -6,7 +6,7 @@
 
 #include "Include.h"
 
-
+#include <memory>
 
 
 namespace nlpp
@@ -18,6 +18,23 @@ namespace types /// Types namespace
 	using Float = double;
 	using Int = int;
 }
+
+
+namespace wrap
+{
+
+/** @name
+ *  @brief Decides whether a given function has or has not a overloaded member functions taking the given parameters
+*/
+//@{
+HAS_OVERLOADED_FUNC(operator(), HasOp);
+
+HAS_OVERLOADED_FUNC(function, HasFunc);
+
+HAS_OVERLOADED_FUNC(gradient, HasGrad);
+//@}
+
+} // namespace wrap
 
 
 /** @name

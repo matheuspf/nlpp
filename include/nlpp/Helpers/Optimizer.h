@@ -8,13 +8,16 @@
 #pragma once
 
 
+
+//#include "../LineSearch/Goldstein/Goldstein.h"
+
 #include "Helpers.h"
 
 #include "FiniteDifference.h"
 
 #include "Gradient.h"
 
-#include "../LineSearch/StrongWolfe/StrongWolfe.h"
+
 
 
 /// Base parameter definitions
@@ -31,6 +34,9 @@
 
 namespace nlpp
 {
+
+struct Goldstein;
+
 
 namespace out
 {
@@ -53,7 +59,7 @@ namespace params
  * 
  *  @details Define the basic variables used by any gradient based optimizer
 */
-template <class LineSearch = StrongWolfe, class Output = out::GradientOptimizer>
+template <class LineSearch = Goldstein, class Output = out::GradientOptimizer>
 struct GradientOptimizer
 {
     /** @name
@@ -97,26 +103,26 @@ namespace out
 
 struct GradientOptimizer
 {
-    template <class LineSearch>
-    void init (const params::GradientOptimizer<LineSearch>& optimizer)
+    template <class LineSearch, class Output>
+    void init (const params::GradientOptimizer<LineSearch, Output>& optimizer)
     {
     }
 
-    template <class LineSearch>
-    void init (const params::GradientOptimizer<LineSearch>& optimizer, double fx) 
+    template <class LineSearch, class Output>
+    void init (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx) 
 
     {
     }
 
-    template <class LineSearch>
-    void operator () (const params::GradientOptimizer<LineSearch>& optimizer, double fx)
+    template <class LineSearch, class Output>
+    void operator () (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
     {
     }
 
     
 
-    template <class LineSearch>
-    void finish (const params::GradientOptimizer<LineSearch>& optimizer, double fx)
+    template <class LineSearch, class Output>
+    void finish (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
     {
     }
 

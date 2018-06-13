@@ -33,19 +33,6 @@ namespace wrap
 */
 //@{
 
-
-/** @name
- *  @brief Decides whether a given function has or has not a overloaded member functions taking the given parameters
-*/
-//@{
-HAS_OVERLOADED_FUNC(operator(), HasOp);
-
-HAS_OVERLOADED_FUNC(function, HasFunc);
-
-HAS_OVERLOADED_FUNC(gradient, HasGrad);
-//@}
-
-
 /** @name
  *  @brief Check if the class @c T is a function, gradient or function/gradient functor, taking parameters of type @c Vec
  * 
@@ -292,6 +279,9 @@ struct Gradient : public Impl
 
 
 
+namespace impl
+{
+
 
 /** @name 
  *  @brief The uniform interface wrapper for function/gradient functors
@@ -468,27 +458,17 @@ struct FunctionGradient<FuncGrad> : public Gradient<FuncGrad>
 //@}
 
 
+} // namespace impl
 
-template <class Func, class Grad>
-struct FunctionGradient<FunctionGradient<Func, Grad>> : FunctionGradient<Func, Grad>
-{
-    using Base = FunctionGradient<Func, Grad>;
 
-    //using Base::Base;
-    using Base::operator();
 
-    // using Base = FunctionGradient<Func, Grad>;
+template <class Func, class Grad = void>
+using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value, 
+    std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value, Func, impl::FunctionGradient<Func>>,
+    impl::FunctionGradient<Func, Grad>>;
 
-    FunctionGradient(const Base& base) : Base(base) {}
 
-    FunctionGradient (const Func& func, const Grad& grad) : Base(func, grad) {}
-};
 
-template <class FuncGrad>
-struct FunctionGradient<FunctionGradient<FuncGrad>> : FunctionGradient<FuncGrad>
-{
-    using FunctionGradient<FuncGrad>::FunctionGradient;
-};
 
 
 /** @name 

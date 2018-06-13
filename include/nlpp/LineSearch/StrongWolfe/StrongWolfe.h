@@ -6,7 +6,10 @@
 namespace nlpp
 {
 
-struct StrongWolfe : public LineSearch<StrongWolfe, true>
+namespace impl
+{
+
+struct StrongWolfe
 {
 	StrongWolfe (double a0 = 1.0, double c1 = 1e-4, double c2 = 0.9, double aMaxC = 100.0, double rho = constants::phi, 
 				 int maxIterBrack = 20, int maxIterInt = 1e2, double tol = constants::eps) :
@@ -34,7 +37,8 @@ struct StrongWolfe : public LineSearch<StrongWolfe, true>
 
 		int iter = 0;
 
-		double aMax = aMaxC * std::max(xNorm, double(N));
+		//double aMax = aMaxC * std::max(xNorm, double(N));
+		double aMax = 100.0;
 
 		while(iter++ < maxIterBrack && b + tol < aMax)
 		{
@@ -129,5 +133,43 @@ struct StrongWolfe : public LineSearch<StrongWolfe, true>
 	double tol;
 };
 
-} // namespace nlpp
+} // namespace impl
 
+
+struct StrongWolfe : public impl::StrongWolfe,
+					 public LineSearch<StrongWolfe>
+{
+	using impl::StrongWolfe::StrongWolfe;
+
+	template <class Function>
+	double lineSearch (Function f)
+	{
+		return impl::StrongWolfe::lineSearch(f);
+	}
+};
+
+
+namespace poly
+{
+
+template <class Function>
+struct StrongWolfe : public impl::StrongWolfe,
+					 public LineSearch<Function>
+{
+	using impl::StrongWolfe::StrongWolfe;
+
+	double lineSearch (Function f)
+	{
+		return impl::StrongWolfe::lineSearch(f);
+	}
+
+	StrongWolfe* clone () const
+	{
+		return new StrongWolfe(*this);
+	}
+};
+
+} // namespace poly
+
+
+} // namespace nlpp

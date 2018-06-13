@@ -6,7 +6,10 @@
 namespace nlpp
 {
 
-struct Goldstein : public LineSearch<Goldstein>
+namespace impl
+{
+
+struct Goldstein
 {
 	Goldstein (double a0 = 1.0, double c = 0.2, double rho1 = 0.5, double rho2 = 1.5, 
 			   double aMin = constants::eps, int maxIter = 100) : 
@@ -64,5 +67,46 @@ struct Goldstein : public LineSearch<Goldstein>
 	double aMin;
 	int maxIter;
 };
+
+} // namespace impl
+
+
+struct Goldstein : public impl::Goldstein,
+				   public LineSearch<Goldstein>
+{
+	using impl::Goldstein::Goldstein;
+
+	template <class Function>
+	double lineSearch (Function f)
+	{
+		return impl::Goldstein::lineSearch(f);
+	}
+};
+
+
+namespace poly
+{
+
+template <class Function>
+struct Goldstein : public impl::Goldstein,
+				   public LineSearch<Function>
+{
+	using impl::Goldstein::Goldstein;
+
+	double lineSearch (Function f)
+	{
+		return impl::Goldstein::lineSearch(f);
+	}
+
+	Goldstein* clone () const
+	{
+		return new Goldstein(*this);
+	}
+};
+
+} // namespace poly
+
+
+
 
 } // namespace nlpp
