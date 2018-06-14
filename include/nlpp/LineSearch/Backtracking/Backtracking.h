@@ -11,7 +11,10 @@ namespace nlpp
  *  @details Search for a point @c a satisfying the first of the Wolfe conditions given the function/gradient
  * 			 functor f
 */
-struct Backtracking : public LineSearch<Backtracking>
+namespace impl
+{
+
+struct Backtracking
 {
 	/// Some reasonable default values
 	Backtracking (double a0 = 1.0, double c = 1e-4, double rho = 0.5, double aMin = constants::eps) :
@@ -50,5 +53,43 @@ struct Backtracking : public LineSearch<Backtracking>
 
 	double rho;		///< Factor to reduce @c a
 };
+
+} // namespace impl
+
+
+struct Backtracking : public impl::Backtracking,
+					  public LineSearch<Backtracking>
+{
+	using impl::Backtracking::Backtracking;
+
+	template <class Function>
+	double lineSearch (Function f)
+	{
+		return impl::Backtracking::lineSearch(f);
+	}
+};
+
+
+namespace poly
+{
+
+template <class Function>
+struct Backtracking : public impl::Backtracking,
+					  public LineSearch<Function>
+{
+	using impl::Backtracking::Backtracking;
+
+	double lineSearch (Function f)
+	{
+		return impl::Backtracking::lineSearch(f);
+	}
+
+	Backtracking* clone () const
+	{
+		return new Backtracking(*this);
+	}
+};
+
+} // namespace poly
 
 } // namespace nlpp

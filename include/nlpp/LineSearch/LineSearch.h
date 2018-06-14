@@ -33,6 +33,16 @@ struct LineSearch
 		return std::make_pair(fx, gx.dot(d));
 	}
 
+	double function (double a)
+	{
+		return f.function(x + a * d);
+	}
+
+	double gradient (double a)
+	{
+		return f.gradient(x + a * d).dot(d);
+	}
+
 	FunctionGradient f;
 
 	Vec x;
