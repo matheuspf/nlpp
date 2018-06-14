@@ -13,57 +13,55 @@ namespace nlpp
 namespace params
 {
 
-template <class LineSearch = Goldstein, class Output = out::GradientOptimizer<0>>
-struct GradientDescent : public GradientOptimizer<LineSearch, Output>
+template <class LineSearch = Goldstein, class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+struct GradientDescent : public GradientOptimizer<LineSearch, Stop, Output>
 {
-	using GradientOptimizer<LineSearch, Output>::GradientOptimizer;
+	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
+	using Params::Params;
 };
 
 } // namespace params
 
 
-template <class LineSearch = Goldstein, class Output = out::GradientOptimizer<0>>
-struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch, Output>,
-								params::GradientDescent<LineSearch, Output>>
+template <class LineSearch = Goldstein, class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch, Stop, Output>,
+								params::GradientOptimizer<LineSearch, Stop, Output>>
 {
-	CPPOPT_USING_PARAMS(Params, GradientOptimizer<GradientDescent<LineSearch, Output>, params::GradientDescent<LineSearch, Output>>);
-	
+	CPPOPT_USING_PARAMS(Params, GradientOptimizer<GradientDescent<LineSearch, Stop, Output>,
+								params::GradientOptimizer<LineSearch, Stop, Output>>);
 	using Params::Params;
 	
 
 	template <class Function, typename Float, int Rows, int Cols>
 	Vec optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
 	{
-		auto [fx, gx] = f(x);
+		double fx;
+		Eigen::Matrix<Float, Rows, Cols> gx, dir;
+		
+		std::tie(fx, gx) = f(x);
 
-		Eigen::Matrix<Float, Rows, Cols> best = x;
+		stop.init(*this, x, fx, gx);
+		output.init(*this, x, fx, gx);
 
-		auto fBest = fx;
-
-		Eigen::Matrix<Float, Rows, Cols> direction = -gx;
-
-		output.init(*this, fx);
-
-
-		for(int iter = 0; iter < maxIterations && direction.norm() > xTol; ++iter)
+		for(int iter = 0; iter < stop.maxIterations; ++iter)
 		{
-			double alpha = lineSearch(f, x, direction);
+			dir = -gx;
 
-			x = x + alpha * direction;
+			double alpha = lineSearch(f, x, dir);
+
+			x = x + alpha * dir;
 
 			fx = f(x, gx);
 
-			if(fx < fBest)
-				best = x;
+			if(stop(*this, x, fx, gx))
+				break;
 
-			direction = -gx;
-
-			output(*this, fx);
+			output(*this, x, fx, gx);
 		}
 
-		output.finish(*this, fx);
+		output.finish(*this, x, fx, gx);
 
-		return best;
+		return x;
 	}
 };
 

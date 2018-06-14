@@ -11,11 +11,11 @@ using namespace nlpp;
 
 int main ()
 {
-	params::CG<FR_PR, StrongWolfe> params(StrongWolfe{});
+	params::CG<FR_PR, StrongWolfe> params(StrongWolfe{}, stop::GradientOptimizer{});
 
-	params.fTol = 0.0;
+	params.stop.fTol = 0.0;
 
-	CG<FR_PR, StrongWolfe> cg(params);
+	CG<FR_PR, StrongWolfe> cg(StrongWolfe{}, stop::GradientOptimizer{});
 
 	Rosenbrock func;
 

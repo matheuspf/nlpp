@@ -20,11 +20,12 @@ namespace nlpp
 namespace params
 {
 
-template <class InitialHessian = BFGS_Diagonal, class LineSearch = Goldstein, class Output = out::GradientOptimizer<0>>
-struct LBFGS : public GradientOptimizer<LineSearch, Output>
+template <class InitialHessian = BFGS_Diagonal, class LineSearch = Goldstein,
+          class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
 {
-	using Params = GradientOptimizer<LineSearch, Output>;
-    using Params::Params;
+	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
+	using Params::Params;
 
 
 	int m = 10;
@@ -35,13 +36,13 @@ struct LBFGS : public GradientOptimizer<LineSearch, Output>
 } // namespace params
 
 
-template <class Vec = nlpp::Vec, class InitialHessian = BFGS_Diagonal, 
-          class LineSearch = StrongWolfe, class Output = out::GradientOptimizer<0>>
-struct LBFGS : public GradientOptimizer<LBFGS<Vec, InitialHessian, LineSearch, Output>, 
-                                        params::LBFGS<InitialHessian, LineSearch, Output>>
+template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe, 
+          class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>, 
+                                        params::LBFGS<InitialHessian, LineSearch, Stop, Output>>
 {
-	CPPOPT_USING_PARAMS_LBFGS(Params, GradientOptimizer<LBFGS<Vec, InitialHessian, LineSearch, Output>, 
-                                                        params::LBFGS<InitialHessian, LineSearch, Output>>);
+	CPPOPT_USING_PARAMS_LBFGS(Params, GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>, 
+                                                        params::LBFGS<InitialHessian, LineSearch, Stop, Output>>);
 	
 	using Params::Params;
 	
@@ -49,11 +50,16 @@ struct LBFGS : public GradientOptimizer<LBFGS<Vec, InitialHessian, LineSearch, O
 	template <class Function>
 	Vec optimize (Function f, Vec x0)
 	{
-        auto [fx0, gx0] = f(x0);
+        Vec x;
+        Vec gx(x0.size()), gx0(x0.size());
+        double fx0, fx;
 
-        output.init(*this, fx0);
+        fx0 = f(x0, gx0);
+        
+        stop.init(*this, x0, fx0, gx0);
+        output.init(*this, x0, fx0, gx0);
 
-        for(int iter = 0; iter < maxIterations; ++iter)
+        for(int iter = 0; iter < stop.maxIterations; ++iter)
         {
             auto H = initialHessian([&](const auto& x){ return f.function(x); },
                                     [&](const auto& x){ return f.gradient(x); }, x0);
@@ -64,10 +70,10 @@ struct LBFGS : public GradientOptimizer<LBFGS<Vec, InitialHessian, LineSearch, O
 
             Vec x = x0 + alpha * p;
 
-            auto [fx, gx] = f(x);
+            fx = f(x, gx);
 
-            if(std::abs(fx - fx0) < fTol || gx.norm() < gTol || (x - x0).norm() < xTol)
-                return x;
+            if(stop(*this, x, fx, gx))
+                break;
 
             Vec s = x - x0;
             Vec y = gx - gx0;
@@ -83,10 +89,10 @@ struct LBFGS : public GradientOptimizer<LBFGS<Vec, InitialHessian, LineSearch, O
 
             std::tie(x0, fx0, gx0) = std::tie(x, fx, gx);
 
-            output(*this, fx);
+            output(*this, x, fx, gx);
         }
 
-        output.finish(*this, fx0);
+        output.finish(*this, x, fx, gx);
 
         return x0;
 	}

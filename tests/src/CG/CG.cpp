@@ -32,10 +32,10 @@ TEST_F(CG, PerformanceTest)
 {
 	nlpp::params::CG<> params;
 
-	params.fTol = 0.0;
-	params.xTol = 0.0;
-	params.gTol = 1e-3;
-	params.maxIterations = 1e4;
+	params.stop.fTol = 0.0;
+	params.stop.xTol = 0.0;
+	params.stop.gTol = 1e-3;
+	params.stop.maxIterations = 1e4;
 
 	cg = nlpp::CG<>(params);
 

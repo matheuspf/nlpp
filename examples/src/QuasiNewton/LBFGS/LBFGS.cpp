@@ -17,22 +17,21 @@ int main ()
     using Func = Rosenbrock;
     using IH = BFGS_Diagonal;
     using LS = StrongWolfe;
+    using Stop = stop::GradientOptimizer;
     using Out = out::GradientOptimizer<0>;
 
-    params::LBFGS<IH, LS, Out> params;
+    params::LBFGS<IH, LS, Stop, Out> params;
 
-    params.maxIterations = 1e4;
-    params.fTol = 1e-8;
-    params.gTol = 1e-8;
-    params.xTol = 1e-8;
+    params.stop.maxIterations = 1e4;
+    params.stop.fTol = 1e-8;
+    params.stop.gTol = 1e-8;
+    params.stop.xTol = 1e-8;
     params.m = 10;
 
-    //params.lineSearch = StrongWolfe(1.0, 1e-4, 0.1);
-
-    LBFGS<Vec, IH, LS, Out> lbfgs(params);
+    LBFGS<IH, LS, Stop, Out> lbfgs(params);
 
     Func func;
-    Vec x = Vec::Constant(2, 1.2);
+    Vec x = Vec::Constant(50, 1.2);
 
     handy::benchmark([&]
     {

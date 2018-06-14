@@ -1,5 +1,7 @@
 #include "QuasiNewton/BFGS/BFGS.h"
 
+#include "LineSearch/Goldstein/Goldstein.h"
+
 #include "TestFunctions/Rosenbrock.h"
 
 
@@ -8,17 +10,19 @@ using namespace nlpp;
 
 int main ()
 {
+    using IH = BFGS_Diagonal;
     using LS = StrongWolfe;
 
-    params::BFGS<LS> params;
+    params::BFGS<IH, LS> params;
 
-    params.maxIterations = 1e4;
-    params.gTol = 1e-8;
-    params.fTol = 1e-8;
-    params.xTol = 1e-8;
+    params.stop.maxIterations = 1e4;
+    params.stop.gTol = 1e-8;
+    params.stop.fTol = 1e-8;
+    params.stop.xTol = 1e-8;
+    params.lineSearch = StrongWolfe(1.0, 1e-2, 0.1);
 
 
-    BFGS<LS> bfgs(params);
+    BFGS<IH, LS> bfgs(params);
 
 
     Vec x = Vec::Constant(10, 5.0);

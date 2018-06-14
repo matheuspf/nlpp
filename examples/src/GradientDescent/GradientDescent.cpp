@@ -9,12 +9,16 @@ using namespace nlpp;
 int main ()
 {
 	using LS = Goldstein;
+	using Stop = stop::GradientOptimizer;
+	using Out = out::GradientOptimizer<1>;
 
-	params::GradientDescent<LS> params(LS(), 10000, 1e-8, 1e-8, 1e-8);
+	params::GradientDescent<LS, Stop, Out> params(LS{}, Stop(1000, 1e-6, 1e-6, 1e-6), Out{});
 
-	GradientDescent<> gd(params);
+	GradientDescent<LS, Stop, Out> gd(params);
 
-	Eigen::VectorXd x(2); x << 1.2, 1.2;
+
+	Eigen::VectorXd x(2);
+	x << 1.2, 1.2;
 
 	Rosenbrock func;
 

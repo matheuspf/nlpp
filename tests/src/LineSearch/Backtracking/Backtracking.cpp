@@ -36,10 +36,10 @@ TEST_F(Backtracking, BacktrackingTest)
 
 	nlpp::params::GradientDescent<nlpp::Backtracking> params;
 
-	params.fTol = 1e-3;
-	params.xTol = 1e-3;
-	params.gTol = 1e-3;
-	params.maxIterations = 1e4;
+	params.stop.fTol = 1e-3;
+	params.stop.xTol = 1e-3;
+	params.stop.gTol = 1e-3;
+	params.stop.maxIterations = 1e4;
 
 	gd = nlpp::GradientDescent<nlpp::Backtracking>(params);
 

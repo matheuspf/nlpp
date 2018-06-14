@@ -22,13 +22,9 @@
 
 /// Base parameter definitions
 #define CPPOPT_USING_PARAMS(TYPE, ...) using TYPE = __VA_ARGS__;    \
-                                       using TYPE::maxIterations;   \
-                                       using TYPE::xTol;            \
-                                       using TYPE::fTol;            \
-                                       using TYPE::gTol;            \
                                        using TYPE::lineSearch;      \
+                                       using TYPE::stop;            \
                                        using TYPE::output;
-
 
 
 
@@ -47,6 +43,14 @@ struct GradientOptimizer;
 } // namespace out
 
 
+namespace stop
+{
+
+struct GradientOptimizer;
+
+} // namespace stop
+
+
 /// Parameters namespace
 namespace params
 {
@@ -62,36 +66,23 @@ namespace params
  * 
  *  @details Define the basic variables used by any gradient based optimizer
 */
-template <class LineSearch = Goldstein, class Output = out::GradientOptimizer<0>>
+template <class LineSearch = Goldstein, class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
 struct GradientOptimizer
 {
     /** @name
      * @brief Some basic constructors
     */
-    GradientOptimizer(int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, 
-                      double gTol = 1e-4, const LineSearch& lineSearch = LineSearch()) :
-                      maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
-
-    GradientOptimizer(const LineSearch& lineSearch,int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) :
-                      maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch) {}
-
-    GradientOptimizer(const LineSearch& lineSearch, const Output& output, 
-                        int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) :
-                        maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol), lineSearch(lineSearch), output(output) {}
+   
+    GradientOptimizer(const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) :
+                      lineSearch(lineSearch), stop(stop), output(output)
+    {
+    }
     //@}
 
 
+    LineSearch lineSearch;  ///< The line search method
 
-    int maxIterations;      ///< Maximum number of outer iterations
-
-	double xTol;            ///< Minimum tolerance on the norm of the input (@c x) between iterations
-
-	double fTol;            ///< Minimum tolerance on the value of the function (@c x) between iterations
-
-    double gTol;            ///< Minimum tolerance on the norm of the gradient (@c g) between iterations
-
-
-    LineSearch lineSearch;  ///< The line search method to be used
+    Stop stop;      ///< Stopping condition
 
     Output output;  ///< The output callback
 };
@@ -112,24 +103,21 @@ struct GradientOptimizer;
 template <>
 struct GradientOptimizer<0>
 {
-    template <class LineSearch, class Output>
-    void init (const params::GradientOptimizer<LineSearch, Output>& optimizer)
+    template <class LineSearch, class Stop, class Output, class Vec>
+    void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx) 
     {
     }
 
-    template <class LineSearch, class Output>
-    void init (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx) 
+    template <class LineSearch, class Stop, class Output, class Vec>
+    void operator() (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx)
     {
     }
 
-    template <class LineSearch, class Output>
-    void operator () (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
-    {
-    }
-
-
-    template <class LineSearch, class Output>
-    void finish (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
+    template <class LineSearch, class Stop, class Output, class Vec>
+    void finish (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx)
     {
     }
 
@@ -145,29 +133,82 @@ struct GradientOptimizer<0>
 template <>
 struct GradientOptimizer<1> : public GradientOptimizer<0>
 {
-    template <class LineSearch, class Output>
-    void init (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx) 
+    template <class LineSearch, class Stop, class Output, class Vec>
+    void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx) 
     {
-        handy::print("init fx: ", fx);
+        handy::print("Init\n\n", "x:", x.transpose(), "   fx:", fx, "   gx:", gx.transpose());
     }
 
-    template <class LineSearch, class Output>
-    void operator () (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
+    template <class LineSearch, class Stop, class Output, class Vec>
+    void operator() (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx)
     {
-        handy::print("fx: ", fx);        
+        handy::print("x:", x.transpose(), "   fx:", fx, "   gx:", gx.transpose());
     }
 
-
-    template <class LineSearch, class Output>
-    void finish (const params::GradientOptimizer<LineSearch, Output>& optimizer, double fx)
+    template <class LineSearch, class Stop, class Output, class Vec>
+    void finish (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx)
     {
-        handy::print("finish fx: ", fx);        
+        handy::print("x:", x.transpose(), "   fx:", fx, "   gx:", gx.transpose(), "\n\nFinish");
     }
 };
 
 
-
 } // namespace out
+
+
+namespace stop
+{
+
+struct GradientOptimizer
+{
+    GradientOptimizer(int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) : 
+                      maxIterations(maxIterations), xTol(xTol), fTol(fTol), gTol(gTol) {}
+
+    template <class LineSearch, class Stop, class Output, class Vec>
+    void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx) 
+    {
+        x0 = x;
+        fx0 = fx;
+        gx0 = gx;
+    }
+
+    template <class LineSearch, class Stop, class Output, class Vec>
+    bool operator () (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+                      const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx) 
+    {
+        bool xStop = (x - x0).norm() < xTol;
+        bool fStop = std::abs(fx - fx0) < fTol;
+        bool gStop = (gx - gx0).norm() < gTol;
+
+        x0 = x;
+        fx0 = fx;
+        gx0 = gx;
+
+        return xStop || fStop || gStop;
+    }
+
+
+    Vec x0;
+    double fx0;
+    Vec gx0;
+
+
+    int maxIterations;      ///< Maximum number of outer iterations
+
+	double xTol;            ///< Minimum tolerance on the norm of the input (@c x) between iterations
+
+	double fTol;            ///< Minimum tolerance on the value of the function (@c x) between iterations
+
+    double gTol;            ///< Minimum tolerance on the norm of the gradient (@c g) between iterations
+};
+
+
+} // namespace stop
+
 
 
 
@@ -185,6 +226,8 @@ struct GradientOptimizer<1> : public GradientOptimizer<0>
 template <class Impl, class Parameters = params::GradientOptimizer<>>
 struct GradientOptimizer : public Parameters
 {
+    using Parameters::Parameters;
+
     /// Simply delegate the call to the base parameters class
     GradientOptimizer(const Parameters& params = Parameters()) : Parameters(params) {}
 
@@ -205,6 +248,7 @@ struct GradientOptimizer : public Parameters
 
     /// When the function and gradient functors are given separatelly
     template <class Function, class Gradient, class Vec, typename... Args>
+            //   std::enable_if_t<wrap::IsFunction<Function, Vec>::value && wrap::IsGradient<Gradient, Vec>::value, int> = 0>
     Vec operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<Vec>& x, Args&&... args)
     {
         return static_cast<Impl&>(*this).optimize(wrap::functionGradient(function, gradient), x.eval(), std::forward<Args>(args)...);
@@ -223,7 +267,7 @@ struct GradientOptimizer : public Parameters
               std::enable_if_t<wrap::IsFunction<Function, Vec>::value, int> = 0>
     Vec operator () (const Function& func, const Eigen::MatrixBase<Vec>& x, Args&&... args)
     {
-        return operator()(func, fd::gradient(func), x, std::forward<Args>(args)...);
+        return operator()(func, fd::gradient(func), x.eval(), std::forward<Args>(args)...);
     }
     //@}
 };

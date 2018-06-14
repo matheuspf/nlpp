@@ -86,7 +86,7 @@ struct LineSearchBase
 	template <class Function, class Vec, bool CalcNorm_ = CalcNorm, std::enable_if_t<!CalcNorm_, int> = 0>
 	double delegate (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
-		N = x.size();
+		//N = x.size();
 
 		return impl(f, x, dir);
 	}
@@ -94,7 +94,7 @@ struct LineSearchBase
 	template <class Function, class Vec, bool CalcNorm_ = CalcNorm, std::enable_if_t<CalcNorm_, int> = 0>
 	double delegate (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
-		xNorm = x.norm();
+		//xNorm = x.norm();
 
 		return delegate<Function, Vec, false>(f, x, dir);
 	}
@@ -102,19 +102,19 @@ struct LineSearchBase
 
 
 	template <class FunctionGradient, class Vec, std::enable_if_t<wrap::IsFunctionGradient<FunctionGradient, Vec>::value, int> = 0>
-	double operator () (const FunctionGradient& f, const Eigen::DenseBase<Vec>& x, const Eigen::DenseBase<Vec>& dir)
+	double operator () (const FunctionGradient& f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
-		return delegate(wrap::functionGradient(f), x.eval(), dir.eval());
+		return delegate(f, x.eval(), dir.eval());
 	}
 
 	template <class Function, class Gradient, class Vec>
-	double operator () (Function f, Gradient g, const Eigen::DenseBase<Vec>& x, const Eigen::DenseBase<Vec>& dir)
+	double operator () (Function f, Gradient g, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
 		return delegate(wrap::functionGradient(f, g), x.eval(), dir.eval());
 	}
 
 	template <class Function, class Vec, std::enable_if_t<wrap::IsFunction<Function, Vec>::value, int> = 0>
-	double operator () (Function f, const Eigen::DenseBase<Vec>& x, const Eigen::DenseBase<Vec>& dir)
+	double operator () (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
 		return operator()(f, fd::gradient(f), x, dir);
 	}

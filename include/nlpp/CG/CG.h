@@ -88,20 +88,17 @@ namespace params
 {
 
 
-template <class CGType = FR_PR, class LineSearch = StrongWolfe, class Output = out::GradientOptimizer<0>>
-struct CG : public GradientOptimizer<LineSearch, Output>
+template <class CGType = FR_PR, class LineSearch = StrongWolfe, 
+		  class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+struct CG : public GradientOptimizer<LineSearch, Stop, Output>
 {
-	using Params = GradientOptimizer<LineSearch, Output>;
+	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
 
-	template <typename... Args, class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, StrongWolfe>::value, int> = 0>
-	CG(const LineSearch& lineSearch = StrongWolfe(1e-2, 1e-4, 0.1), Args&&... args) : Params(lineSearch, std::forward<Args>(args)...)
-	{	
-	}
-
-	template <typename... Args, class LS = std::decay_t<LineSearch>, std::enable_if_t<!std::is_same<LS, StrongWolfe>::value, int> = 0>
-	CG(const LineSearch& lineSearch = LineSearch{}, Args&&... args) : Params(lineSearch, std::forward<Args>(args)...) 
-	{
-	}
+	template <class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, StrongWolfe>::value, int> = 0>
+    CG(const LineSearch& lineSearch = StrongWolfe(1e-2, 1e-4, 0.1), const Stop& stop = Stop{}, const Output& output = Output{}) :
+       Params(lineSearch, stop, output)
+    {
+    }
 
 
 	CGType cg;
@@ -114,12 +111,14 @@ struct CG : public GradientOptimizer<LineSearch, Output>
 
 
 
-template <class CGType = FR_PR, class LineSearch = StrongWolfe, class Output = out::GradientOptimizer<0>>
-struct CG : public GradientOptimizer<CG<CGType, LineSearch, Output>, params::CG<CGType, LineSearch, Output>>
+template <class CGType = FR_PR, class LineSearch = StrongWolfe, 
+		  class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+struct CG : public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, params::CG<CGType, LineSearch, Stop, Output>>
 {
-	CPPOPT_USING_PARAMS_CG(Params, GradientOptimizer<CG<CGType, LineSearch, Output>, params::CG<CGType, LineSearch, Output>>);
+	CPPOPT_USING_PARAMS_CG(Params, GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, params::CG<CGType, LineSearch, Stop, Output>>);
 
 	using Params::Params;
+
 
 
 	template <class Function, class Float, int Rows, int Cols>
@@ -127,23 +126,26 @@ struct CG : public GradientOptimizer<CG<CGType, LineSearch, Output>, params::CG<
 	{
 		Eigen::Matrix<Float, Rows, Cols> fa, dir, fb(x.rows(), x.cols());
 
-		Float fxOld;
+		Float fxOld, fx;
 
 		std::tie(fxOld, fa) = f(x);
 
 		dir = -fa;
 
+		stop.init(*this, x, fxOld, fa);
+		output.init(*this, x, fxOld, fa);
 
-		for(int iter = 0; iter < maxIterations && dir.norm() > xTol; ++iter)
+
+		for(int iter = 0; iter < stop.maxIterations; ++iter)
 		{
 			double alpha = lineSearch(f, x, dir);
 			
 			x = x + alpha * dir;
 
-			Float fx = f(x, fb);
+			fx = f(x, fb);
 			
 
-			if(std::abs(fxOld - fx) < fTol)
+			if(stop(*this, x, fx, fb))
 				break;
 
 			if((fa.dot(fb) / fb.dot(fb)) >= v)
@@ -156,7 +158,11 @@ struct CG : public GradientOptimizer<CG<CGType, LineSearch, Output>, params::CG<
 			fxOld = fx;
 
 			fa = fb;
+
+			output(*this, x, fx, fb);
 		}
+
+		output.finish(*this, x, fx, fb);
 
 		return x;
 	}

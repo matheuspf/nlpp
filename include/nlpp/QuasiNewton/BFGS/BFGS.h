@@ -24,10 +24,12 @@ struct BFGS_Diagonal;
 namespace params
 {
 
-template <class LineSearch = StrongWolfe, class InitialHessian = BFGS_Diagonal>
-struct BFGS : public GradientOptimizer<LineSearch>
+template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe,
+          class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+struct BFGS : public GradientOptimizer<LineSearch, Stop, Output>
 {
-    using GradientOptimizer<LineSearch>::GradientOptimizer;
+    CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
+    using Params::Params;
 
     InitialHessian initialHessian;
 };
@@ -37,11 +39,13 @@ struct BFGS : public GradientOptimizer<LineSearch>
 
 
 
-template <class LineSearch = StrongWolfe, class InitialHessian = BFGS_Diagonal>
-struct BFGS : public GradientOptimizer<BFGS<LineSearch, InitialHessian>, params::BFGS<LineSearch, InitialHessian>>
+template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe,
+          class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Output>, 
+                                       params::BFGS<InitialHessian, LineSearch, Stop, Output>>
 {   
-    CPPOPT_USING_PARAMS_BFGS(Params, GradientOptimizer<BFGS<LineSearch, InitialHessian>, params::BFGS<LineSearch, InitialHessian>>);
-
+    CPPOPT_USING_PARAMS_BFGS(Params, GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Output>, 
+                                       params::BFGS<InitialHessian, LineSearch, Stop, Output>>);
     using Params::Params;
 
 
@@ -61,9 +65,12 @@ struct BFGS : public GradientOptimizer<BFGS<LineSearch, InitialHessian>, params:
         Eigen::Matrix<Float, Rows, Cols> x1, g0(rows, cols), g1(rows, cols), dir, s, y;
 
         Float f0 = f(x0, g0);
+        Float f1;
 
+        stop.init(*this, x0, f0, g0);
+        output.init(*this, x0, f0, g0);
 
-        for(int iter = 0; iter < maxIterations; ++iter)
+        for(int iter = 0; iter < stop.maxIterations; ++iter)
         {
             dir = -hess * g0;
 
@@ -71,12 +78,12 @@ struct BFGS : public GradientOptimizer<BFGS<LineSearch, InitialHessian>, params:
 
             x1 = x0 + alpha * dir;
 
-            Float f1 = f(x1, g1);
+            f1 = f(x1, g1);
 
             s = x1 - x0;
             y = g1 - g0;
 
-            if(g1.norm() < gTol)
+            if(stop(*this, x1, f1, g1))
                 break;
 
 
@@ -86,7 +93,11 @@ struct BFGS : public GradientOptimizer<BFGS<LineSearch, InitialHessian>, params:
 
             x0 = x1;
             g0 = g1;
+
+            output(*this, x1, f1, g1);
         }
+
+        output.finish(*this, x1, f1, g1);
 
         return x1;
     }

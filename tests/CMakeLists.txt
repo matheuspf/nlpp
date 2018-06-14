@@ -12,13 +12,14 @@ target_compile_options(tests PRIVATE -std=c++17)
 if(nlpp_coverage AND  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     #target_compile_options(tests PRIVATE -g -O0 --coverage -fprofile-arcs -ftest-coverage)
     #target_link_libraries(tests PUBLIC -lgcov)    
-    target_compile_options(tests PRIVATE -O3)
+    target_compile_options(tests PRIVATE -O2)
 endif()
 
 
 add_subdirectory(src/GradientDescent)
 add_subdirectory(src/CG)
 add_subdirectory(src/LineSearch)
+add_subdirectory(src/QuasiNewton)
 
 
 enable_testing()
