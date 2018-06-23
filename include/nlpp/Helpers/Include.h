@@ -13,7 +13,7 @@
 
 #elif EIGEN_INCLUDE_GLOBAL
 
-    #include <Eigen/Dense>
+//    #include <Eigen/Dense>
 
 #endif
 
