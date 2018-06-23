@@ -25,7 +25,7 @@ namespace params
 {
 
 template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe,
-          class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct BFGS : public GradientOptimizer<LineSearch, Stop, Output>
 {
     CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
@@ -40,7 +40,7 @@ struct BFGS : public GradientOptimizer<LineSearch, Stop, Output>
 
 
 template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe,
-          class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Output>, 
                                        params::BFGS<InitialHessian, LineSearch, Stop, Output>>
 {   

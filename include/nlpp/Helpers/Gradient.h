@@ -259,16 +259,16 @@ struct Gradient : public Impl
      *  @note Requirements:
      *        - auto Impl::operator()(const Vec&) must be defined and returns the gradient of a scalar type
     */
-    template <class Vec, class Impl_ = Impl, 
+    template <class Vec, class Impl_ = Impl,
               std::enable_if_t<HasOp<Impl_, const Vec&>::value &&
                                IsFunctionGradient<Impl_, Vec>::value &&
                                !HasOp<Impl_, const Vec&, Vec&>::value, int> = 0>
 
     auto operator () (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
     {
-        auto [f, g_] = Impl::operator()(x);
-
-        g = g_;
+        Float f;
+        
+        std::tie(f, g) = Impl::operator()(x);
 
         return f;
     }

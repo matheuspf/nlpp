@@ -9,7 +9,7 @@ using namespace nlpp;
 int main ()
 {
 	using LS = Goldstein;
-	using Stop = stop::GradientOptimizer;
+	using Stop = stop::GradientOptimizer<>;
 	using Out = out::GradientOptimizer<1>;
 
 	params::GradientDescent<LS, Stop, Out> params(LS{}, Stop(1000, 1e-6, 1e-6, 1e-6), Out{});

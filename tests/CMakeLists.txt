@@ -7,13 +7,12 @@ target_include_directories(tests PUBLIC ${PROJECT_SOURCE_DIR}/include/nlpp)
 
 target_compile_features(tests PRIVATE)
 
-target_compile_options(tests PRIVATE -std=c++17)
+target_compile_options(tests PRIVATE -std=c++14 -O3)
 
-if(nlpp_coverage AND  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+#if(nlpp_coverage AND  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     #target_compile_options(tests PRIVATE -g -O0 --coverage -fprofile-arcs -ftest-coverage)
-    #target_link_libraries(tests PUBLIC -lgcov)    
-    target_compile_options(tests PRIVATE -O2)
-endif()
+    #target_link_libraries(tests PUBLIC -lgcov)
+#endif()
 
 
 add_subdirectory(src/GradientDescent)

@@ -22,22 +22,25 @@ struct CG : public ::testing::Test
 	{
 	}
 
+	using CGType = nlpp::FR_PR;
+	using LS = nlpp::StrongWolfe;
+	using Stop = nlpp::stop::GradientOptimizer<1>;
+	using Out = nlpp::out::GradientOptimizer<2, nlpp::Vec>;
 
-	nlpp::CG<> cg;
 };
 
 
 
 TEST_F(CG, PerformanceTest)
 {
-	nlpp::params::CG<> params;
+	nlpp::params::CG<CGType, LS, Stop, Out> params;
 
-	params.stop.fTol = 0.0;
-	params.stop.xTol = 0.0;
+	params.stop.fTol = 1e-3;
+	params.stop.xTol = 1e-3;
 	params.stop.gTol = 1e-3;
 	params.stop.maxIterations = 1e4;
 
-	cg = nlpp::CG<>(params);
+	nlpp::CG<CGType, LS, Stop, Out> cg(params);
 
 	nlpp::Rosenbrock func;
 	auto grad = nlpp::fd::gradient(func);
@@ -46,7 +49,10 @@ TEST_F(CG, PerformanceTest)
 		
 	nlpp::Vec x = cg(func, grad, x0);
 
+
 	EXPECT_LE(grad(x).norm(), 1e-3);
+
+	EXPECT_LE(cg.output.vX.size(), params.stop.maxIterations + 1);
 }
 
 

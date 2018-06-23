@@ -21,7 +21,7 @@ namespace params
 {
 
 template <class InitialHessian = BFGS_Diagonal, class LineSearch = Goldstein,
-          class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
 {
 	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
@@ -37,7 +37,7 @@ struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
 
 
 template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe, 
-          class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>, 
                                         params::LBFGS<InitialHessian, LineSearch, Stop, Output>>
 {
@@ -73,7 +73,7 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
             fx = f(x, gx);
 
             if(stop(*this, x, fx, gx))
-                break;
+                return x;
 
             Vec s = x - x0;
             Vec y = gx - gx0;

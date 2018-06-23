@@ -37,7 +37,7 @@ struct Goldstein;
 namespace out
 {
 
-template <int>
+template <int, typename...>
 struct GradientOptimizer;
 
 } // namespace out
@@ -46,6 +46,7 @@ struct GradientOptimizer;
 namespace stop
 {
 
+template <bool = false>
 struct GradientOptimizer;
 
 } // namespace stop
@@ -66,7 +67,7 @@ namespace params
  * 
  *  @details Define the basic variables used by any gradient based optimizer
 */
-template <class LineSearch = Goldstein, class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+template <class LineSearch = Goldstein, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct GradientOptimizer
 {
     /** @name
@@ -96,7 +97,7 @@ namespace out
 {
 
 
-template <int Level>
+template <int Level, typename...>
 struct GradientOptimizer;
 
 
@@ -156,12 +157,62 @@ struct GradientOptimizer<1> : public GradientOptimizer<0>
 };
 
 
+template <class Vec>
+struct GradientOptimizer<2, Vec> : public GradientOptimizer<0>
+{
+    using Float = typename Vec::Scalar;
+
+    template <class LineSearch, class Stop, class Output>
+    void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, Float fx, const Eigen::MatrixBase<Vec>& gx) 
+    {
+        vX.clear();
+        vFx.clear();
+        vGx.clear();
+
+        pushBack(x, fx, gx);
+    }
+
+    template <class LineSearch, class Stop, class Output>
+    void operator() (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<Vec>& x, Float fx, const Eigen::MatrixBase<Vec>& gx)
+    {
+        pushBack(x, fx, gx);
+    }
+
+    template <class LineSearch, class Stop, class Output>
+    void finish (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+                 const Eigen::MatrixBase<Vec>& x, Float fx, const Eigen::MatrixBase<Vec>& gx)
+    {
+        pushBack(x, fx, gx);
+    }
+
+
+    void pushBack (const Eigen::MatrixBase<Vec>& x, Float fx, const Eigen::MatrixBase<Vec>& gx)
+    {
+        vX.push_back(x);
+        vFx.push_back(fx);
+        vGx.push_back(gx);
+    }
+
+
+    std::vector<Vec> vX;
+    std::vector<Float> vFx;
+    std::vector<Vec> vGx;
+};
+
+
+
 } // namespace out
 
 
 namespace stop
 {
 
+namespace impl
+{
+
+template <class Impl>
 struct GradientOptimizer
 {
     GradientOptimizer(int maxIterations = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) : 
@@ -173,8 +224,9 @@ struct GradientOptimizer
     {
         x0 = x;
         fx0 = fx;
-        gx0 = gx;
+        //gx0 = gx;
     }
+
 
     template <class LineSearch, class Stop, class Output, class Vec>
     bool operator () (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
@@ -182,19 +234,19 @@ struct GradientOptimizer
     {
         bool xStop = (x - x0).norm() < xTol;
         bool fStop = std::abs(fx - fx0) < fTol;
-        bool gStop = (gx - gx0).norm() < gTol;
+        bool gStop = gx.norm() < gTol;
 
         x0 = x;
         fx0 = fx;
-        gx0 = gx;
+        //gx0 = gx;
 
-        return xStop || fStop || gStop;
+        return static_cast<Impl&>(*this).stop(xStop, fStop, gStop);
     }
 
 
     Vec x0;
     double fx0;
-    Vec gx0;
+    //Vec gx0;
 
 
     int maxIterations;      ///< Maximum number of outer iterations
@@ -204,7 +256,38 @@ struct GradientOptimizer
 	double fTol;            ///< Minimum tolerance on the value of the function (@c x) between iterations
 
     double gTol;            ///< Minimum tolerance on the norm of the gradient (@c g) between iterations
+
 };
+
+
+} // namespace impl
+
+
+
+template <bool Exclusive>
+struct GradientOptimizer : public impl::GradientOptimizer<GradientOptimizer<Exclusive>>
+{
+    using impl::GradientOptimizer<GradientOptimizer<Exclusive>>::GradientOptimizer;
+
+
+    bool stop (double xStop, double fStop, double gStop)
+    {
+        return xStop && fStop && gStop;
+    }
+};
+
+
+template <>
+struct GradientOptimizer<false> : public impl::GradientOptimizer<GradientOptimizer<false>>
+{
+    using impl::GradientOptimizer<GradientOptimizer<false>>::GradientOptimizer;
+
+    bool stop (double xStop, double fStop, double gStop)
+    {
+        return xStop || fStop || gStop;
+    }
+};
+
 
 
 } // namespace stop

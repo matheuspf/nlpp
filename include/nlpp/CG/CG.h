@@ -89,7 +89,7 @@ namespace params
 
 
 template <class CGType = FR_PR, class LineSearch = StrongWolfe, 
-		  class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct CG : public GradientOptimizer<LineSearch, Stop, Output>
 {
 	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
@@ -112,7 +112,7 @@ struct CG : public GradientOptimizer<LineSearch, Stop, Output>
 
 
 template <class CGType = FR_PR, class LineSearch = StrongWolfe, 
-		  class Stop = stop::GradientOptimizer, class Output = out::GradientOptimizer<0>>
+		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct CG : public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, params::CG<CGType, LineSearch, Stop, Output>>
 {
 	CPPOPT_USING_PARAMS_CG(Params, GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, params::CG<CGType, LineSearch, Stop, Output>>);
