@@ -20,6 +20,7 @@ add_subdirectory(src/GradientDescent)
 add_subdirectory(src/CG)
 add_subdirectory(src/LineSearch)
 add_subdirectory(src/QuasiNewton)
+add_subdirectory(src/HyperbolicPenalty)
 
 
 enable_testing()

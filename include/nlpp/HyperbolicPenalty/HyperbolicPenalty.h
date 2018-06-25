@@ -4,13 +4,13 @@
 
 #include "../Helpers/FiniteDifference.h"
 
-#include "../QuasiNewton/BFGS/BFGS.h"
+#include "../QuasiNewton/LBFGS/LBFGS.h"
 
 
 namespace nlpp
 {
 
-template <class Optimizer = BFGS<StrongWolfe, BFGS_Constant>>
+template <class Optimizer = LBFGS<>>
 struct HyperbolicPenalty
 {
     HyperbolicPenalty(const Optimizer& optimizer = Optimizer(), double lambda0 = 1e1, double tau0 = 1e1, 
@@ -24,7 +24,7 @@ struct HyperbolicPenalty
 
 
     template <class Function, class Inequalities>
-    Vec operator () (Function&& function, Inequalities&& inequalities, Vec x)
+    Vec operator () (Function function, Inequalities inequalities, Vec x)
     {
         double lambda = lambda0, tau = tau0;
 

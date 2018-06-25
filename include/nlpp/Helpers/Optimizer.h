@@ -34,6 +34,13 @@ namespace nlpp
 struct Goldstein;
 
 
+
+/** @defgroup OptimizerGroup Optimizer
+    @copydoc Optimizer.h
+*/
+//@{
+
+
 namespace out
 {
 
@@ -57,23 +64,21 @@ namespace params
 {
 
 
-/** @defgroup OptimizerGroup Optimizer
-    @copydoc Optimizer.h
-*/
-//@{
-
-
 /** @brief Base parameter class for gradient optimizers
  * 
  *  @details Define the basic variables used by any gradient based optimizer
 */
-template <class LineSearch = Goldstein, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
+template <class LineSearch_ = Goldstein, class Stop_ = stop::GradientOptimizer<>, class Output_ = out::GradientOptimizer<0>>
 struct GradientOptimizer
 {
+    using LineSearch = LineSearch_;
+    using Stop = Stop_;
+    using Output = Output_;
+
+
     /** @name
      * @brief Some basic constructors
     */
-   
     GradientOptimizer(const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) :
                       lineSearch(lineSearch), stop(stop), output(output)
     {
@@ -97,7 +102,7 @@ namespace out
 {
 
 
-template <int Level, typename...>
+template <int Level = 0, typename...>
 struct GradientOptimizer;
 
 
