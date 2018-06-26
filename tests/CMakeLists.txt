@@ -21,6 +21,7 @@ add_subdirectory(src/CG)
 add_subdirectory(src/LineSearch)
 add_subdirectory(src/QuasiNewton)
 add_subdirectory(src/HyperbolicPenalty)
+#add_subdirectory(src/Newton)
 
 
 enable_testing()

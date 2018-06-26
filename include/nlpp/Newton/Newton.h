@@ -2,94 +2,83 @@
 
 #include "../Helpers/Helpers.h"
 
-#include "../LineSearch/Goldstein/Goldstein.h"
-
-#include "../LineSearch/ConstantStep/ConstantStep.h"
+#include "../Helpers/Optimizer.h"
 
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
 #include "Factorizations.h"
 
 
+#define CPPOPT_USING_PARAMS_NEWTON(...) CPPOPT_USING_PARAMS(__VA_ARGS__);	\
+										using Params::factorization;
+
+
+
+
 namespace nlpp
 {
 
-template <class LineSearch = ConstantStep, class Inversion = SmallIdentity>
-struct Newton
+namespace params
 {
-	Newton (LineSearch lineSearch = LineSearch{}, Inversion inversion = Inversion{}) :
-			lineSearch(lineSearch), inversion(inversion) {}
+
+template <class Factorization = fact::SmallIdentity, class LineSearch = StrongWolfe,
+		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+struct Newton : public GradientOptimizer<LineSearch, Stop, Output>
+{
+	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
+	using Params::Params;
+
+	Factorization factorization;
+};
 
 
-	template <class Function, class Gradient, class Hessian, typename Type>
-	Type operator () (Function function, Gradient gradient, Hessian hessian, Type x)
+} // namesapace params
+
+
+
+template <class Factorization = fact::SmallIdentity, class LineSearch = StrongWolfe,
+		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+struct Newton : public GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>,
+								 params::Newton<Factorization, LineSearch, Stop, Output>>
+{
+	CPPOPT_USING_PARAMS_NEWTON(Params, GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>,
+								 		 		 params::Newton<Factorization, LineSearch, Stop, Output>>);
+	using Params::Params;
+
+
+	template <class Function, typename Float, int Rows, int Cols, class Hessian>
+	auto optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x, Hessian hess)
 	{
-		Type dir = direction(gradient(x), hessian(x));
+		Eigen::Matrix<Float, Rows, Cols> gx(x.rows(), x.cols());
+		
+		auto fx = f(x, gx);
+
+		stop.init(*this, x, fx, gx);
+		output.init(*this, x, fx, gx);
 
 
-		for(int iter = 0; iter < maxIterations && dir.norm() > xTol; ++iter)
+		for(int iter = 0; iter < stop.maxIterations; ++iter)
 		{
-			double alpha = lineSearch(function, gradient, x, dir);
+			auto dir = factorization(gx, hess(x));
+
+			auto alpha = lineSearch(f, x, dir);
 
 			x = x + alpha * dir;
 
-			dir = direction(gradient(x), hessian(x));
+			fx = f(x, gx);
+
+
+			if(stop(*this, x, fx, gx))
+				break;
+
+			output(*this, x, fx, gx);
 		}
+
+
+		output.finish(*this, x, fx, gx);
 
 		return x;
 	}
-
-
-	template <class Function, class Gradient, typename Type>
-	Type operator () (Function function, Gradient gradient, Type x)
-	{
-		return this->operator()(function, gradient, fd::hessian(function), x);
-	}
-
-	template <class Function, typename Type>
-	Type operator () (Function function, Type x)
-	{
-		return this->operator()(function, fd::gradient(function), x);
-	}
-
-
-
-
-	double direction (double gx, double hx)
-	{
-		if(abs(hx) < 1e-8)
-		{
-			handy::print("Second derivative is very close to 0. Making a small correction.\n");
-
-			hx = 1e-5;
-		}
-
-
-		return -gx / hx;
-	}
-
-
-
-
-	Vec direction (const Vec& grad, const Mat& hess)
-	{
-		return Inversion(inversion)(grad, hess);
-	}
-
-
-
-
-	LineSearch lineSearch;
-
-	Inversion inversion;
-
-
-	int maxIterations = 1e3;
-
-	double xTol = 1e-6;
-
-	double fTol = 1e-7;
-
 };
 
 } // namespace nlpp

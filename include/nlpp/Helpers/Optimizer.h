@@ -44,7 +44,7 @@ struct Goldstein;
 namespace out
 {
 
-template <int, typename...>
+template <int = 0, typename...>
 struct GradientOptimizer;
 
 } // namespace out
@@ -102,7 +102,7 @@ namespace out
 {
 
 
-template <int Level = 0, typename...>
+template <int Level, typename...>
 struct GradientOptimizer;
 
 
@@ -143,21 +143,21 @@ struct GradientOptimizer<1> : public GradientOptimizer<0>
     void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx) 
     {
-        handy::print("Init\n\n", "x:", x.transpose(), "   fx:", fx, "   gx:", gx.transpose());
+        handy::print("Init\n\n", "x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose()) << std::flush;
     }
 
     template <class LineSearch, class Stop, class Output, class Vec>
     void operator() (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx)
     {
-        handy::print("x:", x.transpose(), "   fx:", fx, "   gx:", gx.transpose());
+        handy::print("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose()) << std::flush;
     }
 
     template <class LineSearch, class Stop, class Output, class Vec>
     void finish (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                const Eigen::MatrixBase<Vec>& x, double fx, const Eigen::MatrixBase<Vec>& gx)
     {
-        handy::print("x:", x.transpose(), "   fx:", fx, "   gx:", gx.transpose(), "\n\nFinish");
+        handy::print("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose(), "\n\nFinish") << std::flush;
     }
 };
 
@@ -311,9 +311,10 @@ struct GradientOptimizer<false> : public impl::GradientOptimizer<GradientOptimiz
  *  @note We inherit from the parameter classes from here, so we create a single inheritance chain, not having to 
  *        resort to multiple inheritance.
 */
-template <class Impl, class Parameters = params::GradientOptimizer<>>
-struct GradientOptimizer : public Parameters
+template <class Impl, class Parameters_ = params::GradientOptimizer<>>
+struct GradientOptimizer : public Parameters_
 {
+    CPPOPT_USING_PARAMS(Parameters, Parameters_);
     using Parameters::Parameters;
 
     /// Simply delegate the call to the base parameters class

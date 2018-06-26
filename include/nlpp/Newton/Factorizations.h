@@ -7,6 +7,9 @@
 namespace nlpp
 {
 
+namespace fact
+{
+
 struct SimplyInvert
 {
 	Vec operator () (const Vec& grad, const Mat& hess)
@@ -211,5 +214,6 @@ struct IndefiniteFactorization
 	double delta;
 };
 
+} // namespace fact
 
 } // namespace nlpp

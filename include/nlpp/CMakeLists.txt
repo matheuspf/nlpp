@@ -21,10 +21,10 @@ install(FILES Helpers/FiniteDifference.h Helpers/Gradient.h Helpers/Helpers.h He
         DESTINATION ${NLPP_INCLUDE_INSTALL_DIR}/${lib_name}/Helpers
 )
 
-configure_file(
-    ${PROJECT_SOURCE_DIR}/include/${lib_name}/Helpers/Config.h.in
-    ${NLPP_INCLUDE_INSTALL_DIR}/${lib_name}/Helpers/Config.h
-)
+# configure_file(
+#     ${PROJECT_SOURCE_DIR}/include/${lib_name}/Helpers/Config.h.in
+#     ${NLPP_INCLUDE_INSTALL_DIR}/${lib_name}/Helpers/Config.h
+# )
 
 
 execute_process(COMMAND git submodule update --init --depth 1 -- ${PROJECT_SOURCE_DIR}/include/nlpp/external/handy

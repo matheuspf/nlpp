@@ -458,7 +458,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step, Float>>
         changeEval(f, x, [&](auto...){ return inc; });
     }
 
-    template <class F, class Derived, class StepSize>
+    template <class F, class Derived, class StepSize, std::enable_if_t<!std::is_fundamental<StepSize>::value, int> = 0>
     static void changeEval (F f, const Eigen::MatrixBase<Derived>& x, const StepSize& stepSize)
     {
         changeEval(f, x, stepSize, handy::range(x.size()));
@@ -470,7 +470,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step, Float>>
         changeEval(f, x, [&](auto...){ return inc; }, range);
     }
 
-    template <class F, class Derived, class StepSize, typename Int>
+    template <class F, class Derived, class StepSize, typename Int, std::enable_if_t<!std::is_fundamental<StepSize>::value, int> = 0>
     static void changeEval (F f, const Eigen::MatrixBase<Derived>& x, const StepSize& stepSize, handy::Range<Int> range)
     {
         Eigen::Matrix<typename Derived::Scalar, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime> y = x;
@@ -657,7 +657,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step, Float>>
         changeEval(f, x, [&](auto...){ return inc; });
     }
 
-    template <class F, class Derived, class StepSize>
+    template <class F, class Derived, class StepSize, std::enable_if_t<!std::is_fundamental<StepSize>::value, int> = 0>
     static void changeEval (F f, const Eigen::MatrixBase<Derived>& x, const StepSize& stepSize)
     {
         changeEval(f, x, stepSize, handy::range(x.size()));
@@ -669,7 +669,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step, Float>>
         changeEval(f, x, [&](auto...){ return inc; }, range);
     }
 
-    template <class F, class Derived, class StepSize, typename Int>
+    template <class F, class Derived, class StepSize, typename Int, std::enable_if_t<!std::is_fundamental<StepSize>::value, int> = 0>
     static void changeEval (F f, const Eigen::MatrixBase<Derived>& x, const StepSize& stepSize, handy::Range<Int> range)
     {
         Eigen::Matrix<typename Derived::Scalar, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime> y = x;
