@@ -41,13 +41,13 @@ namespace wrap
 */
 //@{
  
-template <class T, class Vec>
+template <class T, class V = Vec>
 struct IsFunction
 {
     template <class U = T>
-    static constexpr bool impl (std::decay_t<decltype(std::declval<U>()(Vec()), void())>*)
+    static constexpr bool impl (std::decay_t<decltype(std::declval<U>()(V()), void())>*)
     { 
-        return std::is_floating_point<decltype(std::declval<U>()(Vec()))>::value;
+        return std::is_floating_point<decltype(std::declval<U>()(V()))>::value;
     }
 
     static constexpr bool impl (...)
@@ -59,21 +59,21 @@ struct IsFunction
     enum{ value = impl(nullptr) };
 };
 
-template <class T, class Vec>
+template <class T, class V = Vec>
 struct IsGradient
 {
-    static Vec ref;
+    static V ref;
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec()), void())*)
+    static constexpr bool impl (decltype(std::declval<U>()(V()), void())*)
     { 
-        return ::nlpp::impl::IsMat<decltype(std::declval<U>()(Vec()))>::value;
+        return ::nlpp::impl::IsMat<decltype(std::declval<U>()(V()))>::value;
     }
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), int())*)
+    static constexpr bool impl (decltype(std::declval<U>()(V(), ref), int())*)
     { 
-        return std::is_same<decltype(std::declval<U>()(Vec(), ref)), void>::value;
+        return std::is_same<decltype(std::declval<U>()(V(), ref)), void>::value;
     }
 
     static constexpr bool impl (...)
@@ -85,14 +85,14 @@ struct IsGradient
     enum{ value = impl((int*)0) };
 };
 
-template <class T, class Vec>
-Vec IsGradient<T, Vec>::ref;
+template <class T, class V>
+V IsGradient<T, V>::ref;
 
 
-template <class T, class Vec>
+template <class T, class V = Vec>
 struct IsFunctionGradient
 {
-    static Vec ref;
+    static V ref;
 
 
     template <class U>
@@ -101,23 +101,27 @@ struct IsFunctionGradient
         enum { value = false };
     };
 
-    template <typename U, typename V>
-    struct IsPair<std::pair<U, V>>
+    template <typename U, typename W>
+    struct IsPair<std::pair<U, W>>
     {
         enum { value = true };
     };
 
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec()), void())*)
+    static constexpr bool impl (decltype(std::declval<U>()(V()), void())*)
     { 
-        return IsPair<decltype(std::declval<U>()(Vec()))>::value;
+        return IsPair<decltype(std::declval<U>()(V()))>::value;
+        
+        // return IsPair<decltype(std::declval<U>()(V()))>::value &&
+        //        std::is_floating_point<decltype(std::get<0>(std::declval<U>()(V())))>::value &&
+        //        impl::IsMat<decltype(std::get<1>(std::declval<U>()(V())))>::value;
     }
 
     template <class U = T>
-    static constexpr bool impl (decltype(std::declval<U>()(Vec(), ref), int())*)
+    static constexpr bool impl (decltype(std::declval<U>()(V(), ref), int())*)
     { 
-        return std::is_floating_point<decltype(std::declval<U>()(Vec(), ref))>::value;
+        return std::is_floating_point<decltype(std::declval<U>()(V(), ref))>::value;
     }
 
     static constexpr bool impl (...)
@@ -129,9 +133,37 @@ struct IsFunctionGradient
     enum{ value = impl((int*)0) };
 };
 
-template <class T, class Vec>
-Vec IsFunctionGradient<T, Vec>::ref;
+template <class T, class V>
+V IsFunctionGradient<T, V>::ref;
 //@}
+
+
+
+namespace impl
+{
+
+/** @brief Function wrapping for user uniform defined function calculation
+ * 
+*/
+template <class Impl, typename Float = ::nlpp::types::Float>
+struct Function : public Impl
+{
+    Function (const Impl& impl = Impl{}) : Impl(impl) {}
+
+    
+};
+
+} // namespace impl
+
+
+template <class Impl, typename Float = ::nlpp::types::Float>
+using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value,
+                                    Impl,
+                                    std::conditional_t<IsFunction<Impl>::value || IsFunctionGradient<Impl>::value,
+                                                       impl::Function<Impl, Float>,
+                                                       void>>;
+
+
 
 
 
@@ -163,7 +195,7 @@ struct Gradient : public Impl
     /** @name
      *  @brief Overloads for @c operator() wrapping the actual implementation (@c Impl::operator())
      * 
-     *  @tparam Vec A vector or matrix type represented inheriting from Eigen::DenseBase<Vec>
+     *  @tparam Vec A vector or matrix type inheriting from Eigen::DenseBase<Vec>
      *  @param x The vector or matrix where the actual function will be called at
      *  @param g A reference to a vector, where the gradient of the actual implementation will be saved
      * 
@@ -273,15 +305,25 @@ struct Gradient : public Impl
         return f;
     }
     //@}
+
+
+    template <class Vec>
+    auto gradient (const Eigen::MatrixBase<Vec>& x)
+    {
+        return operator()(x.eval());
+    }
+
+    template <class Vec>
+    void gradient (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
+    {
+        operator()(x.eval(), g);
+    }
 };
-
-
 
 
 
 namespace impl
 {
-
 
 /** @name 
  *  @brief The uniform interface wrapper for function/gradient functors
@@ -307,10 +349,10 @@ struct FunctionGradient;
  *        into @c Gradient<Grad> first
 */
 template <class Func, class Grad>
-struct FunctionGradient<Func, Grad> : public Func, public Gradient<Grad>
+struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Grad>
 {
     /// Single constructor, delegated to Func and Grad
-    FunctionGradient (const Func& f = Func{}, const Grad& g = Grad{}) : Func(f), Gradient<Grad>(g) {}
+    FunctionGradient (const Func& f = Func{}, const Grad& g = Grad{}) : Function<Func>(f), Gradient<Grad>(g) {}
     
     /** @name
      *  @brief Operators for function/gradient calls.
@@ -326,42 +368,15 @@ struct FunctionGradient<Func, Grad> : public Func, public Gradient<Grad>
     template <class Vec>
     auto operator () (const Vec& x)
     {
-        return std::make_pair(Func::operator()(x.eval()), Gradient<Grad>::operator()(x.eval()));
+        return std::make_pair(function(x), gradient(x));
     }
 
     template <class X, class G>
     auto operator () (const Eigen::MatrixBase<X>& x, Eigen::MatrixBase<G>& g)
     {
-        Gradient<Grad>::operator()(x.eval(), g);
+        gradient(x, g);
 
-        return Func::operator()(x.eval());
-    }
-    //@}
-
-
-    /** @name
-     *  @brief Delegation for the base implementation of the function and gradient calls
-     * 
-     *  @param x The vector for which we will be evaluating both function and gradient
-     *  @param g The reference where we are going to store the gradient
-    */
-    //@{
-    template <class Vec>
-    auto function (const Eigen::MatrixBase<Vec>& x)
-    {
-        return Func::operator()(x.eval());
-    }
-
-    template <class Vec>
-    auto gradient (const Eigen::MatrixBase<Vec>& x)
-    {
-        return Gradient<Grad>::operator()(x.eval());
-    }
-
-    template <class Vec>
-    void gradient (const Eigen::MatrixBase<Vec>& x, Eigen::MatrixBase<Vec>& g)
-    {
-        Gradient<Grad>::operator()(x.eval(), g);
+        return function(x);
     }
     //@}
 };
@@ -462,10 +477,19 @@ struct FunctionGradient<FuncGrad> : public Gradient<FuncGrad>
 
 
 
+/** @brief Alias for impl::FunctionGradient
+ *  @details There are three conditions:
+ *           - If @c Grad is not given and
+ *              - If @c Func is already a impl::FunctionGradient, simply set the result to itself (to avoid multiple wrapping)
+ *              - Otherwise set the result to impl::FunctionGradient<Func>
+ *           - Otherwise set the result to impl::FunctionGradient<Func, Grad>
+*/
 template <class Func, class Grad = void>
 using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value, 
-    std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value, Func, impl::FunctionGradient<Func>>,
-    impl::FunctionGradient<Func, Grad>>;
+                                            std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value, 
+                                                               Func, 
+                                                               impl::FunctionGradient<Func>>,
+                                            impl::FunctionGradient<Func, Grad>>;
 
 
 
@@ -476,7 +500,15 @@ using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
 */
 //@{
 
-/// Delegate the call to Gradient<impl, Float>(impl)
+/// Delegate the call to Function<Impl, Float>(impl)
+template <class Impl, typename Float = ::nlpp::types::Float>
+auto function (const Impl& impl)
+{
+    return Function<Impl, Float>(impl);
+}
+
+
+/// Delegate the call to Gradient<Impl, Float>(impl)
 template <class Impl, typename Float = ::nlpp::types::Float>
 auto gradient (const Impl& impl)
 {
