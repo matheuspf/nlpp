@@ -19,34 +19,41 @@ namespace nlpp
 namespace wrap
 {
 
-template <class FunctionGradient, class Vec>
+template <class FunctionGradient, class V>
 struct LineSearch
 {
-	LineSearch (FunctionGradient f, const Vec& x, const Vec& d) : f(f), x(x), d(d) {}
+	using Float = typename V::Scalar;
 
-	auto operator () (double a)
+	LineSearch (const FunctionGradient& f, const V& x, const V& d) : f(f), x(x), d(d), gx(x.rows(), x.cols())
 	{
-		static Vec gx(x.rows(), x.cols());
+	}
 
-		auto fx = f(x + a * d, static_cast<Vec&>(gx));
+	std::pair<Float, Float> operator () (Float a)
+	{
+		auto fx = f(x + a * d, gx);
 
 		return std::make_pair(fx, gx.dot(d));
 	}
 
-	double function (double a)
+	Float function (Float a)
 	{
 		return f.function(x + a * d);
 	}
 
-	double gradient (double a)
+	Float gradient (Float a)
 	{
-		return f.gradient(x + a * d).dot(d);
+		f.gradient(x + a * d, gx);
+
+		return gx.dot(d);
 	}
 
-	FunctionGradient f;
 
-	Vec x;
-	Vec d;
+	const FunctionGradient& f;
+
+	const V& x;
+	const V& d;
+
+	typename V::PlainObject gx;
 };
 
 } // namespace wrap
@@ -73,44 +80,20 @@ struct LineSearchBase
 	template <class Function, class Vec>
 	double impl (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
-		wrap::LineSearch<Function, Vec> ls(f, x, dir);
-
-		return static_cast<Impl&>(*this).lineSearch(ls);
+		return static_cast<Impl&>(*this).lineSearch(wrap::LineSearch<Function, Vec>(f, x, dir));
 	}
-
-
-	/** @name
-	 * 	@brief Decide whether to calculate the norm of @c x or not
-	*/
-	//@{
-	template <class Function, class Vec, bool CalcNorm_ = CalcNorm, std::enable_if_t<!CalcNorm_, int> = 0>
-	double delegate (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
-	{
-		//N = x.size();
-
-		return impl(f, x, dir);
-	}
-
-	template <class Function, class Vec, bool CalcNorm_ = CalcNorm, std::enable_if_t<CalcNorm_, int> = 0>
-	double delegate (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
-	{
-		//xNorm = x.norm();
-
-		return delegate<Function, Vec, false>(f, x, dir);
-	}
-	//@}
 
 
 	template <class FunctionGradient, class Vec, std::enable_if_t<wrap::IsFunctionGradient<FunctionGradient, Vec>::value, int> = 0>
 	double operator () (const FunctionGradient& f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
-		return delegate(f, x.eval(), dir.eval());
+		return impl(f, x, dir);
 	}
 
 	template <class Function, class Gradient, class Vec>
 	double operator () (Function f, Gradient g, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
-		return delegate(wrap::functionGradient(f, g), x.eval(), dir.eval());
+		return impl(wrap::functionGradient(f, g), x, dir);
 	}
 
 	template <class Function, class Vec, std::enable_if_t<wrap::IsFunction<Function, Vec>::value, int> = 0>
@@ -123,9 +106,6 @@ struct LineSearchBase
 	template <class Function, class Gradient>
 	double operator () (Function f, Gradient g, double x, double dir = 1.0)
 	{
-		N = 1;
-		xNorm = std::abs(x);
-
 		return operator()([&](double a){ return f(x + a * dir); },
 						  [&](double a){ return g(x + a * dir) * dir; });
 	}
@@ -142,10 +122,6 @@ struct LineSearchBase
 	LineSearchBase () {}
 
 	friend Impl;
-
-	int N;
-
-	double xNorm;
 };
 
 

@@ -15,7 +15,7 @@ int main ()
 
 	params.stop.fTol = 0.0;
 
-	CG<FR_PR, StrongWolfe> cg(StrongWolfe{}, stop::GradientOptimizer<>{});
+	CG<FR_PR, StrongWolfe> cg(params);
 
 	Rosenbrock func;
 

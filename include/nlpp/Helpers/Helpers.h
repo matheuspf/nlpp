@@ -168,4 +168,41 @@ inline constexpr int sign (T t)
     return int(T{0} < t) - int(t < T{0});
 }
 
+
+
+/** @brief Some forward declarations
+*/
+//@{
+namespace out
+{
+
+template <int = 0, typename = types::Float>
+struct GradientOptimizer;
+
+} // namespace out
+
+
+namespace stop
+{
+
+template <bool = false, typename = types::Float>
+struct GradientOptimizer;
+
+} // namespace stop
+
+
+
+struct StrongWolfe;
+
+
+namespace params
+{
+
+template <class = StrongWolfe, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<0>>
+struct GradientOptimizer;
+
+} // namespace params
+//@}
+
+
 } // namespace nlpp
