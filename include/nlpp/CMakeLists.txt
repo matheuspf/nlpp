@@ -1,4 +1,4 @@
-set(include_files CG GradientDescent HyperbolicPenalty LineSearch Newton QuasiNewton TestFunctions TrustRegion)
+set(include_folders CG GradientDescent HyperbolicPenalty LineSearch Newton QuasiNewton TestFunctions TrustRegion)
 
 if(NOT NLPP_INCLUDE_INSTALL_DIR)
     if(INCLUDE_INSTALL_DIR)
@@ -9,9 +9,9 @@ if(NOT NLPP_INCLUDE_INSTALL_DIR)
 endif()
 
 
-foreach(file ${include_files})
+foreach(folder ${include_folders})
     install(
-        DIRECTORY ${PROJECT_SOURCE_DIR}/include/${lib_name}/${file}
+        DIRECTORY ${PROJECT_SOURCE_DIR}/include/${lib_name}/${folder}
         DESTINATION ${NLPP_INCLUDE_INSTALL_DIR}/${lib_name}
     )
 endforeach()

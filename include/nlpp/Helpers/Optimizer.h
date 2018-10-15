@@ -49,10 +49,10 @@ namespace nlpp
  *           given arguments. 
  * 
  *  @tparam Impl The actual implementation, inheriting from GradientOptimizer<Impl, Parameters>
- *  @tparam Parameters The base parameters for @c Impl, given as argument by @c Impl
+ *  @tparam Parameters_ The base parameters for @c Impl, given as argument by @c Impl
  * 
- *  @note We inherit from the parameter classes from here, so we create a single inheritance chain, not having to 
- *        resort to multiple inheritance.
+ *  @note We inherit from the parameter classes here, so we create a single inheritance chain, not having to 
+ *        resort to multiple inheritance. Also, this way we can have easy access to any member of the parameters class
 */
 template <class Impl, class Parameters_ = params::GradientOptimizer<>>
 struct GradientOptimizer : public Parameters_
@@ -68,38 +68,27 @@ struct GradientOptimizer : public Parameters_
      *  @brief Ensure uniform interface, wrapping arguments before delegation
      * 
      *  @details Given a function OR function and gradient OR function/gradient, wrap the calls accordingly before delegating
-     *           the call to the @c optimize function of the actual implementation
+     *           the call to the @c optimize function of the actual implementation. If a function only is given, a default finite 
+     *           gradient estimation is used. The wrapping interface takes care of the complexity, so we only need to delegate the 
+     *           given parameters.
      * 
      *  @tparam Function A scalar function functor
      *  @tparam Gradient A gradient function functor
      *  @tparam FunctionGradient A function/gradient functor
-     *  @tparam Vec The Eigen::MatrixBase input argument
+     *  @tparam V A Eigen object input argument, which could be also an expression (it is evaluated before the call to the optimize function)
      *  @tparam Args... Any additional parameter to be passed to the optimizer
     */
     //@{
-
-    /// When the function and gradient functors are given separatelly
-    template <class Function, class Gradient, class Vec, typename... Args>
-            //   std::enable_if_t<wrap::IsFunction<Function, Vec>::value && wrap::IsGradient<Gradient, Vec>::value, int> = 0>
-    Vec operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<Vec>& x, Args&&... args)
+    template <class Function, class Gradient, class V, typename... Args>
+    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
         return static_cast<Impl&>(*this).optimize(wrap::functionGradient(function, gradient), x.eval(), std::forward<Args>(args)...);
     }
 
-    /// When the function and gradient functors are given in a single class
-    template <class FunctionGradient, class Vec, typename... Args,
-              std::enable_if_t<wrap::IsFunctionGradient<FunctionGradient, Vec>::value, int> = 0>
-    Vec operator () (const FunctionGradient& funcGrad, const Eigen::MatrixBase<Vec>& x, Args&&... args)
+    template <class Function, class V, typename... Args>
+    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<Impl&>(*this).optimize(wrap::functionGradient(funcGrad), x.eval(), std::forward<Args>(args)...);
-    }
-
-    /// When only the function functor is given - in this case, we use finite difference to estimate the gradient
-    template <class Function, class Vec, typename... Args, 
-              std::enable_if_t<wrap::IsFunction<Function, Vec>::value, int> = 0>
-    Vec operator () (const Function& func, const Eigen::MatrixBase<Vec>& x, Args&&... args)
-    {
-        return operator()(func, fd::gradient(func), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(wrap::functionGradient(function), x.eval(), std::forward<Args>(args)...);
     }
     //@}
 };

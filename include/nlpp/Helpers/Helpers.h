@@ -13,8 +13,8 @@
 namespace nlpp
 {
 
-
-namespace types /// Types namespace
+/// Default types
+namespace types
 {
 	using Float = double;
 	using Int = int;
@@ -28,18 +28,18 @@ namespace wrap
  *  @brief Decides whether a given function has or has not a overloaded member functions taking the given parameters
 */
 //@{
-HAS_OVERLOADED_FUNC(operator(), HasOp);
+HAS_OVERLOADED_FUNC(operator(), HasOperator);
 
-HAS_OVERLOADED_FUNC(function, HasFunc);
+HAS_OVERLOADED_FUNC(function, HasFunction);
 
-HAS_OVERLOADED_FUNC(gradient, HasGrad);
+HAS_OVERLOADED_FUNC(gradient, HasGradient);
 //@}
 
 } // namespace wrap
 
 
 /** @name
- *  @brief Some useful typedefs
+ *  @brief Default vector and matrix types
 */
 //@{
 template <typename T>
@@ -57,9 +57,10 @@ using Mati = MatX<types::Int>;
 
 
 
-namespace impl /// Impl namespace
+namespace impl
 {
 
+/// A functor that does nothing
 struct NullFunctor
 {
 	void operator () (...) {}
@@ -71,19 +72,16 @@ struct NullFunctor
 */
 //@{
 template <typename T>
-struct IsMatImpl
+struct IsMat
 {
 	template <class U>
-	static constexpr int impl (const Eigen::EigenBase<U>&);
+	static constexpr bool impl (const Eigen::EigenBase<U>&) { return true; }
 
-	static constexpr void impl (...);
+	static constexpr bool impl (...) { return false; }
 
-	enum { value = std::is_same<decltype(impl(std::declval<std::decay_t<T>>())), int>::value };
+
+	enum { value = impl(std::declval<std::decay_t<T>>()) };
 };
-
-
-template <typename T>
-struct IsMat : public IsMatImpl<std::decay_t<T>> {};
 
 template <typename T>
 struct IsScalar
@@ -94,12 +92,39 @@ struct IsScalar
 	};
 };
 
-
 template <typename T>
 constexpr bool isMat = IsMat<T>::value;
 
 template <typename T>
 constexpr bool isScalar = IsScalar<T>::value;
+//@}
+
+
+
+/** @name
+ *  @brief Some aliases to Eigen plain types
+*/
+//@{
+template <class V>
+using Plain = typename V::PlainObject;
+
+template <class V>
+using PlainMatrix = typename V::PlainMatrix;
+
+template <class V>
+using PlainArray = typename V::PlainArray;
+//@}
+
+
+/** @name
+ *  @brief Define function overloading calling precedence
+*/
+//@{
+template <int I = 0, int Max = 10>
+struct Precedence : Precedence<I+1, Max> {};
+
+template <int I>
+struct Precedence <I, I> {};
 //@}
 
 
@@ -110,10 +135,11 @@ constexpr bool isScalar = IsScalar<T>::value;
 
 
 
-
+/// Definition of some constants
 namespace constants
 {
 
+/// If boost is already included, use its defined constants
 #ifdef BOOST_VERSION
 
 #include <boost/math/constants/constants.hpp>
@@ -124,6 +150,7 @@ constexpr T pi_ = boost::math::constants::pi<T>();
 template <typename T = double>
 constexpr T phi_ = boost::math::constants::phi<T>();
 
+/// Else define our own
 #else
 
 template <typename T = types::Float>
@@ -146,7 +173,10 @@ constexpr double phi = phi_<types::Float>;
 
 
 
-
+/** @name
+ *  @brief Useful for some line search operations
+*/
+//@{
 template <typename T>
 inline constexpr decltype(auto) shift (T&& x)
 {
@@ -160,8 +190,10 @@ inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args)
 
 	return shift(std::forward<U>(y), std::forward<Args>(args)...);
 }
+//@}
 
 
+/// Implement Matlab's sign function
 template <typename T>
 inline constexpr int sign (T t)
 {
@@ -191,14 +223,14 @@ struct GradientOptimizer;
 } // namespace stop
 
 
-
+/// Because this is used as the default line search procedure in many cases
 struct StrongWolfe;
 
 
 namespace params
 {
 
-template <class = StrongWolfe, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<0>>
+template <class = StrongWolfe, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
 struct GradientOptimizer;
 
 } // namespace params

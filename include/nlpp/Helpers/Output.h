@@ -39,7 +39,7 @@ struct GradientOptimizer<1, Float>
 
     template <class LineSearch, class Stop, class Output, class V>
     void operator() (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
-               const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx)
+                     const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx)
     {
         handy::print("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose()) << std::flush;
     }

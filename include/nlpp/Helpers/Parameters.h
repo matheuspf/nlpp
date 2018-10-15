@@ -11,7 +11,6 @@ namespace params
 {
 
 /** @brief Base parameter class for gradient optimizers
- * 
  *  @details Define the basic variables used by any gradient based optimizer
 */
 template <class LineSearch_, class Stop_, class Output_>

@@ -87,7 +87,8 @@ BUILD_CG_STRUCT(double fr = FR::operator()(fa, fb);
 namespace params
 {
 
-
+/** @brief Conjugate gradient parameters class, extending flow base GradientOptimizer parameters
+*/
 template <class CGType = FR_PR, class LineSearch = StrongWolfe, 
 		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct CG : public GradientOptimizer<LineSearch, Stop, Output>
@@ -101,9 +102,9 @@ struct CG : public GradientOptimizer<LineSearch, Stop, Output>
     }
 
 
-	CGType cg;
+	CGType cg;			///< The functor that calculates the search direction, given the current gradient and the previous directions
 
-	double v = 0.1;
+	double v = 0.1;		///< The minimum factor of orthogonality that the current direction must have
 };
 
 
