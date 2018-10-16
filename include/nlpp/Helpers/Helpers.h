@@ -75,12 +75,12 @@ template <typename T>
 struct IsMat
 {
 	template <class U>
-	static constexpr bool impl (const Eigen::EigenBase<U>&) { return true; }
+	static constexpr bool impl (Eigen::EigenBase<U>*) { return true; }
 
 	static constexpr bool impl (...) { return false; }
 
 
-	enum { value = impl(std::declval<std::decay_t<T>>()) };
+	enum { value = impl((std::decay_t<T>*)0) };
 };
 
 template <typename T>

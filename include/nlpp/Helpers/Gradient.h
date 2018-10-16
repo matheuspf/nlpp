@@ -19,6 +19,8 @@
 
 #include "Helpers.h"
 
+#include "FiniteDifference.h"
+
 
 namespace nlpp
 {
@@ -50,7 +52,7 @@ struct IsFunction
     static constexpr int impl (::nlpp::impl::Precedence<P>) { return P; }
 
     /// If T has an function member `Float operator()(V)`
-    template <class U = T, int P = 1, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>()(V()))>::value, int> = 0>
+    template <class U = T, int P = 1, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().operator()(V()))>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<P>) { return P; }
 
     /// Otherwise return false
@@ -67,11 +69,11 @@ struct IsGradient
     static V ref;   /// We need a lvalue reference to the type V
 
     /// If T has an function member `void gradient(V, V&)`
-    template <class U = T, int P = 0, std::enable_if_t<std::is_same<decltype(std::declval<U>().gradient(V(), ref)), void>, int> = 0>
+    template <class U = T, int P = 0, std::enable_if_t<std::is_same<decltype(std::declval<U>().gradient(V(), ref)), void>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<P>) { return P; }
 
     /// If T has an function member `void operator()(V, V&)`
-    template <class U = T, int P = 1, std::enable_if_t<std::is_same<decltype(std::declval<U>()(V(), ref)), void>, int> = 0>
+    template <class U = T, int P = 1, std::enable_if_t<std::is_same<decltype(std::declval<U>().operator()(V(), ref)), void>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<P>) { return P; }
 
     /// If T has an function member `Eigen::EigenBase<W> gradient(V)`
@@ -79,7 +81,7 @@ struct IsGradient
     static constexpr int impl (::nlpp::impl::Precedence<P>) { return P; }
 
     /// If T has an function member `Eigen::EigenBase<W> operator()(V)`
-    template <class U = T, int P = 3, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>()(V()))>, int> = 0>
+    template <class U = T, int P = 3, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().operator()(V()))>, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<P>) { return P; }
 
     /// Otherwise return false
@@ -105,7 +107,7 @@ struct IsFunctionGradient
 
     /// If T has an function member `Float operator()(V, V&)`
     template <class U = T, int P = 1,
-              std::enable_if_t<std::is_floating_point<decltype(std::declval<U>()operator()(V(), ref))>::value, int> = 0>
+              std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().operator()(V(), ref))>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<P>) { return P; }
 
     /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> functionGradient(V)`
@@ -116,8 +118,8 @@ struct IsFunctionGradient
 
     /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> operator()(V)`
     template <class U = T, int P = 3, 
-              std::enable_if_t<std::is_floating_point<std::decay_t<decltype(std::get<0>(std::declval<U>()(V())))>>::value &&
-                               :nlpp::impl::isMat<decltype(std::get<1>(std::declval<U>()(V())))>, int> = 0>
+              std::enable_if_t<std::is_floating_point<std::decay_t<decltype(std::get<0>(std::declval<U>().operator()(V())))>>::value &&
+                               ::nlpp::impl::IsMat<decltype(std::get<1>(std::declval<U>().operator()(V())))>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<P>) { return P; }
 
     /// Otherwise return false
@@ -139,11 +141,12 @@ namespace impl
 /** @brief Function wrapping for user uniform defined function calculation
  * 
 */
-template <class Impl>
+template <class Impl_>
 struct Function : public Impl_
 {
     using Impl = Impl_;
-    using Impl::Impl;
+    
+    Function (const Impl& impl) : Impl(impl) {}
 
 
     static_assert(IsFunction<Impl>::value >= 0, "The given functor does not have a function interface");
@@ -172,7 +175,7 @@ struct Function : public Impl_
 } // namespace impl
 
 template <class Impl>
-using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value, impl::Function<Impl>>;
+using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value, Impl, impl::Function<Impl>>;
 
 
 
@@ -188,13 +191,13 @@ struct Gradient : public Impl_
     static_assert(IsGradient<Impl>::value >= 0, "The given functor does not have a gradient interface");
 
 
-    template <typename... Args, std::enable_if_t<IsGradient<I>::value % 2 == 0, int> = 0>
+    template <typename... Args, class I = Impl, std::enable_if_t<IsGradient<I>::value % 2 == 0, int> = 0>
     auto delegate (Args&&... args)
     {
         return Impl::gradient(std::forward<Args>(args)...);
     }
 
-    template <typename... Args, std::enable_if_t<IsGradient<I>::value % 2 != 0, int> = 0>
+    template <typename... Args, class I = Impl, std::enable_if_t<IsGradient<I>::value % 2 != 0, int> = 0>
     auto delegate (Args&&... args)
     {
         return Impl::operator()(std::forward<Args>(args)...);
@@ -247,7 +250,7 @@ struct Gradient : public Impl_
 } // namespace impl
 
 template <class Impl>
-using Gradient = std::conditional_t<handy::IsSpecialization<Impl, impl::Gradient>::value, impl::Gradient<Impl>>;
+using Gradient = std::conditional_t<handy::IsSpecialization<Impl, impl::Gradient>::value, Impl, impl::Gradient<Impl>>;
 
 
 
@@ -320,13 +323,13 @@ struct FunctionGradient<Impl_> : public Impl_
     static_assert(IsFunctionGradient<Impl>::value >= 0, "The given functor does not have a function/gradient interface");
 
 
-    template <typename... Args, std::enable_if_t<IsFunctionGradient<I>::value % 2 == 0, int> = 0>
+    template <typename... Args, class I = Impl, std::enable_if_t<IsFunctionGradient<I>::value % 2 == 0, int> = 0>
     auto delegate (Args&&... args)
     {
         return Impl::fuctionGradient(std::forward<Args>(args)...);
     }
 
-    template <typename... Args, std::enable_if_t<IsFunctionGradient<I>::value % 2 != 0, int> = 0>
+    template <typename... Args, class I = Impl, std::enable_if_t<IsFunctionGradient<I>::value % 2 != 0, int> = 0>
     auto delegate (Args&&... args)
     {
         return Impl::operator()(std::forward<Args>(args)...);

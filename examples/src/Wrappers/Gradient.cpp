@@ -51,27 +51,32 @@ struct FuncGrad2
 
 int main ()
 {
-    auto func1 = wrap::functionGradient(Func{}, [](const Vec& x) -> Vec { return 2 * x; });
+    auto func1 = wrap::function([](const Eigen::Vector2d& x){ return x[0]*x[0] + 2*x[1]; });
 
-    Vec x(2); x << 1.0, 2.0;
-    Vec g12(2), g22(2);
+    func1()
 
-    auto [f11, g11] = func1(x);
+
+    //auto func1 = wrap::functionGradient(Func{}, [](const Vec& x) -> Vec { return 2 * x; });
+
+    // Vec x(2); x << 1.0, 2.0;
+    // Vec g12(2), g22(2);
+
+    // auto [f11, g11] = func1(x);
     
-    double f12 = func1(x, g12);
+    // double f12 = func1(x, g12);
 
-    handy::print(f11, "   ", g11.transpose());
-    handy::print(f12, "   ", g12.transpose());
+    // handy::print(f11, "   ", g11.transpose());
+    // handy::print(f12, "   ", g12.transpose());
 
 
-    auto func2 = wrap::functionGradient(wrap::functionGradient(FuncGrad{}));
+    // auto func2 = wrap::functionGradient(wrap::functionGradient(FuncGrad{}));
 
-    auto [f21, g21] = func2(x);
+    // auto [f21, g21] = func2(x);
 
-    double f22 = func2(x, g22);
+    // double f22 = func2(x, g22);
 
-    handy::print(f21, "   ", g21.transpose());
-    handy::print(f22, "   ", g22.transpose());
+    // handy::print(f21, "   ", g21.transpose());
+    // handy::print(f22, "   ", g22.transpose());
 
 
 
