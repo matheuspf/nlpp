@@ -7,6 +7,11 @@ using Vec = Eigen::VectorXd;
 
 struct Func
 {
+    // double function (const Vec& x)
+    // {
+    //     return x[0] + x[1];
+    // }
+
     double operator () (const Vec& x)
     {
         return x[0] + x[1];
@@ -29,31 +34,73 @@ struct Grad2
     }
 };
 
-struct FuncGrad
+// struct FuncGrad
+// {
+//     auto operator () (const Vec& x)
+//     {
+//         return std::make_pair(Func{}(x), Grad{}(x));
+//     }
+// };
+
+// struct FuncGrad2
+// {
+//     double operator () (const Vec& x, Vec& g)
+//     {
+//         Grad2{}(x, g);
+
+//         return Func{}(x);
+//     }
+// };
+
+
+struct Foo
 {
-    auto operator () (const Vec& x)
+    template <class T>
+    double function (const Eigen::MatrixBase<T>& x)
     {
-        return std::make_pair(Func{}(x), Grad{}(x));
+        return x[0]*x[0] + 2*x[1];
     }
 };
 
-struct FuncGrad2
-{
-    double operator () (const Vec& x, Vec& g)
-    {
-        Grad2{}(x, g);
 
-        return Func{}(x);
-    }
-};
+
+// template <class T>
+// struct Test
+// {
+//     template <class Der>
+//     static constexpr bool impl ( Eigen::MatrixBase<Der>) { return true; }
+
+//     static constexpr bool impl (...) { return false; }
+
+
+//     enum { value = impl(nullptr) }
+// };
+
+
 
 
 
 int main ()
 {
-    auto func1 = wrap::function([](const Eigen::Vector2d& x){ return x[0]*x[0] + 2*x[1]; });
+    Eigen::Vector2d x(2, 3);
+    Eigen::VectorXf y(2); y << 2, 3;
 
-    func1()
+    auto func = [](const Eigen::VectorXd& x){ return x[0]*x[0] + 2*x[1]; };
+    //auto grad = [](const Eigen::VectorXd& x){ return 2*x[0] + 2; };
+    auto grad = [](const Eigen::VectorXd& x, auto& g) -> void { g[0] = 2*x[0], g[1] = 2; };
+
+    //auto func1 = wrap::function(func);
+    auto grad1 = wrap::gradient(grad);
+
+    //auto fx = func1(x);
+    auto gx = grad1(x);
+
+    handy::print(gx.transpose());
+
+
+
+
+    //auto func1 = wrap::function([](const Eigen::Vector2d& x){ return x[0]*x[0] + 2*x[1]; });
 
 
     //auto func1 = wrap::functionGradient(Func{}, [](const Vec& x) -> Vec { return 2 * x; });
