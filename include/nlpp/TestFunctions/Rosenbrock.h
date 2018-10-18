@@ -9,7 +9,7 @@ namespace nlpp
 struct Rosenbrock
 {
 	template <class Derived>
-	double operator () (const Eigen::DenseBase<Derived>& x) const
+	double operator () (const Eigen::MatrixBase<Derived>& x)
 	{
 		double r = 0.0;
 

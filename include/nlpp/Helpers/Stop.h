@@ -68,9 +68,9 @@ struct GradientOptimizer
 
 
 template <bool Exclusive, typename Float>
-struct GradientOptimizer : public impl::GradientOptimizer<GradientOptimizer<Exclusive, Float>>
+struct GradientOptimizer : public impl::GradientOptimizer<GradientOptimizer<Exclusive, Float>, Float>
 {
-    using impl::GradientOptimizer<GradientOptimizer<Exclusive, Float>>::GradientOptimizer;
+    using impl::GradientOptimizer<GradientOptimizer<Exclusive, Float>, Float>::GradientOptimizer;
 
     bool stop (double xStop, double fStop, double gStop)
     {
@@ -80,9 +80,9 @@ struct GradientOptimizer : public impl::GradientOptimizer<GradientOptimizer<Excl
 
 
 template <typename Float>
-struct GradientOptimizer<false, Float> : public impl::GradientOptimizer<GradientOptimizer<false, Float>>
+struct GradientOptimizer<false, Float> : public impl::GradientOptimizer<GradientOptimizer<false, Float>, Float>
 {
-    using impl::GradientOptimizer<GradientOptimizer<false, Float>>::GradientOptimizer;
+    using impl::GradientOptimizer<GradientOptimizer<false, Float>, Float>::GradientOptimizer;
 
     bool stop (double xStop, double fStop, double gStop)
     {

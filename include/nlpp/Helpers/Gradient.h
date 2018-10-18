@@ -202,7 +202,7 @@ struct Gradient : public Impl_
 
 
     template <class V, class I = Impl, std::enable_if_t<IsGradient<I, V>::value < 2, int> = 0>
-    void gradient (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<V>& g)
+    void gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
     {
         delegate(x, g);
     }
@@ -219,7 +219,7 @@ struct Gradient : public Impl_
 
 
     template <class V, class I = Impl, std::enable_if_t<IsGradient<I, V>::value >= 2, int> = 0>
-    void gradient (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<V>& g)
+    void gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
     {
         g = delegate(x);
     }
@@ -232,7 +232,7 @@ struct Gradient : public Impl_
 
 
     template <class V>
-    void operator() (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<V>& g)
+    void operator() (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
     {
         gradient(x, g);
     }
@@ -280,9 +280,25 @@ struct FunctionGradient;
 template <class Func, class Grad>
 struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Grad>
 {
+    using Function<Func>::function;
+    using Gradient<Grad>::gradient;
+
     /// Single constructor, delegated to Func and Grad
     FunctionGradient (const Func& f = Func{}, const Grad& g = Grad{}) : Function<Func>(f), Gradient<Grad>(g) {}
     
+
+    // template <class... Args>
+    // auto function (Args&&... args)
+    // {
+    //     return Function<Func>::operator()(std::forward<Args>(args)...);
+    // }
+
+    // template <class... Args>
+    // auto gradient (Args&&... args)
+    // {
+    //     return Gradient<Grad>::operator()(std::forward<Args>(args)...);
+    // }
+
     /** @name
      *  @brief Operators for function/gradient calls.
      * 
@@ -301,7 +317,7 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
     }
 
     template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<V>& g)
+    auto operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
     {
         gradient(x, g);
 

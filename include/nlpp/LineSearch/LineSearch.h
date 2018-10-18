@@ -48,7 +48,7 @@ struct LineSearch
 	}
 
 
-	const FunctionGradient& f;
+	FunctionGradient f;
 
 	const V& x;
 	const V& d;
@@ -84,7 +84,7 @@ struct LineSearchBase
 	}
 
 
-	template <class FunctionGradient, class Vec, std::enable_if_t<wrap::IsFunctionGradient<FunctionGradient, Vec>::value, int> = 0>
+	template <class FunctionGradient, class Vec, std::enable_if_t<(wrap::IsFunctionGradient<FunctionGradient, Vec>::value >= 0), int> = 0>
 	double operator () (const FunctionGradient& f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
 		return impl(f, x, dir);
@@ -96,7 +96,7 @@ struct LineSearchBase
 		return impl(wrap::functionGradient(f, g), x, dir);
 	}
 
-	template <class Function, class Vec, std::enable_if_t<wrap::IsFunction<Function, Vec>::value, int> = 0>
+	template <class Function, class Vec, std::enable_if_t<(wrap::IsFunction<Function, Vec>::value >= 0 && wrap::IsFunctionGradient<Function, Vec>::value < 0), int> = 0>
 	double operator () (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
 	{
 		return operator()(f, fd::gradient(f), x, dir);
