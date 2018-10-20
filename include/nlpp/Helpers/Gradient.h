@@ -48,11 +48,11 @@ template <class T, class V = Mat>
 struct IsFunction
 {
     /// If T has an function member `Float function(V)`
-    template <class U = T, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().function(V()))>::value, int> = 0>
+    template <class U = T, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().function(std::declval<V>()))>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<0>) { return 0; }
 
     /// If T has an function member `Float operator()(V)`
-    template <class U = T, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().operator()(V()))>::value, int> = 0>
+    template <class U = T, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().operator()(std::declval<V>()))>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<1>) { return 1; }
 
     /// Otherwise return false
@@ -66,22 +66,22 @@ struct IsFunction
 template <class T, class V = Mat>
 struct IsGradient
 {
-    static V ref;   /// We need a lvalue reference to the type V
+    static typename V::PlainObject ref;   /// We need a lvalue reference to the type V
 
     /// If T has an function member `void gradient(V, V&)`
-    template <class U = T, std::enable_if_t<std::is_same<decltype(std::declval<U>().gradient(V(), ref)), void>::value, int> = 0>
+    template <class U = T, std::enable_if_t<std::is_same<decltype(std::declval<U>().gradient(std::declval<V>(), ref)), void>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<0>) { return 0; }
 
     /// If T has an function member `void operator()(V, V&)`
-    template <class U = T, std::enable_if_t<std::is_same<decltype(std::declval<U>().operator()(V(), ref)), void>::value, int> = 0>
+    template <class U = T, std::enable_if_t<std::is_same<decltype(std::declval<U>().operator()(std::declval<V>(), ref)), void>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<1>) { return 1; }
 
     /// If T has an function member `Eigen::EigenBase<W> gradient(V)`
-    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().gradient(V()))>, int> = 0>
+    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().gradient(std::declval<V>()))>, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<2>) { return 2; }
 
     /// If T has an function member `Eigen::EigenBase<W> operator()(V)`
-    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().operator()(V()))>, int> = 0>
+    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>()))>, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<3>) { return 3; }
 
     /// Otherwise return false
@@ -92,30 +92,30 @@ struct IsGradient
 };
 
 template <class T, class V>
-V IsGradient<T, V>::ref;
+typename V::PlainObject IsGradient<T, V>::ref;
 
 /// Check if class T is a function/gradient functor
 template <class T, class V = Mat>
 struct IsFunctionGradient
 {
-    static V ref;   /// We need a lvalue reference to the type V
+    static typename V::PlainObject ref;   /// We need a lvalue reference to the type V
 
     /// If T has an function member `Float functionGradient(V, V&)`
-    template <class U = T, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().functionGradient(V(), ref))>::value, int> = 0>
+    template <class U = T, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().functionGradient(std::declval<V>(), ref))>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<0>) { return 0; }
 
     /// If T has an function member `Float operator()(V, V&)`
-    template <class U = T, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().operator()(V(), ref))>::value, int> = 0>
+    template <class U = T, std::enable_if_t<std::is_floating_point<decltype(std::declval<U>().operator()(std::declval<V>(), ref))>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<1>) { return 1; }
 
     /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> functionGradient(V)`
-    template <class U = T, std::enable_if_t<std::is_floating_point<std::decay_t<decltype(std::get<0>(std::declval<U>().functionGradient(V())))>>::value &&
-                                            ::nlpp::impl::isMat<decltype(std::get<1>(std::declval<U>().functionGradient(V())))>, int> = 0>
+    template <class U = T, std::enable_if_t<std::is_floating_point<std::decay_t<decltype(std::get<0>(std::declval<U>().functionGradient(std::declval<V>())))>>::value &&
+                                            ::nlpp::impl::isMat<decltype(std::get<1>(std::declval<U>().functionGradient(std::declval<V>())))>, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<2>) { return 2; }
 
     /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> operator()(V)`
-    template <class U = T, std::enable_if_t<std::is_floating_point<std::decay_t<decltype(std::get<0>(std::declval<U>().operator()(V())))>>::value &&
-                           ::nlpp::impl::IsMat<decltype(std::get<1>(std::declval<U>().operator()(V())))>::value, int> = 0>
+    template <class U = T, std::enable_if_t<std::is_floating_point<std::decay_t<decltype(std::get<0>(std::declval<U>().operator()(std::declval<V>())))>>::value &&
+                           ::nlpp::impl::IsMat<decltype(std::get<1>(std::declval<U>().operator()(std::declval<V>())))>::value, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<3>) { return 3; }
 
     /// Otherwise return false
@@ -126,7 +126,7 @@ struct IsFunctionGradient
 };
 
 template <class T, class V>
-V IsFunctionGradient<T, V>::ref;
+typename V::PlainObject IsFunctionGradient<T, V>::ref;
 //@}
 
 
@@ -287,18 +287,6 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
     FunctionGradient (const Func& f = Func{}, const Grad& g = Grad{}) : Function<Func>(f), Gradient<Grad>(g) {}
     
 
-    // template <class... Args>
-    // auto function (Args&&... args)
-    // {
-    //     return Function<Func>::operator()(std::forward<Args>(args)...);
-    // }
-
-    // template <class... Args>
-    // auto gradient (Args&&... args)
-    // {
-    //     return Gradient<Grad>::operator()(std::forward<Args>(args)...);
-    // }
-
     /** @name
      *  @brief Operators for function/gradient calls.
      * 
@@ -311,19 +299,33 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
     */
     //@{
     template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x)
+    auto functionGradient (const Eigen::MatrixBase<V>& x)
     {
         return std::make_pair(function(x), gradient(x));
     }
 
     template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
+    auto functionGradient (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
     {
         gradient(x, g);
 
         return function(x);
     }
     //@}
+
+
+
+    template <class V>
+    auto operator () (const Eigen::MatrixBase<V>& x)
+    {
+        return functionGradient(x);
+    }
+
+    template <class V>
+    auto operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
+    {
+        return functionGradient(x);
+    }
 };
 
 
@@ -340,7 +342,7 @@ struct FunctionGradient<Impl_> : public Impl_
     template <class V, typename... Args, class I = Impl, std::enable_if_t<IsFunctionGradient<I, V>::value % 2 == 0, int> = 0>
     auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return Impl::fuctionGradient(x, std::forward<Args>(args)...);
+        return Impl::functionGradient(x, std::forward<Args>(args)...);
     }
 
     template <class V, typename... Args, class I = Impl, std::enable_if_t<IsFunctionGradient<I, V>::value % 2 != 0, int> = 0>
@@ -351,13 +353,13 @@ struct FunctionGradient<Impl_> : public Impl_
 
 
     template <class V, class I = Impl, std::enable_if_t<IsFunctionGradient<I, V>::value < 2, int> = 0>
-    auto fuctionGradient (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<V>& g)
+    auto functionGradient (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
     {
         return delegate(x, g);
     }
 
     template <class V, class I = Impl, std::enable_if_t<IsFunctionGradient<I, V>::value < 2, int> = 0>
-    auto fuctionGradient (const Eigen::MatrixBase<V>& x)
+    auto functionGradient (const Eigen::MatrixBase<V>& x)
     {
         ::nlpp::impl::Plain<V> g(x.rows(), x.cols());
 
@@ -368,7 +370,7 @@ struct FunctionGradient<Impl_> : public Impl_
 
 
     template <class V, class I = Impl, std::enable_if_t<IsFunctionGradient<I, V>::value >= 2, int> = 0>
-    auto fuctionGradient (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<V>& g)
+    auto functionGradient (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
     {
         std::decay_t<decltype(std::get<0>(delegate(x)))> f;
 
@@ -378,22 +380,22 @@ struct FunctionGradient<Impl_> : public Impl_
     }
 
     template <class V, class I = Impl, std::enable_if_t<IsFunctionGradient<I, V>::value >= 2, int> = 0>
-    auto fuctionGradient (const Eigen::MatrixBase<V>& x)
+    auto functionGradient (const Eigen::MatrixBase<V>& x)
     {
         return delegate(x);
     }
 
 
     template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<V>& g)
+    auto operator() (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
     {
-        return fuctionGradient(x, g);
+        return functionGradient(x, g);
     }
 
     template <class V>
     auto operator() (const Eigen::MatrixBase<V>& x)
     {
-        return fuctionGradient(x);
+        return functionGradient(x);
     }
 };
 

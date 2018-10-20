@@ -52,7 +52,8 @@ int main ()
 	// }
 
 
-	Newton<StrongWolfe, CholeskyIdentity> newton(StrongWolfe(1.0, 0.2));
+	Newton<StrongWolfe, fact::CholeskyIdentity> newton;
+	//Newton<StrongWolfe, fact::CholeskyIdentity> newton(StrongWolfe(1.0, 0.2));
 
 
 	Vec x = Vec::Constant(100, 5.0);

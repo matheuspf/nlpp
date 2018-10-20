@@ -7,20 +7,18 @@ using Vec = Eigen::VectorXd;
 
 struct Func
 {
-    // double function (const Vec& x)
-    // {
-    //     return x[0] + x[1];
-    // }
-
-    double operator () (const Vec& x)
+    template <class V>
+    double operator () (const Eigen::MatrixBase<V>& x)
     {
-        return x[0] + x[1];
+        return x(0) + x(1);
     }
 };
 
-struct Grad
+struct Grad1
 {
-    Vec operator () (const Vec& x)
+    template <class V>
+    auto operator () (const Eigen::MatrixBase<V>& x)
+    //auto operator () (const Eigen::Vector2f& x)
     {
         return 2 * x;
     }
@@ -28,134 +26,63 @@ struct Grad
 
 struct Grad2
 {
-    void operator () (const Vec& x, Vec& g)
+    template <class V>
+    void operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
     {
         g = 2 * x;
     }
 };
 
-// struct FuncGrad
-// {
-//     auto operator () (const Vec& x)
-//     {
-//         return std::make_pair(Func{}(x), Grad{}(x));
-//     }
-// };
-
-// struct FuncGrad2
-// {
-//     double operator () (const Vec& x, Vec& g)
-//     {
-//         Grad2{}(x, g);
-
-//         return Func{}(x);
-//     }
-// };
-
-
-struct Foo
+struct FuncGrad1
 {
-    template <class T>
-    double function (const Eigen::MatrixBase<T>& x)
+    template <class V>
+    auto operator () (const Eigen::MatrixBase<V>& x)
     {
-        return x[0]*x[0] + 2*x[1];
+        return std::make_pair(Func{}(x), Grad1{}(x));
     }
 };
 
+struct FuncGrad2
+{
+    template <class V>
+    double operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
+    {
+        Grad2{}(x, g);
 
-
-// template <class T>
-// struct Test
-// {
-//     template <class Der>
-//     static constexpr bool impl ( Eigen::MatrixBase<Der>) { return true; }
-
-//     static constexpr bool impl (...) { return false; }
-
-
-//     enum { value = impl(nullptr) }
-// };
-
+        return Func{}(x);
+    }
+};
 
 
 
 
 int main ()
 {
-    Eigen::Vector2d x(2, 3);
-    Eigen::VectorXf y(2); y << 2, 3;
+    Eigen::Vector2d x(2, 3), gx(2, 3);
+    Eigen::VectorXf y(2), gy(2); y << 2, 3;
 
-    auto func = [](const Eigen::VectorXd& x){ return x[0]*x[0] + 2*x[1]; };
-    //auto grad = [](const Eigen::VectorXd& x){ return 2*x[0] + 2; };
-    auto grad = [](const Eigen::VectorXd& x, auto& g) -> void { g[0] = 2*x[0], g[1] = 2; };
+    auto func = wrap::function(Func{});
 
-    //auto func1 = wrap::function(func);
-    auto grad1 = wrap::gradient(grad);
+    auto grad1 = wrap::gradient(Grad1{});
+    auto grad2 = wrap::gradient(Grad2{});
 
-    //auto fx = func1(x);
-    auto gx = grad1(x);
-
-    handy::print(gx.transpose());
-
-
-
-
-    //auto func1 = wrap::function([](const Eigen::Vector2d& x){ return x[0]*x[0] + 2*x[1]; });
-
-
-    //auto func1 = wrap::functionGradient(Func{}, [](const Vec& x) -> Vec { return 2 * x; });
-
-    // Vec x(2); x << 1.0, 2.0;
-    // Vec g12(2), g22(2);
-
-    // auto [f11, g11] = func1(x);
+    auto funcGrad1 = wrap::functionGradient(Func{}, Grad2{});
+    auto funcGrad2 = wrap::functionGradient(FuncGrad2{});
     
-    // double f12 = func1(x, g12);
 
-    // handy::print(f11, "   ", g11.transpose());
-    // handy::print(f12, "   ", g12.transpose());
+    handy::print(func(x), func(y));
+    handy::print(func(x+x), func(y+y), "\n");
 
+    handy::print(grad1(x).transpose(), grad1(y).transpose());
+    handy::print(grad1(x+x).transpose(), grad1(y+y).transpose());
+    grad2(x, gx), grad2(y, gy); handy::print(gx.transpose(), gy.transpose());
+    grad2(x+x, gx), grad2(y+y, gy); handy::print(gx.transpose(), gy.transpose(), "\n");    
 
-    // auto func2 = wrap::functionGradient(wrap::functionGradient(FuncGrad{}));
+    handy::print(std::get<0>(funcGrad1(x+x)), std::get<0>(funcGrad1(y+y)));
+    handy::print(std::get<1>(funcGrad1(x)).transpose(), std::get<1>(funcGrad1(y)).transpose());
+    handy::print(funcGrad2(x, gx), funcGrad2(y, gy));
+    funcGrad2(x+x, gx), funcGrad2(y+y, gy); handy::print(gx.transpose(), gy.transpose(), "\n");   
 
-    // auto [f21, g21] = func2(x);
-
-    // double f22 = func2(x, g22);
-
-    // handy::print(f21, "   ", g21.transpose());
-    // handy::print(f22, "   ", g22.transpose());
-
-
-
-
-
-
-    // auto func = [](const Vec& x){ return 10.0; };
-    // auto grad1 = [](const Vec& x){ return x; };
-    // auto grad2 = [](const Vec& x, Vec& g){};
-    // auto funcGrad1 = [](const Vec& x){ return std::make_pair(10.0, Vec()); };
-    // auto funcGrad2 = [](const Vec& x, Vec& g){ return 10.0; };
-
-    // handy::print("IsFunction:\n");
-    // handy::print("func: ", wrap::IsFunction<decltype(func), Vec>::value);
-    // handy::print("grad1: ", wrap::IsFunction<decltype(grad1), Vec>::value);
-    // handy::print("grad2: ", wrap::IsFunction<decltype(grad2), Vec>::value);
-    // handy::print("funcGrad1: ", wrap::IsFunction<decltype(funcGrad1), Vec>::value);
-    // handy::print("funcGrad2: ", wrap::IsFunction<decltype(funcGrad2), Vec>::value, "\n");
-    
-    // handy::print("IsGradient:\n");
-    // handy::print("func: ", wrap::IsGradient<decltype(func), Vec>::value);
-    // handy::print("grad1: ", wrap::IsGradient<decltype(grad1), Vec>::value);
-    // handy::print("grad2: ", wrap::IsGradient<decltype(grad2), Vec>::value);
-    // handy::print("funcGrad1: ", wrap::IsGradient<decltype(funcGrad1), Vec>::value);
-    // handy::print("funcGrad2: ", wrap::IsGradient<decltype(funcGrad2), Vec>::value, "\n");
-
-    // handy::print("IsFunctionGradient:\n");
-    // handy::print("func: ", wrap::IsFunctionGradient<decltype(func), Vec>::value);
-    // handy::print("grad1: ", wrap::IsFunctionGradient<decltype(grad1), Vec>::value);
-    // handy::print("grad2: ", wrap::IsFunctionGradient<decltype(grad2), Vec>::value);
-    // handy::print("funcGrad1: ", wrap::IsFunctionGradient<decltype(funcGrad1), Vec>::value);
-    // handy::print("funcGrad2: ", wrap::IsFunctionGradient<decltype(funcGrad2), Vec>::value, "\n");
 
     return 0;
 }
