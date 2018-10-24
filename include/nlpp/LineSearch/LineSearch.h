@@ -6,7 +6,7 @@
 
 #include "../Helpers/Helpers.h"
 
-#include "../Helpers/Gradient.h"
+#include "../Helpers/Wrappers.h"
 
 #include "../Helpers/FiniteDifference.h"
 

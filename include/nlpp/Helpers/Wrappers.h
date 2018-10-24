@@ -397,6 +397,40 @@ struct FunctionGradient<Impl_> : public Impl_
     {
         return functionGradient(x);
     }
+
+
+
+    template <class V, class I = Impl, std::enable_if_t<IsFunction<I, V>::value >= 0, int> = 0>
+    auto function (const Eigen::MatrixBase<V>& x)
+    {
+        return Function<Impl>(*this)(x);
+    }
+
+    template <class V, class I = Impl, std::enable_if_t<IsFunction<I, V>::value < 0, int> = 0>
+    auto function (const Eigen::MatrixBase<V>& x)
+    {
+        static typename V::PlainObject dummieG;
+
+        return functionGradient(x, dummieG);
+    }
+
+    template <class V, class... Args, class I = Impl, std::enable_if_t<IsGradient<I, V>::value >= 0, int> = 0>
+    auto gradient (const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return Gradient<Impl>(*this)(x, std::forward<Args>(args)...);
+    }
+
+    template <class V, class... Args, class I = Impl, std::enable_if_t<IsGradient<I, V>::value < 0, int> = 0>
+    void gradient (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
+    {
+        functionGradient(x, g);
+    }
+
+    template <class V, class... Args, class I = Impl, std::enable_if_t<IsGradient<I, V>::value < 0, int> = 0>
+    auto gradient (const Eigen::MatrixBase<V>& x)
+    {
+        return std::get<1>(functionGradient(x));
+    }
 };
 
 } // namespace impl

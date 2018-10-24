@@ -15,7 +15,7 @@
 
 #include "FiniteDifference.h"
 
-#include "Gradient.h"
+#include "Wrappers.h"
 
 #include "Output.h"
 

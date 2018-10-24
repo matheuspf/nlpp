@@ -1,4 +1,4 @@
-#include "Gradient.h"
+#include "Wrappers.h"
 
 using namespace nlpp;
 
@@ -8,7 +8,7 @@ using Vec = Eigen::VectorXd;
 struct Func
 {
     template <class V>
-    double operator () (const Eigen::MatrixBase<V>& x)
+    double function (const Eigen::MatrixBase<V>& x)
     {
         return x(0) + x(1);
     }
@@ -17,7 +17,7 @@ struct Func
 struct Grad1
 {
     template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x)
+    auto gradient (const Eigen::MatrixBase<V>& x)
     //auto operator () (const Eigen::Vector2f& x)
     {
         return 2 * x;
@@ -47,9 +47,10 @@ struct FuncGrad2
     template <class V>
     double operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
     {
-        Grad2{}(x, g);
+        if(g.size())
+            Grad2{}(x, g);
 
-        return Func{}(x);
+        return Func{}.function(x);
     }
 };
 
@@ -81,7 +82,9 @@ int main ()
     handy::print(std::get<0>(funcGrad1(x+x)), std::get<0>(funcGrad1(y+y)));
     handy::print(std::get<1>(funcGrad1(x)).transpose(), std::get<1>(funcGrad1(y)).transpose());
     handy::print(funcGrad2(x, gx), funcGrad2(y, gy));
-    funcGrad2(x+x, gx), funcGrad2(y+y, gy); handy::print(gx.transpose(), gy.transpose(), "\n");   
+    funcGrad2(x+x, gx), funcGrad2(y+y, gy); handy::print(gx.transpose(), gy.transpose());
+    handy::print(funcGrad1.function(y+y), funcGrad1.gradient(x+x).transpose());
+    handy::print(funcGrad2.function(y+y), funcGrad2.gradient(x+x).transpose());
 
 
     return 0;
