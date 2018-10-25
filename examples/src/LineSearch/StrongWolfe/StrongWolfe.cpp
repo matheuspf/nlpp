@@ -1,6 +1,6 @@
 #include "LineSearch/StrongWolfe/StrongWolfe.h"
 
-#include "Newton/Newton.h"
+#include "CG/CG.h"
 
 #include "LineSearch/Backtracking/Backtracking.h"
 
@@ -52,13 +52,13 @@ int main ()
 	// }
 
 
-	Newton<StrongWolfe, fact::CholeskyIdentity> newton;
+	//Newton<StrongWolfe, fact::CholeskyIdentity> newton;
 	//Newton<StrongWolfe, fact::CholeskyIdentity> newton(StrongWolfe(1.0, 0.2));
-
+	CG<StrongWolfe> cg(StrongWolfe(1.0, 0.2));
 
 	Vec x = Vec::Constant(100, 5.0);
 
-	x = newton(Rosenbrock(), x);
+	x = cg(Rosenbrock(), x);
 
 
 	handy::print(x.transpose());
