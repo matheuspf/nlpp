@@ -32,11 +32,11 @@ struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch, St
 	using Params::Params;
 	
 
-	template <class Function, typename Float, int Rows, int Cols>
-	Vec optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
+	template <class Function, class V>
+	V optimize (Function f, V x)
 	{
-		double fx;
-		Eigen::Matrix<Float, Rows, Cols> gx, dir;
+		impl::Scalar<V> fx;
+		V gx, dir;
 		
 		std::tie(fx, gx) = f(x);
 
@@ -47,7 +47,7 @@ struct GradientDescent : public GradientOptimizer<GradientDescent<LineSearch, St
 		{
 			dir = -gx;
 
-			double alpha = lineSearch(f, x, dir);
+			auto alpha = lineSearch(f, x, dir);
 
 			x = x + alpha * dir;
 

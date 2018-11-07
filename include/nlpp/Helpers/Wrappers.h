@@ -284,8 +284,12 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
     using Gradient<Grad>::gradient;
 
     /// Single constructor, delegated to Func and Grad
-    FunctionGradient (const Func& f = Func{}, const Grad& g = Grad{}) : Function<Func>(f), Gradient<Grad>(g) {}
+    template <class F = Func, class G = Grad, std::enable_if_t<handy::HasConstructor<G>::value, int> = 0>
+    FunctionGradient (const F& f = Func{}, const G& g = Grad{}) : Function<Func>(f), Gradient<Grad>(g) {}
     
+    template <class F = Func, class G = Grad, std::enable_if_t<!handy::HasConstructor<G>::value, int> = 0>
+    FunctionGradient (const F& f = Func{}, const G& g = Grad{Func{}}) : Function<Func>(f), Gradient<Grad>(g) {}
+
 
     /** @name
      *  @brief Operators for function/gradient calls.
@@ -324,7 +328,7 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
     template <class V>
     auto operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
     {
-        return functionGradient(x);
+        return functionGradient(x, g);
     }
 };
 

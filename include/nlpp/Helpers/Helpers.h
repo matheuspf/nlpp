@@ -102,7 +102,7 @@ constexpr bool isScalar = IsScalar<T>::value;
 
 
 /** @name
- *  @brief Some aliases to Eigen plain types
+ *  @brief Some aliases to avoid some typenames's/template's with Eigen types
 */
 //@{
 template <class V>
@@ -113,6 +113,15 @@ using PlainMatrix = typename V::PlainMatrix;
 
 template <class V>
 using PlainArray = typename V::PlainArray;
+
+template <class V>
+using Scalar = typename V::Scalar;
+
+template <typename T, class V>
+constexpr decltype(auto) cast (V&& v)
+{
+	return v.template cast<T>();
+}
 //@}
 
 

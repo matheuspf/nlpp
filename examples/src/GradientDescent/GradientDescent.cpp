@@ -17,13 +17,12 @@ int main ()
 	GradientDescent<LS, Stop, Out> gd(params);
 
 
-	Eigen::VectorXd x(2);
+	Eigen::VectorXf x(2);
 	x << 1.2, 1.2;
 
 	Rosenbrock func;
 
 	auto grad = fd::gradient(func);
-
 
 	handy::print("tm: ", handy::benchmark([&]{
 		x = gd(func, x);

@@ -23,8 +23,8 @@ struct GradientOptimizer
                const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx) 
     {
         fx0 = fx;
-        x0 = x;
-        gx0 = gx;
+        x0 = ::nlpp::impl::cast<Float>(x);
+        gx0 = ::nlpp::impl::cast<Float>(gx);
     }
 
 
@@ -32,13 +32,13 @@ struct GradientOptimizer
     bool operator () (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                       const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx) 
     {
-        bool xStop = (x - x0).norm() < xTol;
         bool fStop = std::abs(fx - fx0) < fTol;
+        bool xStop = (::nlpp::impl::cast<Float>(x) - x0).norm() < xTol;
         bool gStop = gx.norm() < gTol;
 
         fx0 = fx;
-        x0 = x;
-        gx0 = gx;
+        x0 = ::nlpp::impl::cast<Float>(x);
+        gx0 = ::nlpp::impl::cast<Float>(gx);
 
         return static_cast<Impl&>(*this).stop(xStop, fStop, gStop);
     }

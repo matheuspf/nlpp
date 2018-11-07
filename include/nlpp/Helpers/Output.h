@@ -60,8 +60,8 @@ struct GradientOptimizer<2, Float>
     void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx) 
     {
-        vX.clear();
         vFx.clear();
+        vX.clear();
         vGx.clear();
 
         pushBack(x, fx, gx);
@@ -85,9 +85,9 @@ struct GradientOptimizer<2, Float>
     template <class V>
     void pushBack (const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx)
     {
-        vX.push_back(x);
         vFx.push_back(fx);
-        vGx.push_back(gx);
+        vX.push_back(::nlpp::impl::cast<Float>(x));
+        vGx.push_back(::nlpp::impl::cast<Float>(gx));
     }
 
 
