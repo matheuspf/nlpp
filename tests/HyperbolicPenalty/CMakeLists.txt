@@ -1,0 +1,1 @@
+target_sources(tests PUBLIC HyperbolicPenalty/HyperbolicPenalty.cpp)

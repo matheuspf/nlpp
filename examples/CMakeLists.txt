@@ -1,7 +1,8 @@
 add_custom_target(examples)
 
-add_subdirectory(src/CG)
-add_subdirectory(src/GradientDescent)
-add_subdirectory(src/LineSearch)
-add_subdirectory(src/QuasiNewton)
-add_subdirectory(src/HyperbolicPenalty)
+#add_subdirectory(CG)
+add_subdirectory(GradientDescent)
+add_subdirectory(Newton)
+#add_subdirectory(LineSearch)
+#add_subdirectory(QuasiNewton)
+#add_subdirectory(HyperbolicPenalty)

@@ -24,7 +24,7 @@ namespace
 TEST(Newton, PrecisionTest)
 {
     using Opt = nlpp::Newton<nlpp::fact::CholeskyIdentity, nlpp::StrongWolfe,
-                            nlpp::stop::GradientOptimizer<1>, nlpp::out::GradientOptimizer<1>>;
+                            nlpp::stop::GradientOptimizer<1>, nlpp::out::GradientOptimizer<0>>;
 
 
     typename Opt::Params params;
@@ -34,9 +34,9 @@ TEST(Newton, PrecisionTest)
     params.stop.gTol = 1e-4;
 
 
-    int N = 50;
+    int N = 10;
 
-    double x0 = 5.0;
+    double x0 = 1.2;
 
 
     nlpp::Rosenbrock func;
@@ -46,7 +46,7 @@ TEST(Newton, PrecisionTest)
     auto hess = nlpp::fd::hessian(func);
 
 
-    nlpp::Vec xOpt = nlpp::Vec::Constant(N, x0);
+    nlpp::Vec xOpt = nlpp::Vec::Constant(N, 1.0);
 
     double fOpt = 0.0;
 
@@ -56,12 +56,12 @@ TEST(Newton, PrecisionTest)
     nlpp::Vec x = nlpp::Vec::Constant(N, x0);
 
 
-	x = newton(func, nlpp::fd::gradient(func), x, nlpp::fd::hessian(func));
+	x = newton(func, grad, x, hess);
 
 
     ASSERT_LE((x - xOpt).norm(), params.stop.xTol);
 
-    ASSERT_LE(std::abs(func(x)), params.stop.fTol);
+    ASSERT_LE(std::abs(func(x) - fOpt), params.stop.fTol);
     
     ASSERT_LE(grad(x).norm(), params.stop.gTol);
 }

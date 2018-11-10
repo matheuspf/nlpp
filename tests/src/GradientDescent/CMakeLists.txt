@@ -1,1 +1,0 @@
-target_sources(tests PUBLIC src/GradientDescent/GradientDescent.cpp)
