@@ -3,23 +3,17 @@
 */
 #pragma once
 
-
-#include "Include.h"
-
+#include <type_traits>
 #include <memory>
 #include <deque>
+
+#include "Include.h"
+#include "Types.h"
+#include "ForwardDeclarations.h"
 
 
 namespace nlpp
 {
-
-/// Default types
-namespace types
-{
-	using Float = double;
-	using Int = int;
-}
-
 
 namespace wrap
 {
@@ -36,25 +30,6 @@ HAS_OVERLOADED_FUNC(gradient, HasGradient);
 //@}
 
 } // namespace wrap
-
-
-/** @name
- *  @brief Default vector and matrix types
-*/
-//@{
-template <typename T>
-using VecX = Eigen::Matrix<T, Eigen::Dynamic, 1>;
-
-template <typename T>
-using MatX = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-
-using Vec = VecX<types::Float>;
-using Mat = MatX<types::Float>;
-
-using Veci = VecX<types::Int>;
-using Mati = MatX<types::Int>;
-//@}
-
 
 
 namespace impl
@@ -141,9 +116,6 @@ struct Precedence <I, I> {};
 
 
 
-
-
-
 /// Definition of some constants
 namespace constants
 {
@@ -210,40 +182,6 @@ inline constexpr int sign (T t)
 }
 
 
-
-/** @brief Some forward declarations
-*/
-//@{
-namespace out
-{
-
-template <int = 0, typename = types::Float>
-struct GradientOptimizer;
-
-} // namespace out
-
-
-namespace stop
-{
-
-template <bool = false, typename = types::Float>
-struct GradientOptimizer;
-
-} // namespace stop
-
-
-/// Because this is used as the default line search procedure in many cases
-struct StrongWolfe;
-
-
-namespace params
-{
-
-template <class = StrongWolfe, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
-struct GradientOptimizer;
-
-} // namespace params
-//@}
 
 
 } // namespace nlpp

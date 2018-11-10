@@ -10,15 +10,14 @@ int main ()
 {
 	using LS = Goldstein;
 	using Stop = stop::GradientOptimizer<>;
-	using Out = out::GradientOptimizer<1>;
+	using Out = out::GradientOptimizer<2>;
 
 	params::GradientDescent<LS, Stop, Out> params(LS{}, Stop(1000, 1e-6, 1e-6, 1e-6), Out{});
 
 	GradientDescent<LS, Stop, Out> gd(params);
 
 
-	Eigen::VectorXf x(2);
-	x << 1.2, 1.2;
+	Eigen::VectorXd x = Eigen::VectorXd::Constant(10, 1.2);
 
 	Rosenbrock func;
 
@@ -32,6 +31,8 @@ int main ()
 	}), "\n");
 
 	handy::print("fx: ", func(x), "\n\nx:", x.transpose(), "\n");
+
+	handy::print(gd.output.vFx.size());
 
 
 

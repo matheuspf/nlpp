@@ -19,7 +19,7 @@
 
 #include "Helpers.h"
 
-#include "FiniteDifference.h"
+//#include "FiniteDifference.h"
 
 
 namespace nlpp
@@ -44,7 +44,7 @@ namespace wrap
 //@{
  
 /// Check if class T is a function functor
-template <class T, class V = Mat>
+template <class T, class V>
 struct IsFunction
 {
     /// If T has an function member `Float function(V)`
@@ -63,7 +63,7 @@ struct IsFunction
 };
 
 /// Check if class T is a gradient functor
-template <class T, class V = Mat>
+template <class T, class V>
 struct IsGradient
 {
     static typename V::PlainObject ref;   /// We need a lvalue reference to the type V
@@ -95,7 +95,7 @@ template <class T, class V>
 typename V::PlainObject IsGradient<T, V>::ref;
 
 /// Check if class T is a function/gradient functor
-template <class T, class V = Mat>
+template <class T, class V>
 struct IsFunctionGradient
 {
     static typename V::PlainObject ref;   /// We need a lvalue reference to the type V
@@ -170,11 +170,6 @@ struct Function : public Impl_
 
 } // namespace impl
 
-template <class Impl>
-using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value, Impl, impl::Function<Impl>>;
-
-template <class> class PrintType;
-
 namespace impl
 {
 
@@ -246,8 +241,6 @@ struct Gradient : public Impl_
 
 } // namespace impl
 
-template <class Impl>
-using Gradient = std::conditional_t<handy::IsSpecialization<Impl, impl::Gradient>::value, Impl, impl::Gradient<Impl>>;
 
 
 
@@ -318,6 +311,66 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
     //@}
 
 
+
+    template <class V>
+    auto operator () (const Eigen::MatrixBase<V>& x)
+    {
+        return functionGradient(x);
+    }
+
+    template <class V>
+    auto operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
+    {
+        return functionGradient(x, g);
+    }
+};
+
+
+template <class Func, template <class, class> class Difference, class Step>
+struct FunctionGradient<Func, fd::Gradient<Func, Difference, Step>> : Function<Func>, public fd::Gradient<Func, Difference, Step>
+{
+    using Function = wrap::Function<Func>;
+    using Gradient = fd::Gradient<Func, Difference, Step>;
+
+
+    using Function::function;
+    using Gradient::gradient;
+
+
+    FunctionGradient (const Function& f = Function{}) : Function(f), Gradient(f) {} 
+
+    FunctionGradient (const Function& f, const Gradient& g) : Function(f), Gradient(Function(f)) {}
+    
+
+    /** @name
+     *  @brief Operators for function/gradient calls.
+     * 
+     *  @details Returns both function and gradient if only a @Vec is given. If the reference @c g
+     *           is also given, returns only the Func::operator()(x) return and calls 
+     *           @c Gradient<Grad>::operator()(x, g) to write on @c g.
+     * 
+     *  @param x The vector for which we will be evaluating both function and gradient
+     *  @param g The reference where we are going to store the gradient
+    */
+    //@{
+    template <class V>
+    auto functionGradient (const Eigen::MatrixBase<V>& x)
+    {
+        auto f = function(x);
+
+        return std::make_pair(f, gradient(x, f));
+    }
+
+    template <class V>
+    auto functionGradient (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
+    {
+        auto f = function(x);
+
+        gradient(x, g, f);
+
+        return f;
+    }
+    //@}
 
     template <class V>
     auto operator () (const Eigen::MatrixBase<V>& x)
@@ -438,29 +491,6 @@ struct FunctionGradient<Impl_> : public Impl_
 };
 
 } // namespace impl
-
-
-/** @brief Alias for impl::FunctionGradient
- *  @details There are four conditions:
- *           - Is @c Grad given?
- *              - If not, is @c Func already an impl::FunctionGradient?
- *                  - (1) If so, simply set the result to itself (to avoid multiple wrapping)
- *                  - Otherwise, is @c Func a function but not a function/gradient functor?
- *                      - (2) If so, set the result to impl::FunctionGradient<Func, fd::Gradient<Func>> (use finite difference to aproximate the gradient)
- *                      - (3) Otherwise it should be a function/gradient functor, so we use impl::FunctionGradient<Func>
- *              - (4) If yes, set the result to impl::FunctionGradient<Func, Grad>
-*/
-template <class Func, class Grad = void>
-using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
-    std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value,
-        Func,
-        std::conditional_t<wrap::IsFunction<Func>::value >= 0 && wrap::IsFunctionGradient<Func>::value < 0,
-            impl::FunctionGradient<Func, fd::Gradient<Func>>,
-            impl::FunctionGradient<Func>
-        >
-    >,
-    impl::FunctionGradient<Func, Grad>
->;
 
 
 

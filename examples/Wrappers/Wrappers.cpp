@@ -1,4 +1,4 @@
-#include "Wrappers.h"
+#include "Helpers/Wrappers.h"
 
 using namespace nlpp;
 
@@ -88,8 +88,8 @@ int main ()
     handy::print(funcGrad1.function(y+y), funcGrad1.gradient(x+x).transpose());
     handy::print(funcGrad2.function(y+y), funcGrad2.gradient(x+x).transpose(), "\n");
 
-    handy::print(std::get<0>(funcGrad1(x+x)), std::get<1>(funcGrad1(y+y)).transpose());
-    handy::print(funcGrad1(x+x, gx), gx.transpose());
+    //handy::print(std::get<0>(funcGrad3(x+x)), std::get<1>(funcGrad3(y+y)).transpose());
+    handy::print(funcGrad3(x+x, gx), gx.transpose());
 
     
 

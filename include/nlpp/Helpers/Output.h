@@ -13,15 +13,18 @@ namespace out
 template <typename Float>
 struct GradientOptimizer<0, Float>
 {
-    void init (...) 
+    template <typename... Args>
+    void init (Args&&...) 
     {
     }
 
-    void operator() (...)
+    template <typename... Args>
+    void operator() (Args&&...)
     {
     }
 
-    void finish (...)
+    template <typename... Args>
+    void finish (Args&&...)
     {
     }
 };

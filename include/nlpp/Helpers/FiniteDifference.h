@@ -27,7 +27,7 @@
 #pragma once
 
 #include "Helpers.h"
-
+#include "Wrappers.h"
 
 /** @defgroup FiniteDifferenceGroup Finite Difference
     @copydoc FiniteDifference.h
@@ -63,7 +63,7 @@ namespace fd
     @brief Forward Declarations of the @c Step classes
 */
 //@{
-template <typename = types::Float>
+template <typename>
 struct SimpleStep;
 
 template <typename = types::Float>
@@ -274,7 +274,7 @@ struct FiniteDifference
  *  @tparam Step Step size template functor
  *  @tparam Float Base floating point type
 */
-template <class Function, class Step = SimpleStep<>>
+template <class Function, class Step>
 struct Forward : public FiniteDifference<Forward<Function, Step>>
 {
     CPPOPT_USING_FINITE_DIFFERENCE(Base, FiniteDifference<Forward<Function, Step>>);
@@ -907,9 +907,6 @@ struct Central : public FiniteDifference<Central<Function, Step>>
 };
 
 
-
-
-
 /** @name
  *  @brief Classes used to join everything and expose interface via @c operator().
  *  
@@ -921,10 +918,10 @@ struct Central : public FiniteDifference<Central<Function, Step>>
 //@{
 
 /// Gradient interface for finite difference estimation
-template <class Function, template <class, class> class Difference = Forward, class Step = SimpleStep<>>
-struct Gradient : public Difference<Function, Step>
+template <class Function, template <class, class> class Difference, class Step>
+struct Gradient : public Difference<wrap::Function<Function>, Step>
 {
-    CPPOPT_USING_FINITE_DIFFERENCE(Base, Difference<Function, Step>);
+    CPPOPT_USING_FINITE_DIFFERENCE(Base, Difference<wrap::Function<Function>, Step>);
 
     
     /// Simply delegate the call to Difference<Function, Step, Float>::gradient
@@ -938,9 +935,9 @@ struct Gradient : public Difference<Function, Step>
 
 /// Hessian interface for finite difference estimation
 template <class Function, template <class, class> class Difference = Forward, class Step = SimpleStep<>, typename Float = types::Float>
-struct Hessian : public Difference<Function, Step>
+struct Hessian : public Difference<wrap::Function<Function>, Step>
 {
-    CPPOPT_USING_FINITE_DIFFERENCE(Base, Difference<Function, Step>);
+    CPPOPT_USING_FINITE_DIFFERENCE(Base, Difference<wrap::Function<Function>, Step>);
 
     /** @name
      *  @brief Default constructor must have @c h equal to @f$u^{\frac{3}{4}}$@f
@@ -960,7 +957,6 @@ struct Hessian : public Difference<Function, Step>
     }
 };
 //@}
-
 
 
 
