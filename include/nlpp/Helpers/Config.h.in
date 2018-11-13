@@ -2,9 +2,7 @@
  *  @brief Some compile time configurations
 */
 
-#ifndef NLPP_HELPERS_CONFIG_H
-#define NLPP_HELPERS_CONFIG_H
-
+#pragma once
 
 
 #define EIGEN_INCLUDE_LOCAL @_eigen_include_local@
@@ -26,6 +24,3 @@
 #define NLPP_MINOR_VERSION 0
 #define NLPP_PATCH_VERSION 0
 //@}
-
-
-#endif // NLPP_HELPERS_CONFIG_H

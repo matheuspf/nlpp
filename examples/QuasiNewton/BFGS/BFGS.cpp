@@ -10,7 +10,7 @@ using namespace nlpp;
 
 int main ()
 {
-    using IH = BFGS_Diagonal;
+    using IH = BFGS_Diagonal<>;
     using LS = StrongWolfe;
 
     params::BFGS<IH, LS> params;

@@ -17,14 +17,17 @@
 namespace nlpp
 {
 
+template <typename Float = types::Float>
 struct BFGS_Constant;
+
+template <typename Float = types::Float>
 struct BFGS_Diagonal;
 
 
 namespace params
 {
 
-template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe,
+template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe,
           class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct BFGS : public GradientOptimizer<LineSearch, Stop, Output>
 {
@@ -39,7 +42,7 @@ struct BFGS : public GradientOptimizer<LineSearch, Stop, Output>
 
 
 
-template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe,
+template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe,
           class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Output>, 
                                        params::BFGS<InitialHessian, LineSearch, Stop, Output>>
@@ -49,20 +52,19 @@ struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Ou
     using Params::Params;
 
 
-    template <class Function, typename Float, int Rows, int Cols>
-    auto optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x0)
+    template <class Function, class V>
+    V optimize (Function f, V x0)
     {
-        constexpr int Size = Rows * Cols;
+        using Float = impl::Scalar<V>;
+        constexpr int Size = V::SizeAtCompileTime;
 
         int rows = x0.rows(), cols = x0.cols(), size = rows * cols;
 
         Eigen::Matrix<Float, Size, Size> In = Eigen::Matrix<Float, Size, Size>::Identity(size, size);
 
-        auto hess = initialHessian([&](const auto& x){ return f.function(x); },
-                                   [&](const auto& x){ return f.gradient(x); }, x0);
+        auto hess = initialHessian(f, x0);
 
-
-        Eigen::Matrix<Float, Rows, Cols> x1, g0(rows, cols), g1(rows, cols), dir, s, y;
+        V x1, g0(rows, cols), g1(rows, cols), dir, s, y;
 
         Float f0 = f(x0, g0);
         Float f1;
@@ -87,7 +89,7 @@ struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Ou
                 break;
 
 
-            double rho = 1.0 / std::max(y.dot(s), constants::eps);
+            double rho = 1.0 / std::max((double)y.dot(s), constants::eps);
 
             hess = (In - rho * s * y.transpose()) * hess * (In - rho * y * s.transpose()) + rho * s * s.transpose();
 
@@ -105,58 +107,55 @@ struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Ou
 
 
 
-
+template <typename Float>
 struct BFGS_Diagonal
 {
-    BFGS_Diagonal (double h = 1e-4) : h(h) {}
+    BFGS_Diagonal (Float h = 1e-4) : h(h) {}
 
-    template <class Function, class Gradient>
-    Mat operator () (Function function, Gradient gradient, Vec x)
+    template <class Function, class Derived>
+    impl::Plain2D<Derived> operator () (Function f, const Eigen::MatrixBase<Derived>& x)
     {
-        double fx = function(x);
+        impl::Plain2D<Derived> hess = impl::Plain2D<Derived>::Constant(x.rows(), x.rows(), 0.0);
 
-        Mat hess = Mat::Constant(x.rows(), x.rows(), 0.0);
-
-        hess.diagonal() = (2*h) / (gradient((x.array() + h).matrix()) - gradient((x.array() - h).matrix())).array();
+        hess.diagonal() = (2*h) / (f.gradient((x.array() + h).matrix()) - f.gradient((x.array() - h).matrix())).array();
 
         return hess;
     }
-    
 
-    double h;
+    Float h;
 };
 
 
+template <typename Float>
 struct BFGS_Constant
 {
-    BFGS_Constant (double alpha = 1e-4) : alpha(alpha) {}
+    BFGS_Constant (Float alpha = 1e-4) : alpha(alpha) {}
 
-    template <class Function, class Gradient>
-    Mat operator () (Function function, Gradient gradient, const Vec& x0)
+    template <class Function, class Derived>
+    impl::Plain2D<Derived> operator () (Function f, const Eigen::MatrixBase<Derived>& x0)
     {
-        Vec g0 = gradient(x0);
-        Vec x1 = x0 - alpha * g0;
-        Vec g1 = gradient(x1);
+        auto g0 = f.gradient(x0);
+        auto x1 = x0 - alpha * g0;
+        auto g1 = f.gradient(x1);
 
-        Vec s = x1 - x0;
-        Vec y = g1 - g0;
+        auto s = x1 - x0;
+        auto y = g1 - g0;
 
-        Mat hess = (y.dot(s) / y.dot(y)) * Mat::Identity(x0.rows(), x0.rows());
+        impl::Plain2D<Derived> hess = (y.dot(s) / y.dot(y)) * impl::Plain2D<Derived>::Identity(x0.rows(), x0.rows());
 
         return hess;
     }
 
-
-    double alpha;
+    Float alpha;
 };
 
 
 struct BFGS_Identity
 {
-    template <class Function, class Gradient>
-    Mat operator () (Function, Gradient, const Vec& x)
+    template <class Function, class Derived>
+    impl::Plain2D<Derived> operator () (Function, const Eigen::MatrixBase<Derived>& x)
     {
-        return Mat::Identity(x.rows(), x.rows());
+        return impl::Plain2D<Derived>::Identity(x.rows(), x.rows());
     }
 };
 

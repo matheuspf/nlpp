@@ -122,12 +122,12 @@ struct CG : public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, param
 
 
 
-	template <class Function, class Float, int Rows, int Cols>
-	auto optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x)
+	template <class Function, class V>
+	V optimize (Function f, V x)
 	{
-		Eigen::Matrix<Float, Rows, Cols> fa, dir, fb(x.rows(), x.cols());
+		V fa, dir, fb(x.rows(), x.cols());
 
-		Float fxOld, fx;
+		impl::Scalar<V> fxOld, fx;
 
 		std::tie(fxOld, fa) = f(x);
 

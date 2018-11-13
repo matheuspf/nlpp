@@ -16,8 +16,9 @@ foreach(folder ${include_folders})
     )
 endforeach()
 
-install(FILES Helpers/FiniteDifference.h Helpers/Gradient.h Helpers/Helpers.h Helpers/Include.h
-              Helpers/Optimizer.h Helpers/SpectraHelpers.h
+install(FILES Helpers/FiniteDifference.h Helpers/ForwardDeclarations.h Helpers/Helpers.h Helpers/Include.h
+              Helpers/Optimizer.h Helpers/Output.h Helpers/Parameters.h Helpers/SpectraHelpers.h Helpers/Stop.h
+              Helpers/Types.h Helpers/Wrappers.h
         DESTINATION ${NLPP_INCLUDE_INSTALL_DIR}/${lib_name}/Helpers
 )
 

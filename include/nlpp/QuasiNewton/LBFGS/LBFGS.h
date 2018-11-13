@@ -6,6 +6,8 @@
 
 #include "../../LineSearch/StrongWolfe/StrongWolfe.h"
 
+#include "../../LineSearch/Goldstein/Goldstein.h"
+
 #include "../BFGS/BFGS.h"
 
 
@@ -47,11 +49,10 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
 	using Params::Params;
 	
 
-	template <class Function>
-	Vec optimize (Function f, Vec x0)
+	template <class Function, class V>
+	V optimize (Function f, V x0)
 	{
-        Vec x;
-        Vec gx(x0.size()), gx0(x0.size());
+        V gx(x0.rows(), x0.cols()), gx0(x0.rows(), x0.cols());
         double fx0, fx;
 
         fx0 = f(x0, gx0);
@@ -64,19 +65,19 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
             auto H = initialHessian([&](const auto& x){ return f.function(x); },
                                     [&](const auto& x){ return f.gradient(x); }, x0);
 
-            auto p = direction(f, x0, gx0, H);
+            V p = direction(f, x0, gx0, H);
 
             auto alpha = lineSearch(f, x0, p);
 
-            Vec x = x0 + alpha * p;
+            V x = x0 + alpha * p;
 
             fx = f(x, gx);
 
             if(stop(*this, x, fx, gx))
                 return x;
 
-            Vec s = x - x0;
-            Vec y = gx - gx0;
+            auto s = x - x0;
+            auto y = gx - gx0;
 
             vs.push_back(s);
             vy.push_back(y);
@@ -99,7 +100,7 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
 
 
     template <class Function, class Mat>
-    Vec direction (Function f, const Vec& x, const Vec& gx, const Mat& H)
+    V direction (Function f, const Vec& x, const Vec& gx, const Mat& H)
     {
         Vec alpha(vs.size());
         Vec rho(vs.size());

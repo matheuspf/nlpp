@@ -92,6 +92,9 @@ using PlainArray = typename V::PlainArray;
 template <class V>
 using Scalar = typename V::Scalar;
 
+template <class V>
+using Plain2D = Eigen::Matrix<Scalar<V>, V::SizeAtCompileTime, V::SizeAtCompileTime>;
+
 template <typename T, class V>
 constexpr decltype(auto) cast (V&& v)
 {
