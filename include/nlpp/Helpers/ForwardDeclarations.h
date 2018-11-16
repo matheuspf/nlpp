@@ -44,13 +44,15 @@ struct GradientOptimizer;
 namespace fd
 {
 
+struct AutoStep;
+
 template <typename Float = types::Float>
 struct SimpleStep;
 
-template <class Function, class Step = SimpleStep<>>
+template <class Function, class Step = AutoStep>
 struct Forward;
 
-template <class Function, template <class, class> class Difference = Forward, class Step = SimpleStep<>>
+template <class Function, template <class, class> class Difference = Forward, class Step = AutoStep>
 struct Gradient;
 
 } // namespace fd

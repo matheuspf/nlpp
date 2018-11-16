@@ -21,7 +21,7 @@ namespace nlpp
 namespace params
 {
 
-template <class Factorization = fact::SmallIdentity, class LineSearch = StrongWolfe,
+template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe,
 		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 struct Newton : public GradientOptimizer<LineSearch, Stop, Output>
 {
@@ -36,7 +36,7 @@ struct Newton : public GradientOptimizer<LineSearch, Stop, Output>
 
 
 
-template <class Factorization = fact::SmallIdentity, class LineSearch = StrongWolfe,
+template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe,
 		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 struct Newton : public GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>,
 								 params::Newton<Factorization, LineSearch, Stop, Output>>
@@ -46,16 +46,13 @@ struct Newton : public GradientOptimizer<Newton<Factorization, LineSearch, Stop,
 	using Params::Params;
 
 
-	template <class Function, typename Float, int Rows, int Cols, class Hessian>
-	auto optimize (Function f, Eigen::Matrix<Float, Rows, Cols> x, Hessian hess)
+	template <class Function, class V, class Hessian>
+	auto optimize (Function f, V x, Hessian hess)
 	{
-		Eigen::Matrix<Float, Rows, Cols> gx(x.rows(), x.cols());
-		
-		auto fx = f(x, gx);
+		auto[fx, gx] = f(x);
 
 		stop.init(*this, x, fx, gx);
 		output.init(*this, x, fx, gx);
-
 
 		for(int iter = 0; iter < stop.maxIterations; ++iter)
 		{
@@ -73,7 +70,6 @@ struct Newton : public GradientOptimizer<Newton<Factorization, LineSearch, Stop,
 
 			output(*this, x, fx, gx);
 		}
-
 
 		output.finish(*this, x, fx, gx);
 

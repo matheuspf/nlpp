@@ -12,82 +12,74 @@ namespace fact
 
 struct SimplyInvert
 {
-	Vec operator () (const Vec& grad, const Mat& hess)
+	template <class V, class U>
+	impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess)
 	{
 		return -hess.colPivHouseholderQr().solve(grad);
 	}
 };
 
 
+template <typename Float = types::Float>
 struct SmallIdentity
 {
-	SmallIdentity (double alpha = 1e-5) : alpha(alpha) {}
+	SmallIdentity (Float alpha = 1e-5) : alpha(alpha) {}
 
-
-	Vec operator () (const Vec& grad, Mat hess)
+	template <class V, class U>
+	impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess)
 	{
-		double minDiag = hess.diagonal().array().minCoeff();
+		auto minDiag = hess.diagonal().array().minCoeff();
 
 		if(minDiag < 0.0)
 			hess.diagonal().array() += minDiag + alpha;
 
-
 		return -hess.colPivHouseholderQr().solve(grad);
 	}
 
-
-	double alpha;
+	Float alpha;
 };
 
 
 
+template <typename Float = types::Float>
 struct CholeskyIdentity
 {
-	CholeskyIdentity (double beta = 1e-3, double c = 2.0, double maxTau = 1e8) : beta(beta), c(c), maxTau(maxTau) {}
+	CholeskyIdentity (Float beta = 1e-3, Float c = 2.0, Float maxTau = 1e8) : beta(beta), c(c), maxTau(maxTau) {}
 
-
-	Vec operator () (const Vec& grad, Mat hess)
+	template <class V, class U>
+	impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, U hess)
 	{
-		Eigen::ArrayXd orgDiag = hess.diagonal().array();
+		impl::PlainArray<U> orgDiag = hess.diagonal().array();
 
-		double minDiag = orgDiag.minCoeff();
+		auto minDiag = orgDiag.minCoeff();
 
-
-		double tau = minDiag < 0.0 ? beta - minDiag : 0.0;
-
+		Float tau = minDiag < 0.0 ? beta - minDiag : 0.0;
 
 		while(tau < maxTau)
 		{
-			Eigen::LLT<Mat> llt(hess);
-
+			Eigen::LLT<impl::Plain<U>> llt(hess);
 
 			if(llt.info() == Eigen::Success)
 				return -llt.solve(grad);
-
 
 			hess.diagonal().array() = orgDiag + tau;
 
 			tau = std::max(c * tau, beta);
 		}
 
-
 		return -grad;
 	}
 
-
-
-	double beta;
-
-	double c;
-
-	double maxTau;
+	Float beta;
+	Float c;
+	Float maxTau;
 };
 
 
+template <typename Float>
 struct CholeskyFactorization
 {
-	CholeskyFactorization (double delta = 1e-3) : delta(delta) {}
-
+	CholeskyFactorization (Float delta = 1e-3) : delta(delta) {}
 
 	Vec operator () (const Vec& grad, Mat hess)
 	{

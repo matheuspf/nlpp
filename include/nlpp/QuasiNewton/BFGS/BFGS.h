@@ -56,11 +56,10 @@ struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Ou
     V optimize (Function f, V x0)
     {
         using Float = impl::Scalar<V>;
-        constexpr int Size = V::SizeAtCompileTime;
 
         int rows = x0.rows(), cols = x0.cols(), size = rows * cols;
 
-        Eigen::Matrix<Float, Size, Size> In = Eigen::Matrix<Float, Size, Size>::Identity(size, size);
+        impl::Plain2D<V> In = impl::Plain2D<V>::Identity(size, size);
 
         auto hess = initialHessian(f, x0);
 
@@ -76,7 +75,7 @@ struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Ou
         {
             dir = -hess * g0;
 
-            double alpha = lineSearch(f, x0, dir);
+            auto alpha = lineSearch(f, x0, dir);
 
             x1 = x0 + alpha * dir;
 
@@ -89,7 +88,7 @@ struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Ou
                 break;
 
 
-            double rho = 1.0 / std::max((double)y.dot(s), constants::eps);
+            Float rho = 1.0 / std::max(y.dot(s), constants::eps_<Float>);
 
             hess = (In - rho * s * y.transpose()) * hess * (In - rho * y * s.transpose()) + rho * s * s.transpose();
 

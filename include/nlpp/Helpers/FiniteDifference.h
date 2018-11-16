@@ -63,6 +63,8 @@ namespace fd
     @brief Forward Declarations of the @c Step classes
 */
 //@{
+struct AutoStep;
+
 template <typename>
 struct SimpleStep;
 
@@ -160,14 +162,27 @@ struct FiniteDifference
                  representing the derivative of @c f at @c x.
     */
     //@{
-    template <typename X>
-    auto gradient (const X& x)
+    template <class V>
+    auto gradient (const Eigen::MatrixBase<V>& x)
     {
         return static_cast<Impl&>(*this).gradient(x, f(x));
     }
 
-    template <typename X, typename G>
-    auto gradient (const X& x, G& g)
+    template <class V, class U>
+    auto gradient (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<U>& g)
+    {
+        return static_cast<Impl&>(*this).gradient(x, g, f(x));
+    }
+
+
+    template <typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
+    auto gradient (Float x)
+    {
+        return static_cast<Impl&>(*this).gradient(x, f(x));
+    }
+
+    template <typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
+    auto gradient (Float x, Float& g)
     {
         return static_cast<Impl&>(*this).gradient(x, g, f(x));
     }
@@ -500,7 +515,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
  *  @tparam Step Step size template functor
  *  @tparam Float Base floating point type
 */
-template <class Function, class Step = SimpleStep<>>
+template <class Function, class Step = AutoStep>
 struct Backward : public FiniteDifference<Backward<Function, Step>>
 {
     CPPOPT_USING_FINITE_DIFFERENCE(Base, FiniteDifference<Backward<Function, Step>>);
@@ -704,7 +719,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
  *  @tparam Step Step size template functor
  *  @tparam Float Base floating point type
 */
-template <class Function, class Step = SimpleStep<>>
+template <class Function, class Step = AutoStep>
 struct Central : public FiniteDifference<Central<Function, Step>>
 {
     CPPOPT_USING_FINITE_DIFFERENCE(Base, FiniteDifference<Central<Function, Step>>);
@@ -974,14 +989,29 @@ struct Hessian : public Difference<wrap::Function<Function>, Step>
  * 
  *  @tparam Float The base floating point type
 */
+struct AutoStep
+{
+    AutoStep (...)
+    {}
+
+    void init (...)
+    {}
+
+    template <class Derived>
+    impl::Scalar<Derived> operator () (const Eigen::MatrixBase<Derived>&, ...)  const
+    {
+        return constants::eps_<impl::Scalar<Derived>>;
+    }
+};
+
+
 template <typename Float>
 struct SimpleStep
 {
     SimpleStep (Float h = constants::eps_<Float>) : h(h) {}
 
     void init (...)
-    {
-    }
+    {}
 
     Float operator () (...) const
     {
@@ -996,7 +1026,7 @@ template <typename Float>
 struct NormalizedStep : public SimpleStep<Float>
 {
     CPPOPT_USING_STEPSIZE(Base, SimpleStep<Float>);
-
+    
 
     /// Returns @f$max(u^2, |x_i|)$@f for dimension @c i
     template <typename X>
@@ -1024,13 +1054,13 @@ struct NormalizedStep : public SimpleStep<Float>
  *  @tparam Float Base floating point type
 */
 //@{
-template <class Function, template <class, class> class Difference = Forward, class Step = SimpleStep<>>
+template <class Function, template <class, class> class Difference = Forward, class Step = AutoStep>
 auto gradient (const Function& f)
 {
     return Gradient<Function, Difference, Step>(f);
 }
 
-template <class Function, template <class, class> class Difference = Forward, class Step = SimpleStep<>>
+template <class Function, template <class, class> class Difference = Forward, class Step = AutoStep>
 auto gradient (const Function& f, const Step& step)
 {
     return Gradient<Function, Difference, Step>(f, step);

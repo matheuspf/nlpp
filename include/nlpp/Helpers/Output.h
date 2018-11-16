@@ -37,14 +37,14 @@ struct GradientOptimizer<1, Float>
     void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx) 
     {
-        handy::print("Init\n\n", "x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose()) << std::flush;
+        handy::print("Init\n\n", "x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose(), "\n") << std::flush;
     }
 
     template <class LineSearch, class Stop, class Output, class V>
     void operator() (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                      const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx)
     {
-        handy::print("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose()) << std::flush;
+        handy::print("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose(), "\n") << std::flush;
     }
 
     template <class LineSearch, class Stop, class Output, class V>

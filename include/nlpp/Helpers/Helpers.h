@@ -123,31 +123,19 @@ struct Precedence <I, I> {};
 namespace constants
 {
 
-/// If boost is already included, use its defined constants
-#ifdef BOOST_VERSION
-
-#include <boost/math/constants/constants.hpp>
-
-template <typename T = double>
-constexpr T pi_ = boost::math::constants::pi<T>();
-
-template <typename T = double>
-constexpr T phi_ = boost::math::constants::phi<T>();
-
-/// Else define our own
-#else
-
 template <typename T = types::Float>
 constexpr T pi_ = T(3.14159265359);
 
 template <typename T = types::Float>
 constexpr T phi_ = T(1.61803398875);
 
-#endif
+template <typename> struct Eps;
 
+constexpr double eps_f (double) { return 1e-8; }
+constexpr float eps_f (float) { return 1e-4; }
 
 template <typename T = types::Float>
-constexpr T eps_ = T(1e-8);
+constexpr T eps_ = eps_f(T{});
 
 constexpr double eps = eps_<types::Float>;
 constexpr double pi  = pi_<types::Float>;
