@@ -15,17 +15,17 @@ using namespace nlpp;
 int main ()
 {
     using Func = Rosenbrock;
-    using IH = BFGS_Diagonal;
+    using IH = BFGS_Diagonal<>;
     using LS = StrongWolfe;
-    using Stop = stop::GradientOptimizer<>;
-    using Out = out::GradientOptimizer<0>;
+    using Stop = stop::GradientOptimizer<0>;
+    using Out = out::GradientOptimizer<1>;
 
     params::LBFGS<IH, LS, Stop, Out> params;
 
     params.stop.maxIterations = 1e4;
-    params.stop.fTol = 1e-8;
-    params.stop.gTol = 1e-8;
-    params.stop.xTol = 1e-8;
+    params.stop.fTol = 1e-4;
+    params.stop.gTol = 1e-4;
+    params.stop.xTol = 1e-4;
     params.m = 10;
 
     LBFGS<IH, LS, Stop, Out> lbfgs(params);

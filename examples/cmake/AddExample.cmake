@@ -12,7 +12,7 @@ function(addExample file_path files)
 
         target_compile_options(${file} PRIVATE -O2)
 
-        target_compile_definitions(${file} PUBLIC EIGEN_INCLUDE_LOCAL=${_eigen_include_local})
+        #target_compile_definitions(${file} PUBLIC EIGEN_INCLUDE_LOCAL=${_eigen_include_local})
 
         add_dependencies(examples ${file})
     endforeach()

@@ -22,7 +22,7 @@ namespace nlpp
 namespace params
 {
 
-template <class InitialHessian = BFGS_Diagonal, class LineSearch = Goldstein,
+template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = Goldstein,
           class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
 {
@@ -38,7 +38,7 @@ struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
 } // namespace params
 
 
-template <class InitialHessian = BFGS_Diagonal, class LineSearch = StrongWolfe, 
+template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe, 
           class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>, 
                                         params::LBFGS<InitialHessian, LineSearch, Stop, Output>>
@@ -52,20 +52,24 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
 	template <class Function, class V>
 	V optimize (Function f, V x0)
 	{
+        using Float = impl::Scalar<V>;
+
         V gx(x0.rows(), x0.cols()), gx0(x0.rows(), x0.cols());
-        double fx0, fx;
+        Float fx0, fx;
 
         fx0 = f(x0, gx0);
         
         stop.init(*this, x0, fx0, gx0);
         output.init(*this, x0, fx0, gx0);
 
+        std::deque<V> vs;
+        std::deque<V> vy;
+
         for(int iter = 0; iter < stop.maxIterations; ++iter)
         {
-            auto H = initialHessian([&](const auto& x){ return f.function(x); },
-                                    [&](const auto& x){ return f.gradient(x); }, x0);
+            auto H = initialHessian(f, x0);
 
-            V p = direction(f, x0, gx0, H);
+            V p = direction(f, x0, gx0, H, vs, vy);
 
             auto alpha = lineSearch(f, x0, p);
 
@@ -93,18 +97,19 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
             output(*this, x, fx, gx);
         }
 
-        output.finish(*this, x, fx, gx);
+        output.finish(*this, x0, fx, gx);
 
         return x0;
 	}
 
 
-    template <class Function, class Mat>
-    V direction (Function f, const Vec& x, const Vec& gx, const Mat& H)
+    template <class Function, class V, class U>
+    V direction (Function f, const V& x, const V& gx, const Eigen::MatrixBase<U>& H,
+                 const std::deque<V>& vs, const std::deque<V>& vy)
     {
-        Vec alpha(vs.size());
-        Vec rho(vs.size());
-        Vec q = -gx;
+        V alpha(vs.size());
+        V rho(vs.size());
+        V q = -gx;
 
         for(int i = vs.size() - 1; i >= 0; --i)
         {
@@ -114,21 +119,17 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
             q = q - alpha[i] * vy[i];
         }
 
-        Vec r = H * q;
+        V r = H * q;
 
         for(int i = 0; i < vs.size(); ++i)
         {
-            double beta = rho[i] * vy[i].dot(r);
+            auto beta = rho[i] * vy[i].dot(r);
 
             r = r + (alpha[i] - beta) * vs[i];
         }
 
         return r;
     }
-
-
-    std::deque<Vec> vs;
-    std::deque<Vec> vy;
 };
 
 

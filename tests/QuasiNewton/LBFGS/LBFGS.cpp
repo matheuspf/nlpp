@@ -24,7 +24,7 @@ struct LBFGS_Test : public ::testing::Test
 
 
     using Func = nlpp::Rosenbrock;
-    using IH = nlpp::BFGS_Diagonal;
+    using IH = nlpp::BFGS_Diagonal<>;
     using LS = nlpp::StrongWolfe;
     using Stop = nlpp::stop::GradientOptimizer<1>;
     using Out = nlpp::out::GradientOptimizer<0>;
