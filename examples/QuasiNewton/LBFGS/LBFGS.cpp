@@ -1,7 +1,5 @@
 #include "QuasiNewton/LBFGS/LBFGS.h"
 
-#include "LineSearch/Dynamic/Dynamic.h"
-
 #include "LineSearch/StrongWolfe/StrongWolfe.h"
 
 #include "LineSearch/Goldstein/Goldstein.h"
@@ -16,7 +14,7 @@ int main ()
 {
     using Func = Rosenbrock;
     using IH = BFGS_Diagonal<>;
-    using LS = StrongWolfe;
+    using LS = StrongWolfe<>;
     using Stop = stop::GradientOptimizer<0>;
     using Out = out::GradientOptimizer<1>;
 

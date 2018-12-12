@@ -10,7 +10,7 @@ using namespace nlpp;
 
 int main ()
 {
-    using BFGS = BFGS<BFGS_Diagonal<>, StrongWolfe, stop::GradientOptimizer<1>, out::GradientOptimizer<1>>;
+    using BFGS = BFGS<BFGS_Diagonal<>, StrongWolfe<>, stop::GradientOptimizer<1>, out::GradientOptimizer<1>>;
 
     BFGS::Params params;
 
@@ -18,7 +18,7 @@ int main ()
     params.stop.gTol = 1e-4;
     params.stop.fTol = 1e-4;
     params.stop.xTol = 1e-4;
-    params.lineSearch = StrongWolfe(1.0, 1e-4, 0.9);
+    params.lineSearch = StrongWolfe<>(1.0, 1e-4, 0.9);
 
 
     BFGS bfgs(params);

@@ -9,10 +9,11 @@ namespace nlpp
 namespace impl
 {
 
+template <typename Float = types::Float>
 struct Goldstein
 {
-	Goldstein (double a0 = 1.0, double c = 0.2, double rho1 = 0.5, double rho2 = 1.5, 
-			   double aMin = constants::eps, int maxIter = 100) : 
+	Goldstein (Float a0 = 1.0, Float c = 0.2, Float rho1 = 0.5, Float rho2 = 1.5, 
+			   Float aMin = constants::eps, int maxIter = 100) : 
 			   a0(a0), mu1(c), mu2(1.0 - c), rho1(rho1), rho2(rho2), aMin(aMin), maxIter(maxIter)
 	{
 		assert(a0 > 1e-5 && "a0 must be positive");
@@ -24,9 +25,9 @@ struct Goldstein
 
 
 	template <class Function>
-	double lineSearch (Function f)
+	Float lineSearch (Function f)
 	{
-		double f0, g0, a = a0, safeGuard = a0;
+		Float f0, g0, a = a0, safeGuard = a0;
 		
 		std::tie(f0, g0) = f(0.0);
 
@@ -35,7 +36,7 @@ struct Goldstein
 
 		while(a > aMin && ++iter < maxIter)
 		{
-			double fa, ga;
+			Float fa, ga;
 
 			std::tie(fa, ga) = f(a);
 
@@ -61,25 +62,29 @@ struct Goldstein
 	}
 
 
-	double a0;
-	double mu1, mu2;
-	double rho1, rho2;
-	double aMin;
+	Float a0;
+	Float mu1, mu2;
+	Float rho1, rho2;
+	Float aMin;
 	int maxIter;
 };
 
 } // namespace impl
 
 
-struct Goldstein : public impl::Goldstein,
-				   public LineSearch<Goldstein>
+template <typename Float = types::Float>
+struct Goldstein : public impl::Goldstein<Float>,
+				   public LineSearchBase<Goldstein<Float>>
 {
-	using impl::Goldstein::Goldstein;
+	using Interface = LineSearchBase<Goldstein<Float>>;
+	using Impl = impl::Goldstein<Float>;
+	using Impl::Impl;
+
 
 	template <class Function>
 	double lineSearch (Function f)
 	{
-		return impl::Goldstein::lineSearch(f);
+		return Impl::lineSearch(f);
 	}
 };
 
@@ -87,15 +92,18 @@ struct Goldstein : public impl::Goldstein,
 namespace poly
 {
 
-template <class Function>
-struct Goldstein : public impl::Goldstein,
+template <class Function, typename Float = types::Float>
+struct Goldstein : public impl::Goldstein<Float>,
 				   public LineSearch<Function>
 {
-	using impl::Goldstein::Goldstein;
+	using Interface = LineSearch<Goldstein<Float>>;
+	using Impl = impl::Goldstein<Float>;
+	using Impl::Impl;
+
 
 	double lineSearch (Function f)
 	{
-		return impl::Goldstein::lineSearch(f);
+		return Impl::lineSearch(f);
 	}
 
 	Goldstein* clone () const
@@ -105,8 +113,6 @@ struct Goldstein : public impl::Goldstein,
 };
 
 } // namespace poly
-
-
 
 
 } // namespace nlpp

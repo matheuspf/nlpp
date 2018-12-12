@@ -32,7 +32,8 @@
 \
 struct __VA_ARGS__ \
 {\
-	double operator () (const Vec& fa, const Vec& fb, const Vec& dir = Vec()) const \
+	template <class V>	\
+	impl::Scalar<V> operator () (const V& fa, const V& fb, const V& dir = V()) const \
 	{\
 		Op; \
 	}\
@@ -61,15 +62,15 @@ BUILD_CG_STRUCT(return fb.dot(fb) / dir.dot(fb - fa), DY);
 
 BUILD_CG_STRUCT(Vec y = fb - fa;
 
-				double yp = y.dot(dir);
-				double yy = y.dot(y);
+				auto yp = y.dot(dir);
+				auto yy = y.dot(y);
 
 				return (y - 2 * dir * (yy / yp)).dot(fb) / yp;,
 
 				HZ);
 
-BUILD_CG_STRUCT(double fr = FR::operator()(fa, fb);
-				double pr = PR::operator()(fa, fb);
+BUILD_CG_STRUCT(auto fr = FR::operator()(fa, fb);
+				auto pr = PR::operator()(fa, fb);
 
 				if(pr < -fr) return -fr;
 
@@ -89,14 +90,14 @@ namespace params
 
 /** @brief Conjugate gradient parameters class, extending flow base GradientOptimizer parameters
 */
-template <class CGType = FR_PR, class LineSearch = StrongWolfe, 
+template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, 
 		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct CG : public GradientOptimizer<LineSearch, Stop, Output>
 {
 	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
 
-	template <class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, StrongWolfe>::value, int> = 0>
-    CG(const LineSearch& lineSearch = StrongWolfe(1e-2, 1e-4, 0.1), const Stop& stop = Stop{}, const Output& output = Output{}) :
+	template <class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, StrongWolfe<>>::value, int> = 0>
+    CG(const LineSearch& lineSearch = StrongWolfe<>(1e-2, 1e-4, 0.1), const Stop& stop = Stop{}, const Output& output = Output{}) :
        Params(lineSearch, stop, output)
     {
     }
@@ -112,7 +113,7 @@ struct CG : public GradientOptimizer<LineSearch, Stop, Output>
 
 
 
-template <class CGType = FR_PR, class LineSearch = StrongWolfe, 
+template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, 
 		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct CG : public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, params::CG<CGType, LineSearch, Stop, Output>>
 {

@@ -23,21 +23,21 @@ struct GradientDescent : public ::testing::Test
 	}
 
 
-	nlpp::GradientDescent<nlpp::Goldstein> cg;
+	nlpp::GradientDescent<nlpp::Goldstein<>> cg;
 };
 
 
 
 TEST_F(GradientDescent, PerformanceTest)
 {
-	nlpp::params::GradientDescent<nlpp::Goldstein> params;
+	nlpp::params::GradientDescent<nlpp::Goldstein<>> params;
 
 	params.stop.fTol = 0.0;
 	params.stop.xTol = 0.0;
 	params.stop.gTol = 1e-3;
 	params.stop.maxIterations = 1e4;
 
-	cg = nlpp::GradientDescent<nlpp::Goldstein>(params);
+	cg = nlpp::GradientDescent<nlpp::Goldstein<>>(params);
 
 	nlpp::Rosenbrock func;
 	auto grad = nlpp::fd::gradient(func);

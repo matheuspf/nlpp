@@ -9,10 +9,11 @@ namespace nlpp
 namespace impl
 {
 
+template <typename Float>
 struct StrongWolfe
 {
-	StrongWolfe (double a0 = 1.0, double c1 = 1e-4, double c2 = 0.9, double aMaxC = 100.0, double rho = constants::phi, 
-				 int maxIterBrack = 20, int maxIterInt = 1e2, double tol = constants::eps) :
+	StrongWolfe (Float a0 = 1.0, Float c1 = 1e-4, Float c2 = 0.9, Float aMaxC = 100.0, Float rho = constants::phi, 
+				 int maxIterBrack = 20, int maxIterInt = 1e2, Float tol = constants::eps) :
 				 a0(a0), c1(c1), c2(c2), aMaxC(aMaxC), rho(rho), 
 				 maxIterBrack(maxIterBrack), maxIterInt(maxIterInt), tol(tol)
 	{
@@ -24,21 +25,21 @@ struct StrongWolfe
 
 
 	template <class Function>
-	double lineSearch (Function f)
+	Float lineSearch (Function f)
 	{
-		double f0, g0;
+		Float f0, g0;
 		
 		std::tie(f0, g0) = f(0.0);
 
-		double a = 0.0, fa = f0, ga = g0;
-		double b = a0, fb, gb;
+		Float a = 0.0, fa = f0, ga = g0;
+		Float b = a0, fb, gb;
 
-		double safeGuard = 0.0;
+		Float safeGuard = 0.0;
 
 		int iter = 0;
 
-		//double aMax = aMaxC * std::max(xNorm, double(N));
-		double aMax = 100.0;
+		//Float aMax = aMaxC * std::max(xNorm, Float(N));
+		Float aMax = 100.0;
 
 		while(iter++ < maxIterBrack && b + tol < aMax)
 		{
@@ -58,7 +59,7 @@ struct StrongWolfe
 				return zoom(f, b, fb, gb, a, fa, ga, f0, g0);
 
 
-			double next = interpolate(a, fa, ga, b, fb, gb);
+			Float next = interpolate(a, fa, ga, b, fb, gb);
 
 			a = b, fa = fb, ga = gb;
 
@@ -71,16 +72,16 @@ struct StrongWolfe
 
 
 	template <class Function>
-	double zoom (Function f, double l, double fl, double gl, double u, double fu, double gu, double f0, double g0)
+	Float zoom (Function f, Float l, Float fl, Float gl, Float u, Float fu, Float gu, Float f0, Float g0)
 	{
-		double a = l, fa, ga;
+		Float a = l, fa, ga;
 
 		int iter = 0;
 
 
 		while(iter++ < maxIterInt)
 		{
-			double next = interpolate(l, fl, gl, u, fu, gu);
+			Float next = interpolate(l, fl, gl, u, fu, gu);
 
 			if(a - tol <= l || a + tol >= u || std::abs(next - a) < tol)
 				a = (u + l) / 2.0;
@@ -114,10 +115,10 @@ struct StrongWolfe
 	}
 
 
-	double interpolate (double a, double fa, double ga, double b, double fb, double gb)
+	Float interpolate (Float a, Float fa, Float ga, Float b, Float fb, Float gb)
 	{
-		double d1 = ga + gb - 3 * ((fa - fb) / (a - b));
-		double d2 = sign(b - a) * std::sqrt(d1 * d1 - ga * gb);
+		Float d1 = ga + gb - 3 * ((fa - fb) / (a - b));
+		Float d2 = sign(b - a) * std::sqrt(d1 * d1 - ga * gb);
 
 		return b - (b - a) * ((gb + d2 - d1) / (gb - ga + 2 * d2));
 	}
@@ -125,26 +126,32 @@ struct StrongWolfe
 
 
 
-	double a0;
-	double c1, c2;
-	double aMaxC;
-	double rho;
-	int maxIterBrack, maxIterInt;
-	double tol;
+	Float a0;
+	Float c1;
+	Float c2;
+	Float aMaxC;
+	Float rho;
+	int maxIterBrack;
+	int maxIterInt;
+	Float tol;
 };
 
 } // namespace impl
 
 
-struct StrongWolfe : public impl::StrongWolfe,
-					 public LineSearch<StrongWolfe>
+template <typename Float>
+struct StrongWolfe : public impl::StrongWolfe<Float>,
+					 public LineSearchBase<StrongWolfe<Float>>
 {
-	using impl::StrongWolfe::StrongWolfe;
+	using Interface = LineSearchBase<StrongWolfe<Float>>;
+	using Impl = impl::StrongWolfe<Float>;
+	using Impl::Impl;
+
 
 	template <class Function>
-	double lineSearch (Function f)
+	auto lineSearch (Function f)
 	{
-		return impl::StrongWolfe::lineSearch(f);
+		return Impl::lineSearch(f);
 	}
 };
 
@@ -152,15 +159,18 @@ struct StrongWolfe : public impl::StrongWolfe,
 namespace poly
 {
 
-template <class Function>
-struct StrongWolfe : public impl::StrongWolfe,
+template <class Function, typename Float = types::Float>
+struct StrongWolfe : public impl::StrongWolfe<Float>,
 					 public LineSearch<Function>
 {
-	using impl::StrongWolfe::StrongWolfe;
+	using Interface = LineSearch<StrongWolfe<Float>>;
+	using Impl = impl::StrongWolfe<Float>;
+	using Impl::Impl;
 
-	double lineSearch (Function f)
+
+	Float lineSearch (Function f)
 	{
-		return impl::StrongWolfe::lineSearch(f);
+		return Impl::ineSearch(f);
 	}
 
 	StrongWolfe* clone () const

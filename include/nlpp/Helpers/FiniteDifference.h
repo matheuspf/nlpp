@@ -1067,13 +1067,13 @@ auto gradient (const Function& f, const Step& step)
 }
 
 
-template <class Function, template <class, class> class Difference = Forward, class Step = SimpleStep<>>
+template <class Function, template <class, class> class Difference = Forward, class Step = AutoStep>
 auto hessian (const Function& f)
 {
     return Hessian<Function, Difference, Step>(f);
 }
 
-template <class Function, template <class, class> class Difference = Forward, class Step = SimpleStep<>>
+template <class Function, template <class, class> class Difference = Forward, class Step = AutoStep>
 auto hessian (const Function& f, const Step& step)
 {
     return Hessian<Function, Difference, Step>(f, step);

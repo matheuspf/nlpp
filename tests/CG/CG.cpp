@@ -23,7 +23,7 @@ struct CG : public ::testing::Test
 	}
 
 	using CGType = nlpp::FR_PR;
-	using LS = nlpp::StrongWolfe;
+	using LS = nlpp::StrongWolfe<>;
 	using Stop = nlpp::stop::GradientOptimizer<1>;
 	using Out = nlpp::out::GradientOptimizer<2>;
 

@@ -8,7 +8,9 @@ using namespace nlpp;
 
 int main ()
 {
-	using LS = Goldstein;
+	using F = long double;
+
+	using LS = Goldstein<F>;
 	using Stop = stop::GradientOptimizer<>;
 	using Out = out::GradientOptimizer<2>;
 

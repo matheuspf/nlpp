@@ -19,6 +19,7 @@ namespace nlpp
 namespace wrap
 {
 
+/// A utility to wrap a vector function to a scalar function along a direction @c d
 template <class FunctionGradient, class V>
 struct LineSearch
 {
@@ -126,27 +127,15 @@ struct LineSearchBase
 
 
 
-
-template <class Impl>
-struct LineSearch : public LineSearchBase<LineSearch<Impl>>
-{
-	template <class Function>
-	double lineSearch (Function f)
-	{
-		return static_cast<Impl&>(*this).lineSearch(f);
-	}
-};
-
-
 namespace poly
 {
 
-template <class Function>
+template <class Function, typename Float = types::Float>
 struct LineSearch : public LineSearchBase<LineSearch<Function>>
 {
 	virtual ~LineSearch () {}
 
-	virtual double lineSearch (Function f) = 0;
+	virtual Float lineSearch (Function f) = 0;
 
 	virtual LineSearch* clone () const = 0;
 };
@@ -158,8 +147,8 @@ struct LineSearch : public LineSearchBase<LineSearch<Function>>
 
 
 
-template <class Impl, bool Polymorphic, typename... Args>
-using LineSearchPick = std::conditional_t<Polymorphic, poly::LineSearch<Args...>, LineSearch<Impl>>;
+//template <class Impl, bool Polymorphic, typename... Args>
+//using LineSearchPick = std::conditional_t<Polymorphic, poly::LineSearch<Args...>, LineSearch<Impl>>;
 
 
 

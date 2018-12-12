@@ -131,6 +131,8 @@ constexpr T phi_ = T(1.61803398875);
 
 template <typename> struct Eps;
 
+// TODO: automatically select the sqrt of the std::numeric_limits::epsilon of each type
+constexpr long double eps_f (long double) { return 3e-10; }
 constexpr double eps_f (double) { return 1e-8; }
 constexpr float eps_f (float) { return 1e-4; }
 

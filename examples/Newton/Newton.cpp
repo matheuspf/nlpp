@@ -7,10 +7,10 @@ using namespace nlpp;
 
 int main ()
 {
-    using F = float;
+    using F = long double;
 
-    using Opt = nlpp::Newton<nlpp::fact::CholeskyIdentity<F>, nlpp::StrongWolfe,
-                            nlpp::stop::GradientOptimizer<1, F>, nlpp::out::GradientOptimizer<>>;
+    using Opt = nlpp::Newton<nlpp::fact::CholeskyIdentity<>, nlpp::StrongWolfe<>,
+                            nlpp::stop::GradientOptimizer<1>, nlpp::out::GradientOptimizer<>>;
                             
 
     typename Opt::Params params;
@@ -27,11 +27,8 @@ int main ()
 
     nlpp::Rosenbrock func;
 
-    //auto grad = fd::gradient(func);
-    fd::Gradient<Rosenbrock, fd::Forward, fd::SimpleStep<F>> grad(func, fd::SimpleStep<F>(1e-4));
-    fd::Hessian<Rosenbrock, fd::Forward, fd::SimpleStep<F>> hess(func, fd::SimpleStep<F>(1e-4));
-
-    //auto hess = fd::hessian(func);
+    auto grad = fd::gradient(func);
+    auto hess = fd::hessian(func);
 
     Opt newton(params);
 
@@ -41,7 +38,7 @@ int main ()
 	x = newton(func, grad, x, hess);
 
 
-    handy::print("x: ", x.transpose(), "\nfx: ", func(x), "\ngx: ", grad(x).transpose(), "\n");
+    handy::print("x: ", x.transpose(), "\nfx: ", func(x), "\ngx: ", grad(x).norm(), "\n");
 
 
 

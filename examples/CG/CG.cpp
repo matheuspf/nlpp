@@ -2,7 +2,7 @@
 
 #include "TestFunctions/Rosenbrock.h"
 
-#include "LineSearch/Goldstein/Goldstein.h"
+//#include "LineSearch/Goldstein/Goldstein.h"
 
 
 
@@ -11,11 +11,11 @@ using namespace nlpp;
 
 int main ()
 {
-	params::CG<FR_PR, StrongWolfe> params(StrongWolfe{}, stop::GradientOptimizer<>{});
+	params::CG<FR_PR, StrongWolfe<>> params(StrongWolfe<>{}, stop::GradientOptimizer<>{});
 
 	params.stop.fTol = 0.0;
 
-	CG<FR_PR, StrongWolfe> cg(params);
+	CG<FR_PR, StrongWolfe<>> cg(params);
 
 	Rosenbrock func;
 
@@ -27,6 +27,7 @@ int main ()
 	//auto grad = [](const auto& x){ return x; };
 
 	Eigen::VectorXd x = Eigen::VectorXd::Constant(10, 5.0);
+	//Eigen::VectorXf x = Eigen::VectorXf::Constant(10, 5.0);
 	
 	handy::print(handy::benchmark([&]
 	{

@@ -6,8 +6,6 @@
 
 #include "../../LineSearch/StrongWolfe/StrongWolfe.h"
 
-#include "../../LineSearch/Goldstein/Goldstein.h"
-
 #include "../BFGS/BFGS.h"
 
 
@@ -22,7 +20,7 @@ namespace nlpp
 namespace params
 {
 
-template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = Goldstein,
+template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>,
           class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
 {
@@ -38,7 +36,7 @@ struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
 } // namespace params
 
 
-template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe, 
+template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>, 
           class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
 struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>, 
                                         params::LBFGS<InitialHessian, LineSearch, Stop, Output>>

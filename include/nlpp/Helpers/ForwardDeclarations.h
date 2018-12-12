@@ -28,13 +28,14 @@ struct GradientOptimizer;
 
 
 /// Because this is used as the default line search procedure in many cases
+template <typename Float = types::Float>
 struct StrongWolfe;
 
 
 namespace params
 {
 
-template <class = StrongWolfe, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
+template <class = StrongWolfe<>, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
 struct GradientOptimizer;
 
 } // namespace params

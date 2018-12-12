@@ -23,7 +23,7 @@ namespace
 
 TEST(Newton, PrecisionTest)
 {
-    using Opt = nlpp::Newton<nlpp::fact::CholeskyIdentity<>, nlpp::StrongWolfe,
+    using Opt = nlpp::Newton<nlpp::fact::CholeskyIdentity<>, nlpp::StrongWolfe<>,
                             nlpp::stop::GradientOptimizer<1>, nlpp::out::GradientOptimizer<0>>;
 
 
