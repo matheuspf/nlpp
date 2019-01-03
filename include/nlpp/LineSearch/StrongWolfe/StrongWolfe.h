@@ -139,47 +139,9 @@ struct StrongWolfe
 } // namespace impl
 
 
-template <typename Float>
-struct StrongWolfe : public impl::StrongWolfe<Float>,
-					 public LineSearchBase<StrongWolfe<Float>>
-{
-	using Interface = LineSearchBase<StrongWolfe<Float>>;
-	using Impl = impl::StrongWolfe<Float>;
-	using Impl::Impl;
+NLPP_LINE_SEARCH_D(StrongWolfe)
 
 
-	template <class Function>
-	auto lineSearch (Function f)
-	{
-		return Impl::lineSearch(f);
-	}
-};
-
-
-namespace poly
-{
-
-template <class Function, typename Float = types::Float>
-struct StrongWolfe : public impl::StrongWolfe<Float>,
-					 public LineSearch<Function>
-{
-	using Interface = LineSearch<StrongWolfe<Float>>;
-	using Impl = impl::StrongWolfe<Float>;
-	using Impl::Impl;
-
-
-	Float lineSearch (Function f)
-	{
-		return Impl::ineSearch(f);
-	}
-
-	StrongWolfe* clone () const
-	{
-		return new StrongWolfe(*this);
-	}
-};
-
-} // namespace poly
 
 
 } // namespace nlpp

@@ -72,47 +72,9 @@ struct Goldstein
 } // namespace impl
 
 
-template <typename Float = types::Float>
-struct Goldstein : public impl::Goldstein<Float>,
-				   public LineSearchBase<Goldstein<Float>>
-{
-	using Interface = LineSearchBase<Goldstein<Float>>;
-	using Impl = impl::Goldstein<Float>;
-	using Impl::Impl;
 
 
-	template <class Function>
-	double lineSearch (Function f)
-	{
-		return Impl::lineSearch(f);
-	}
-};
-
-
-namespace poly
-{
-
-template <class Function, typename Float = types::Float>
-struct Goldstein : public impl::Goldstein<Float>,
-				   public LineSearch<Function>
-{
-	using Interface = LineSearch<Goldstein<Float>>;
-	using Impl = impl::Goldstein<Float>;
-	using Impl::Impl;
-
-
-	double lineSearch (Function f)
-	{
-		return Impl::lineSearch(f);
-	}
-
-	Goldstein* clone () const
-	{
-		return new Goldstein(*this);
-	}
-};
-
-} // namespace poly
+NLPP_LINE_SEARCH(Goldstein)
 
 
 } // namespace nlpp

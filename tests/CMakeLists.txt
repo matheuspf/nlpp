@@ -16,7 +16,7 @@ endif()
 
 add_subdirectory(CG)
 add_subdirectory(GradientDescent)
-#add_subdirectory(LineSearch)
+add_subdirectory(LineSearch)
 add_subdirectory(QuasiNewton)
 #add_subdirectory(HyperbolicPenalty)
 add_subdirectory(Newton)

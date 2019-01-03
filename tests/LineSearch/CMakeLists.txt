@@ -1,1 +1,1 @@
-target_sources(tests PUBLIC LineSearch/Backtracking/Backtracking.cpp LineSearch/Bracketing/Bracketing.cpp)
+target_sources(tests PUBLIC LineSearch/Backtracking/Backtracking.cpp)

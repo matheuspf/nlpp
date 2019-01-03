@@ -11,13 +11,15 @@ namespace nlpp
  *  @details Search for a point @c a satisfying the first of the Wolfe conditions given the function/gradient
  * 			 functor f
 */
+
 namespace impl
 {
 
+template <typename Float = types::Float>
 struct Backtracking
 {
 	/// Some reasonable default values
-	Backtracking (double a0 = 1.0, double c = 1e-4, double rho = 0.5, double aMin = constants::eps) :
+	Backtracking (Float a0 = 1.0, Float c = 1e-4, Float rho = 0.5, Float aMin = constants::eps) :
 				  a0(a0), c(c), rho(rho), aMin(aMin)
 	{
 		assert(a0 > 1e-5 && "a0 must be larger than this");
@@ -31,9 +33,9 @@ struct Backtracking
 	 *  @param f A function/gradient functor, projected on a single dimension
 	*/
 	template <class Function>
-	double lineSearch (Function f)
+	Float lineSearch (Function f)
 	{
-		double f0, g0, a = a0;
+		Float f0, g0, a = a0;
 
 		std::tie(f0, g0) = f(0.0);
 
@@ -45,51 +47,19 @@ struct Backtracking
 	}
 
 
-	double a0;		///< Initial step
+	Float a0;		///< Initial step
 
-	double c;		///< Factor to control the linear Wolfe condition (@c c1)
+	Float c;		///< Factor to control the linear Wolfe condition (@c c1)
 
-	double aMin;	///< Smallest step acceptable
+	Float aMin;	///< Smallest step acceptable
 
-	double rho;		///< Factor to reduce @c a
+	Float rho;		///< Factor to reduce @c a
 };
 
 } // namespace impl
 
 
-struct Backtracking : public impl::Backtracking,
-					  public LineSearch<Backtracking>
-{
-	using impl::Backtracking::Backtracking;
+NLPP_LINE_SEARCH(Backtracking)
 
-	template <class Function>
-	double lineSearch (Function f)
-	{
-		return impl::Backtracking::lineSearch(f);
-	}
-};
-
-
-namespace poly
-{
-
-template <class Function>
-struct Backtracking : public impl::Backtracking,
-					  public LineSearch<Function>
-{
-	using impl::Backtracking::Backtracking;
-
-	double lineSearch (Function f)
-	{
-		return impl::Backtracking::lineSearch(f);
-	}
-
-	Backtracking* clone () const
-	{
-		return new Backtracking(*this);
-	}
-};
-
-} // namespace poly
 
 } // namespace nlpp

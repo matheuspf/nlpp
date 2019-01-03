@@ -41,7 +41,7 @@ struct Bracketing : ::testing::Test
     }
 
 
-    nlpp::Bracketing bc;
+    nlpp::Bracketing<> bc;
 
     double x, y, z;
 };

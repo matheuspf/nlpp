@@ -26,7 +26,7 @@ struct Backtracking : ::testing::Test
     }
 
 
-    nlpp::GradientDescent<nlpp::Backtracking> gd;
+    nlpp::GradientDescent<nlpp::Backtracking<>> gd;
 };
 
 
@@ -34,14 +34,14 @@ TEST_F(Backtracking, BacktrackingTest)
 {
 	handy::Benchmark benchmark;
 
-	nlpp::params::GradientDescent<nlpp::Backtracking> params;
+	nlpp::params::GradientDescent<nlpp::Backtracking<>> params;
 
 	params.stop.fTol = 0.0;
 	params.stop.xTol = 0.0;
 	params.stop.gTol = 1e-3;
 	params.stop.maxIterations = 1e4;
 
-	gd = nlpp::GradientDescent<nlpp::Backtracking>(params);
+	gd = nlpp::GradientDescent<nlpp::Backtracking<>>(params);
 
 	nlpp::Rosenbrock func;
 	auto grad = nlpp::fd::gradient(func);
@@ -52,7 +52,7 @@ TEST_F(Backtracking, BacktrackingTest)
 
 	EXPECT_LE(grad(x).norm(), 1e-3);
 
-	EXPECT_LE(benchmark.finish(), 1e-1);
+	EXPECT_LE(benchmark.finish(), 1.0);
 }
 
 
