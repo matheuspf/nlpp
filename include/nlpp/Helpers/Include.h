@@ -28,6 +28,6 @@
 
 #elif HANDY_INCLUDE_LOCAL
 
-    #include "../external/handy/include/Handy.h"
+    #include "../external/handy/include/handy/Handy.h"
 
 #endif
