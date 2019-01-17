@@ -24,7 +24,7 @@
 #define NLPP_TEMPLATE_PARAMS(...) APPLY_N(NLPP_TEMPLATE_PARAMS, __VA_ARGS__)
 
 
-#define NLPP_LINE_SEARCH_ALIASES(Name, ...)		using Interface = LineSearchBase<Name>;	\
+#define NLPP_LINE_SEARCH_ALIASES(Name, ...)		using Interface = LineSearch<Name>;	\
 												using Impl = impl::__VA_ARGS__;				\
 												using Impl::Impl;						\
 
@@ -38,7 +38,7 @@
 \
 template <EXPAND(NLPP_TEMPLATE_PARAMS(Float_Template, ## __VA_ARGS__))>					\
 struct Name : public impl::Name<Float, ## __VA_ARGS__>,					\
-			  public LineSearchBase<Name<Float, ## __VA_ARGS__>>			\
+			  public LineSearch<Name<Float, ## __VA_ARGS__>>			\
 {																		\
 	NLPP_LINE_SEARCH_ALIASES(Name, Name<Float, ## __VA_ARGS__>)			\
 																		\
@@ -54,7 +54,7 @@ namespace poly	\
 \
 template <EXPAND(NLPP_TEMPLATE_PARAMS(Function, Float_Template, ## __VA_ARGS__))> \
 struct Name : public impl::Name<Float, ## __VA_ARGS__>, \
-			  public LineSearchBase<Function, Float>	\
+			  public LineSearch<Function, Float>	\
 {	\
 	NLPP_LINE_SEARCH_ALIASES(Name, Name<Float, ## __VA_ARGS__>)	\
 	\
@@ -136,7 +136,7 @@ struct LineSearch
  * 	@tparam Whether we must save the norm of the given vector before delegating the calls
 */
 template <class Impl, bool CalcNorm = true>
-struct LineSearchBase
+struct LineSearch
 {
 	template <class Function, class Vec>
 	double impl (Function f, const Eigen::MatrixBase<Vec>& x, const Eigen::MatrixBase<Vec>& dir)
@@ -180,7 +180,7 @@ struct LineSearchBase
 
 //private:
 
-	LineSearchBase () {}
+	LineSearch () {}
 
 	friend Impl;
 };
@@ -191,13 +191,13 @@ namespace poly
 {
 
 template <class Function, typename Float = types::Float>
-struct LineSearchBase : public ::nlpp::LineSearchBase<LineSearchBase<Function>>
+struct LineSearch : public ::nlpp::LineSearch<::nlpp::poly::LineSearch<Function>>
 {
-	virtual ~LineSearchBase () {}
+	virtual ~LineSearch () {}
 
 	virtual Float lineSearch (Function f) = 0;
 
-	virtual LineSearchBase* clone () const = 0;
+	virtual LineSearch* clone () const = 0;
 };
 
 
