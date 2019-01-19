@@ -540,6 +540,260 @@ auto functionGradient (const Impl& impl)
 
 //@}
 
+
+namespace poly
+{
+
+template <class V_ = Vec>
+struct Function
+{
+    using V = V_;
+    using Float = ::nlpp::impl::Scalar<V>;
+
+    using FuncType = Float (const Eigen::Ref<const V>&);
+
+
+    Function () {}
+
+    Function(const std::function<FuncType>& func) : func(func)
+    {
+    }
+
+    Float function (const Eigen::Ref<const V>& x)
+    {
+        return func(x);
+    }
+
+    Float operator () (const Eigen::Ref<const V>& x)
+    {
+        return function(x);
+    }
+
+    std::function<FuncType> func;
+};
+
+
+template <class V_ = Vec>
+struct Gradient
+{
+    using V = V_;
+    using Float = ::nlpp::impl::Scalar<V>;
+
+    using GradType_1 = V (const Eigen::Ref<const V>&);
+    using GradType_2 = void (const Eigen::Ref<const V>&, Eigen::Ref<V>);
+
+
+    Gradient () {}
+
+    Gradient (const std::function<GradType_1>& grad_1) : grad_1(grad_1)
+    {
+        init();
+    }
+
+    Gradient (const std::function<GradType_2>& grad_2) : grad_2(grad_2)
+    {
+        init();
+    }
+
+
+    V gradient (const Eigen::Ref<const V>& x)
+    {
+        return grad_1(x);
+    }
+
+    void gradient (const Eigen::Ref<const V>& x, Eigen::Ref<V> g)
+    {
+        grad_2(x, g);
+    }
+
+
+    V operator () (const Eigen::Ref<const V>& x)
+    {
+        return gradient(x);
+    }
+
+    void operator () (const Eigen::Ref<const V>& x, Eigen::Ref<V> g)
+    {
+        gradient(x, g);
+    }
+
+
+    void init ()
+    {
+        if(!grad_1)
+        {
+            grad_1 = [gradImpl = nlpp::wrap::gradient(grad_2)](const Eigen::Ref<const V>& x) mutable -> V
+            {
+                return gradImpl(x);
+            };
+        }
+
+        if(!grad_2)
+        {
+            grad_2 = [gradImpl = nlpp::wrap::gradient(grad_1)](const Eigen::Ref<const V>& x, Eigen::Ref<V> g) mutable
+            {
+                gradImpl(x, g);
+            };
+        }
+    }
+
+
+    std::function<GradType_1> grad_1;
+    std::function<GradType_2> grad_2;
+};
+
+
+template <class V_ = Vec>
+struct FunctionGradient : public Function<V_>, public Gradient<V_>
+{
+    using V = V_;
+    using Float = ::nlpp::impl::Scalar<V>;
+
+    using Func = Function<V>;
+    using Grad = Gradient<V>;
+
+    using Func::Function;
+    using Func::function;
+    using Func::func;
+    using Grad::Gradient;
+    using Grad::gradient;
+    using Grad::grad_1;
+    using Grad::grad_2;
+
+    using FuncType = typename Func::FuncType;
+    using GradType_1 = typename Grad::GradType_1;
+    using GradType_2 = typename Grad::GradType_2;
+
+    using FuncGradType_1 = std::pair<Float, V> (const Eigen::Ref<const V>&);
+    using FuncGradType_2 = Float (const Eigen::Ref<const V>&, Eigen::Ref<V>);
+
+
+
+    FunctionGradient (const std::function<FuncGradType_1>& grad_1) : funcGrad_1(funcGrad_1)
+    {
+        init();
+    }
+
+    FunctionGradient (const std::function<FuncGradType_2>& grad_2) : funcGrad_2(funcGrad_2)
+    {
+        init();
+    }
+
+    FunctionGradient (const std::function<FuncType>& func, const std::function<GradType_1>& grad_1) : Func(func), Grad(grad_1)
+    {
+        init();
+    }
+
+    FunctionGradient (const std::function<FuncType>& func, const std::function<GradType_2>& grad_2) : Func(func), Grad(grad_2)
+    {
+        init();
+    }
+
+    FunctionGradient (const std::function<FuncType>& func) : Func(func)
+    {
+        init();
+    }
+
+
+
+    std::pair<Float, V> functionGradient (const Eigen::Ref<const V>& x)
+    {
+        return funcGrad_1(x);
+    }
+
+    Float functionGradient (const Eigen::Ref<const V>& x, Eigen::Ref<V> g)
+    {
+        return funcGrad_2(x, g);
+    }
+
+
+    std::pair<Float, V> operator () (const Eigen::Ref<const V>& x)
+    {
+        return functionGradient(x);
+    }
+
+    Float operator () (const Eigen::Ref<const V>& x, Eigen::Ref<V> g)
+    {
+        return functionGradient(x, g);
+    }
+
+
+
+
+    template <class FuncGradImpl>
+    void setFuncGrad(FuncGradImpl funcGradImpl)
+    {
+        setFuncGrad_1(funcGradImpl);
+        setFuncGrad_2(funcGradImpl);
+    }
+
+    template <class FuncGradImpl>
+    void setFuncGrad_1(FuncGradImpl funcGradImpl)
+    {
+        funcGrad_1 = [funcGradImpl](const Eigen::Ref<const V>& x) mutable -> std::pair<Float, V>
+            {
+                return funcGradImpl(x);
+            };
+    }
+    
+    template <class FuncGradImpl>
+    void setFuncGrad_2(FuncGradImpl funcGradImpl)
+    {
+        // funcGrad_2 = [funcGradImpl](const Eigen::Ref<const V>& x, Eigen::Ref<V> g) mutable -> Float
+        // {
+        //     return funcGradImpl(x, g);
+        // }; 
+    }
+
+
+    void init ()
+    {
+        if(!funcGrad_1 && !funcGrad_2)
+        {
+            if(grad_1)
+                setFuncGrad(::nlpp::wrap::functionGradient(func, grad_1));
+
+            else if(grad_2)
+                setFuncGrad(::nlpp::wrap::functionGradient(func, grad_2));
+
+            else
+                setFuncGrad(::nlpp::wrap::functionGradient(func));
+        }
+
+        else if(funcGrad_1 && !funcGrad_2)
+            setFuncGrad_1(::nlpp::wrap::functionGradient(funcGrad_1));
+
+        else if(!funcGrad_1 && funcGrad_2)
+            setFuncGrad_2(::nlpp::wrap::functionGradient(funcGrad_2));
+
+        if(!func)
+        {
+            if(funcGrad_1)
+                func = [funcGrad = funcGrad_1](const Eigen::Ref<const V>& x) -> Float
+                {
+                    return std::get<0>(funcGrad(x));
+                };
+
+            else if(funcGrad_2)
+                func = [funcGrad = funcGrad_2](const Eigen::Ref<const V>& x) -> Float
+                {
+                    V g(x.rows(), x.cols());
+                    return funcGrad(x, g);
+                };
+        }
+    }
+
+
+
+    std::function<FuncGradType_1> funcGrad_1;
+    std::function<FuncGradType_2> funcGrad_2;
+};
+
+
+} // namespace poly
+
+
+
 } // namespace wrap
 
 
