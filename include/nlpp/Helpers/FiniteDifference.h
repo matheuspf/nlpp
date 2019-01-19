@@ -326,7 +326,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     }
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g, typename Derived::Scalar fx)
+    void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g, typename Derived::Scalar fx)
     {
         step.init(x);
         
@@ -551,7 +551,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
     }
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g, typename Derived::Scalar fx)
+    void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g, typename Derived::Scalar fx)
     {
         step.init(x);
 
@@ -772,13 +772,13 @@ struct Central : public FiniteDifference<Central<Function, Step>>
 
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g, typename Derived::Scalar)
+    void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g, typename Derived::Scalar)
     {
         gradient(x, g);
     }
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g)
+    void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g)
     {
         step.init(x);
         Eigen::Matrix<typename Derived::Scalar, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime> y = x;
