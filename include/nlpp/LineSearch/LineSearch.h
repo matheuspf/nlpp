@@ -52,21 +52,18 @@ struct Name : public impl::Name<Float, ## __VA_ARGS__>,					\
 namespace poly	\
 {\
 \
-template <EXPAND(NLPP_TEMPLATE_PARAMS(Function, Float_Template, ## __VA_ARGS__))> \
+template <EXPAND(NLPP_TEMPLATE_PARAMS(Float_Template, ## __VA_ARGS__))> \
 struct Name : public impl::Name<Float, ## __VA_ARGS__>, \
-			  public LineSearch<Function, Float>	\
+			  public LineSearch<Float>	\
 {	\
 	NLPP_LINE_SEARCH_ALIASES(Name, Name<Float, ## __VA_ARGS__>)	\
 	\
-	Float lineSearch (Function f)	\
+	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec> f)	\
 	{	\
 		return Impl::lineSearch(f);	\
 	}	\
 	\
-	Name* clone () const	\
-	{	\
-		return new Name(*this);	\
-	}	\
+	virtual Name* clone_impl () const {	return new Name(*this);	}	\
 };	\
 \
 } // namespace poly
@@ -190,17 +187,27 @@ struct LineSearch
 namespace poly
 {
 
-template <class Function, typename Float = types::Float>
-struct LineSearch : public ::nlpp::LineSearch<::nlpp::poly::LineSearch<Function>>
+template <typename Float = ::nlpp::types::Float>
+struct LineSearch : public ::nlpp::poly::CloneBase<LineSearch<Float>>,
+					public ::nlpp::LineSearch<LineSearch<Float>>
 {
-	virtual ~LineSearch () {}
-
-	virtual Float lineSearch (Function f) = 0;
-
-	virtual LineSearch* clone () const = 0;
+	virtual Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec>) = 0;
 };
 
 
+template <typename Float>
+struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearch<Float>>,
+					 public ::nlpp::LineSearch<LineSearch_<Float>>
+{
+	NLPP_USING_POLY_CLASS(Base, ::nlpp::poly::PolyClass<LineSearch<Float>>);
+
+	LineSearch_ () : Base(new StrongWolfe<Float>()) {}
+
+	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec> f)
+	{
+		return impl->lineSearch(f);
+	}
+};
 
 
 } // namespace poly

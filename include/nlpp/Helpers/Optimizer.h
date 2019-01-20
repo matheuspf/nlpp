@@ -54,14 +54,14 @@ namespace nlpp
  *  @note We inherit from the parameter classes here, so we create a single inheritance chain, not having to 
  *        resort to multiple inheritance. Also, this way we can have easy access to any member of the parameters class
 */
-template <class Impl, class Parameters_ = params::GradientOptimizer<>>
-struct GradientOptimizer : public Parameters_
+template <class Impl>//, class Parameters_ = params::GradientOptimizer<>>
+struct GradientOptimizer// : public Parameters_
 {
-    CPPOPT_USING_PARAMS(Parameters, Parameters_);
-    using Parameters::Parameters;
+    // CPPOPT_USING_PARAMS(Parameters, Parameters_);
+    // using Parameters::Parameters;
 
-    /// Simply delegate the call to the base parameters class
-    GradientOptimizer(const Parameters& params = Parameters()) : Parameters(params) {}
+    // /// Simply delegate the call to the base parameters class
+    // GradientOptimizer(const Parameters& params = Parameters()) : Parameters(params) {}
 
 
     /** @name
@@ -94,5 +94,51 @@ struct GradientOptimizer : public Parameters_
 };
 
 //@}
+
+
+namespace wrap
+{
+
+namespace poly
+{
+
+template <class Impl>
+struct GradientOptimizer //: ::nlpp::params::poly::GradientOptimizer_
+{
+    // CPPOPT_USING_PARAMS(Parameters, ::nlpp::params::poly::GradientOptimizer_);
+
+    // GradientOptimizer (const Parameters& params = Parameters()) : Parameters(params) {}
+
+
+    template <class Function, class Gradient, class V, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<V>(function, gradient), x.eval(), std::forward<Args>(args)...);
+    }
+
+    template <class Function, class V, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<V>(function), x.eval(), std::forward<Args>(args)...);
+    }
+};
+
+
+} // namespace poly
+
+} // namespace wrap
+
+
+namespace poly
+{
+
+template <class V = ::nlpp::Vec>
+struct GradientOptimizer : public CloneBase<GradientOptimizer<V>>,
+                           public ::nlpp::wrap::poly::GradientOptimizer<GradientOptimizer<V>>
+{
+    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) = 0;
+};
+
+} // namespace poly
 
 } // namespace nlpp

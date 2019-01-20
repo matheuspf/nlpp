@@ -101,6 +101,79 @@ struct GradientOptimizer<2, Float>
 
 
 
+namespace poly
+{
+
+template <class V = ::nlpp::Vec>
+struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V>>
+{
+    using Float = ::nlpp::impl::Scalar<V>;
+
+    virtual void init (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
+
+    virtual void operator() (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&);
+    
+    virtual void finish (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&);
+};
+
+
+template <int Level = 0, class V = ::nlpp::Vec>
+struct GradientOptimizer : public GradientOptimizerBase<V>,
+                           public ::nlpp::out::GradientOptimizer<Level, ::nlpp::impl::Scalar<V>>
+{
+    using Float = ::nlpp::impl::Scalar<V>;
+    using Impl = ::nlpp::out::GradientOptimizer<Level, ::nlpp::impl::Scalar<V>>;
+
+
+    virtual void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        Impl::init(optimizer, x, fx, gx);
+    }
+
+    virtual void operator() (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        return Impl::operator()(optimizer, x, fx, gx);
+    }
+
+    virtual void finish (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        Impl::finish(optimizer, x, fx, gx);
+    }
+
+    virtual GradientOptimizer* clone_impl () const { return new GradientOptimizer(*this); }
+};
+
+
+template <class V>
+struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>
+{
+    NLPP_USING_POLY_CLASS(Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);
+
+    using Float = ::nlpp::impl::Scalar<V>;
+
+
+    GradientOptimizer_ () : Base(new GradientOptimizer<true, V>()) {}
+
+
+    void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        impl->init(optimizer, x, fx, gx);
+    }
+
+    void operator () (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        impl->operator()(optimizer, x, fx, gx);
+    }
+
+    void finish (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        impl->finish(optimizer, x, fx, gx);
+    }
+};
+
+
+} // namespace poly 
+
 } // namespace out
 
 } // namespace nlpp

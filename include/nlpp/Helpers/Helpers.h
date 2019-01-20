@@ -11,9 +11,46 @@
 #include "Types.h"
 #include "ForwardDeclarations.h"
 
+#define NLPP_USING_POLY_CLASS(Name, ...)  using Name = __VA_ARGS__;  \
+										  using Name::Name;		 	 \
+										  using Name::operator=; 	 \
+										  using Name::impl;
 
 namespace nlpp
 {
+
+namespace poly
+{
+
+template <class Impl>
+struct CloneBase
+{
+    auto clone () const { return std::unique_ptr<Impl>(clone_impl()); }
+
+    virtual Impl* clone_impl () const = 0;
+};
+
+
+template <class Base>
+struct PolyClass
+{
+	//virtual ~PolyClass () {}
+
+    PolyClass (Base* base) : impl(base) {}
+    PolyClass& operator= (Base* base) { impl.reset(base); return *this; }
+
+    PolyClass (const PolyClass& PolyClass) : impl(PolyClass.impl ? PolyClass.impl->clone() : nullptr) {}
+    PolyClass (PolyClass&& PolyClass) = default;
+
+    PolyClass& operator= (const PolyClass& PolyClass) { if(PolyClass.impl) impl = PolyClass.impl->clone(); return *this; }
+    PolyClass& operator= (PolyClass&& PolyClass) = default;
+
+
+    std::unique_ptr<Base> impl;
+};
+
+} // namespace poly
+
 
 namespace wrap
 {

@@ -12,8 +12,16 @@ namespace nlpp
 namespace out
 {
 
-template <int = 0, typename = types::Float>
+template <int Level = 0, typename Float = types::Float>
 struct GradientOptimizer;
+
+namespace poly
+{
+
+template <class V = ::nlpp::Vec>
+struct GradientOptimizer_;
+
+} // namespace poly
 
 } // namespace out
 
@@ -21,8 +29,16 @@ struct GradientOptimizer;
 namespace stop
 {
 
-template <bool = false, typename = types::Float>
+template <bool Exclusive = false, typename Float = types::Float>
 struct GradientOptimizer;
+
+namespace poly
+{
+
+template <class V = ::nlpp::Vec>
+struct GradientOptimizer_;
+
+} // namespace poly
 
 } // namespace stop
 
@@ -31,12 +47,30 @@ struct GradientOptimizer;
 template <typename Float = types::Float>
 struct StrongWolfe;
 
+namespace poly
+{
+
+template <typename Float = types::Float>
+struct LineSearch_;
+
+template <typename Float = types::Float>
+struct StrongWolfe;
+
+} // namespace poly
+
 
 namespace params
 {
 
 template <class = StrongWolfe<>, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
 struct GradientOptimizer;
+
+namespace poly
+{
+
+using GradientOptimizer_ = ::nlpp::params::GradientOptimizer<::nlpp::poly::LineSearch_<>, ::nlpp::stop::poly::GradientOptimizer_<>, ::nlpp::out::poly::GradientOptimizer_<>>;
+
+} // namespace poly
 
 } // namespace params
 //@}
