@@ -166,6 +166,13 @@ struct Function : public Impl_
     {
         return function(x);
     }
+
+    /// Necessary to hide a lambda operator matching the exact arguments
+    template <typename T, int R, int C>
+    auto operator () (const Eigen::Matrix<T, R, C>& x)
+    {
+        return function(x);
+    }
 };
 
 } // namespace impl
@@ -378,6 +385,13 @@ struct FunctionGradient<Func, fd::Gradient<Func, Difference, Step>> : Function<F
         return functionGradient(x);
     }
 
+    /// Necessary to hide a lambda operator matching the exact arguments
+    template <typename T, int R, int C>
+    auto operator () (const Eigen::Matrix<T, R, C>& x)
+    {
+        return functionGradient(x);
+    }
+
     template <class V>
     auto operator () (const Eigen::MatrixBase<V>& x, Eigen::Ref<::nlpp::impl::Plain<V>> g)
     {
@@ -455,6 +469,12 @@ struct FunctionGradient<Impl_> : public Impl_
         return functionGradient(x);
     }
 
+    /// Necessary to hide a lambda operator matching the exact arguments
+    template <typename T, int R, int C>
+    auto operator () (const Eigen::Matrix<T, R, C>& x)
+    {
+        return functionGradient(x);
+    }
 
 
     template <class V, class I = Impl, std::enable_if_t<IsFunction<I, V>::value >= 0, int> = 0>

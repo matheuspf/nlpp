@@ -23,6 +23,8 @@
 
 #include "Parameters.h"
 
+#include "../LineSearch/LineSearch.h"
+
 
 
 
