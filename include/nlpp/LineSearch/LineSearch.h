@@ -10,8 +10,6 @@
 
 #include "../Helpers/FiniteDifference.h"
 
-#include "../Helpers/Optimizer.h"
-
 
 #define NLPP_TEMPLATE_PARAMS7(T7, ...) typename T7, NLPP_TEMPLATE_PARAMS6(__VA_ARGS__)
 #define NLPP_TEMPLATE_PARAMS6(T6, ...) typename T6, NLPP_TEMPLATE_PARAMS5(__VA_ARGS__) 

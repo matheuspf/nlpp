@@ -28,10 +28,15 @@ struct GradientDescent : public ::nlpp::params::GradientOptimizer<LineSearch, St
 } // namespace params
 
 
-template <class LineSearch = ::nlpp::Goldstein<>, class Stop = ::nlpp::stop::GradientOptimizer<>, class Output = ::nlpp::out::GradientOptimizer<0>>
-struct GradientDescent : public params::GradientDescent<LineSearch, Stop, Output>
+// template <bool Poly = false, class LineSearch = ::nlpp::Goldstein<>, class Stop = ::nlpp::stop::GradientOptimizer<>, class Output = ::nlpp::out::GradientOptimizer<0>>
+// struct GradientDescent : public std::conditional_t<Poly, ::nlpp::poly::GradientDescent
+// public params::GradientDescent<LineSearch, Stop, Output>
+
+
+template <class Params_>
+struct GradientDescent : public Params_
 {
-	CPPOPT_USING_PARAMS(Params, params::GradientDescent<LineSearch, Stop, Output>);
+	CPPOPT_USING_PARAMS(Params, Params_);
 	using Params::Params;
 	
 
@@ -71,11 +76,11 @@ struct GradientDescent : public params::GradientDescent<LineSearch, Stop, Output
 } // namespace impl
 
 
-template <class LineSearch = Goldstein<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct GradientDescent : public impl::GradientDescent<LineSearch, Stop, Output>,
+template <class LineSearch = Goldstein<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+struct GradientDescent : public impl::GradientDescent<params::GradientOptimizer<LineSearch, Stop, Output>>,
 						 public GradientOptimizer<GradientDescent<LineSearch, Stop, Output>>
 {
-	CPPOPT_USING_PARAMS(Impl, impl::GradientDescent<LineSearch, Stop, Output>);
+	CPPOPT_USING_PARAMS(Impl, impl::GradientDescent<params::GradientOptimizer<LineSearch, Stop, Output>>);
 	using Impl::Impl;
 
 	template <class Function, class V>
@@ -90,10 +95,9 @@ namespace poly
 {
 
 template <class V = ::nlpp::Vec>
-struct GradientDescent : public ::nlpp::impl::GradientDescent<::nlpp::poly::LineSearch_<>, ::nlpp::stop::poly::GradientOptimizer_<>, ::nlpp::out::poly::GradientOptimizer_<>>,
-						 public ::nlpp::poly::GradientOptimizer<V>
+struct GradientDescent : public ::nlpp::impl::GradientDescent<::nlpp::poly::GradientOptimizer<V>>
 {
-	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::GradientDescent<::nlpp::poly::LineSearch_<>, ::nlpp::stop::poly::GradientOptimizer_<>, ::nlpp::out::poly::GradientOptimizer_<>>);
+	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::GradientDescent<::nlpp::poly::GradientOptimizer<V>>);
 	using Impl::Impl;
 
 	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)

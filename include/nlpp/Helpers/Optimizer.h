@@ -134,8 +134,12 @@ namespace poly
 
 template <class V = ::nlpp::Vec>
 struct GradientOptimizer : public CloneBase<GradientOptimizer<V>>,
-                           public ::nlpp::wrap::poly::GradientOptimizer<GradientOptimizer<V>>
+                           public ::nlpp::wrap::poly::GradientOptimizer<GradientOptimizer<V>>,
+                           public ::nlpp::params::poly::GradientOptimizer_
 {
+    CPPOPT_USING_PARAMS(Params, ::nlpp::params::poly::GradientOptimizer_);
+    using Params::Params;
+
     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) = 0;
 };
 
