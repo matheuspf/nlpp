@@ -123,6 +123,12 @@ struct GradientOptimizer //: ::nlpp::params::poly::GradientOptimizer_
     {
         return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<V>(function), x.eval(), std::forward<Args>(args)...);
     }
+    
+
+    // nlpp::Vec operator () (const std::function<double(const Eigen::Ref<const nlpp::Vec>&)> function, const Eigen::Ref<const nlpp::Vec>& x)
+    // {
+    //     return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<nlpp::Vec>(function), x);
+    // }
 };
 
 
