@@ -105,30 +105,19 @@ namespace poly
 {
 
 template <class Impl>
-struct GradientOptimizer //: ::nlpp::params::poly::GradientOptimizer_
+struct GradientOptimizer
 {
-    // CPPOPT_USING_PARAMS(Parameters, ::nlpp::params::poly::GradientOptimizer_);
-
-    // GradientOptimizer (const Parameters& params = Parameters()) : Parameters(params) {}
-
-
     template <class Function, class Gradient, class V, typename... Args>
-    ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args)
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const V& x, Args&&... args)
     {
         return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<V>(function, gradient), x.eval(), std::forward<Args>(args)...);
     }
 
     template <class Function, class V, typename... Args>
-    ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const V& x, Args&&... args)
     {
         return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<V>(function), x.eval(), std::forward<Args>(args)...);
     }
-    
-
-    // nlpp::Vec operator () (const std::function<double(const Eigen::Ref<const nlpp::Vec>&)> function, const Eigen::Ref<const nlpp::Vec>& x)
-    // {
-    //     return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<nlpp::Vec>(function), x);
-    // }
 };
 
 

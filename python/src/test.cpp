@@ -39,38 +39,34 @@ PYBIND11_MODULE(nlpy, m)
 
     py::class_<nlpp::poly::GradientDescent<>>(m, "GradientDescent")
         .def(py::init<>())
-        .def("optimize", &nlpp::poly::GradientOptimizer<>::optimize)
-        //.def("__call__", [](const std::function<double(const Eigen::Ref<const nlpp::Vec>&)> function, const Eigen::Ref<const nlpp::Vec>& x){  })
+        
+        .def("optimize", &nlpp::poly::GradientDescent<>::optimize)
+
+        // .def("__call__", (nlpp::Vec (nlpp::poly::GradientDescent<>::*)
+        //                  (const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncType>&, const nlpp::Vec&))
+        //                  &nlpp::poly::GradientDescent<>::operator(), py::is_operator())
+
+        // .def("__call__", (nlpp::Vec (nlpp::poly::GradientDescent<>::*)
+        //                  (const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncType>&, const std::function<::nlpp::wrap::poly::FunctionGradient<>::GradType_1>&, const nlpp::Vec&))
+        //                  &nlpp::poly::GradientDescent<>::operator(), py::is_operator())
+
+
+        .def("__call__", (nlpp::Vec (nlpp::poly::GradientDescent<>::*)
+                         (const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncGradType_1>&, const nlpp::Vec&))
+                         &nlpp::poly::GradientDescent<>::operator(), py::is_operator())
+        
+
         .def_readwrite("stop", &nlpp::poly::GradientDescent<>::stop)
         .def_readwrite("output", &nlpp::poly::GradientOptimizer<>::output)
         .def_readwrite("lineSearch", &nlpp::poly::GradientOptimizer<>::lineSearch);
 
 
-    py::class_<::nlpp::wrap::poly::FunctionGradient<>>(m, "Function")
+    py::class_<::nlpp::wrap::poly::Function<>>(m, "Function")
         .def(py::init<const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncType>&>());
+        
+    py::class_<::nlpp::wrap::poly::FunctionGradient<>>(m, "FunctionGradient")
+        .def(py::init<const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncGradType_1>&>());
 
-    py::implicitly_convertible<const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncType>&, ::nlpp::wrap::poly::FunctionGradient<>>();
-
-
-    // py::class_<nlpp::out::poly::GradientOptimizer_<>>(m, "Output")
-
-
-
-
-    // py::class_<Test>(m, "Test")
-    //     .def(py::init<const std::string&>(), py::arg("x") = "abc")
-    //     .def_readwrite("x", &Test::x);
-
-    // // py::class_<nlpp::StrongWolfe<double>>(m, "StrongWolfe")
-    // //     .def(py::init<double, double, double>(), py::arg("a0") = 1.0, py::arg("c1") = 1e-4, py::arg("c2") = 0.9)
-    // //     .def("lineSearch", &nlpp::StrongWolfe<double>::lineSearch<std::function<double(const nlpp::Vec)>>);
-
-    // py::class_<Func>(m, "Func")
-    //     .def(py::init<>())
-    //     .def("func", &Func::operator()); 
-
-    // py::class_<nlpp::poly::StrongWolfe<Func, double>>(m, "StrongWolfe")
-    //     .def(py::init<double, double, double>(), py::arg("a0") = 1.0, py::arg("c1") = 1e-4, py::arg("c2") = 0.9)
-    //     .def("lineSearch", &nlpp::poly::StrongWolfe<Func, double>::lineSearch);
+    //py::implicitly_convertible<const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncType>&, ::nlpp::wrap::poly::FunctionGradient<>>();
 
 }
