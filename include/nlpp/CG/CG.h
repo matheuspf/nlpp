@@ -83,21 +83,27 @@ BUILD_CG_STRUCT(auto fr = FR::operator()(fa, fb);
 
 
 
-
+namespace impl
+{
 
 namespace params
 {
 
 /** @brief Conjugate gradient parameters class, extending flow base GradientOptimizer parameters
 */
-template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, 
-		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct CG : public GradientOptimizer<LineSearch, Stop, Output>
+template <class Params_, class CGType = FR_PR>
+struct CG : public Params_
 {
-	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
+	CPPOPT_USING_PARAMS(Params, Params_);
 
-	template <class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, StrongWolfe<>>::value, int> = 0>
-    CG(const LineSearch& lineSearch = StrongWolfe<>(1e-2, 1e-4, 0.1), const Stop& stop = Stop{}, const Output& output = Output{}) :
+	using LineSearch = typename Params::LineSearch;
+	using Stop = typename Params::Stop;
+	using Output = typename Params::Output;
+
+	CG() {}
+
+	template <class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, ::nlpp::StrongWolfe<>>::value, int> = 0>
+    CG(const LineSearch& lineSearch = ::nlpp::StrongWolfe<>(1e-2, 1e-4, 0.1), const Stop& stop = Stop{}, const Output& output = Output{}) :
        Params(lineSearch, stop, output)
     {
     }
@@ -113,14 +119,12 @@ struct CG : public GradientOptimizer<LineSearch, Stop, Output>
 
 
 
-template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, 
-		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct CG : public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, params::CG<CGType, LineSearch, Stop, Output>>
+
+template <class Params_, class CGType = FR_PR>
+struct CG : public params::CG<Params_, CGType>
 {
-	CPPOPT_USING_PARAMS_CG(Params, GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, params::CG<CGType, LineSearch, Stop, Output>>);
-
+	CPPOPT_USING_PARAMS_CG(Params, params::CG<Params_, CGType>);
 	using Params::Params;
-
 
 
 	template <class Function, class V>
@@ -138,7 +142,7 @@ struct CG : public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, param
 		output.init(*this, x, fxOld, fa);
 
 
-		for(int iter = 0; iter < stop.maxIterations; ++iter)
+		for(int iter = 0; iter < stop.maxIterations(); ++iter)
 		{
 			double alpha = lineSearch(f, x, dir);
 			
@@ -169,6 +173,45 @@ struct CG : public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>, param
 		return x;
 	}
 };
+
+} // namespace impl
+
+template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
+struct CG : public impl::CG<params::GradientOptimizer<LineSearch, Stop, Output>, CGType>,
+			public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>>
+{
+	CPPOPT_USING_PARAMS(Impl, impl::CG<params::GradientOptimizer<LineSearch, Stop, Output>, CGType>);
+	using Impl::Impl;
+
+	template <class Function, class V>
+	V optimize (Function f, V x)
+	{
+		return Impl::optimize(f, x);
+	}
+};
+
+namespace poly
+{
+
+template <class CGType = ::nlpp::FR_PR, class V = ::nlpp::Vec>
+struct CG : public ::nlpp::impl::CG<::nlpp::poly::GradientOptimizer<V>, CGType>
+{
+	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::CG<::nlpp::poly::GradientOptimizer<V>, CGType>);
+	using Impl::Impl;
+
+	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
+	{
+		return Impl::optimize(f, x);
+	}
+
+	virtual CG* clone_impl () const { return new CG(*this); }
+};
+
+
+} // namespace poly
+
+
+
 
 
 } // namespace nlpp

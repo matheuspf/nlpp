@@ -325,6 +325,13 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
         return functionGradient(x);
     }
 
+    /// Necessary to hide a lambda operator matching the exact arguments
+    template <typename T, int R, int C>
+    auto operator () (const Eigen::Matrix<T, R, C>& x)
+    {
+        return functionGradient(x);
+    }
+
     template <class V>
     auto operator () (const Eigen::MatrixBase<V>& x, Eigen::Ref<::nlpp::impl::Plain<V>> g)
     {
