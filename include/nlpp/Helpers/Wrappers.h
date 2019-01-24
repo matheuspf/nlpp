@@ -817,7 +817,28 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
 };
 
 
-using Function_ = Function<>;
+template <class V_ = ::nlpp::Vec, class M_ = ::nlpp::Mat>
+struct Hessian
+{
+    using V = V_;
+    using M = M_;
+    using Float = ::nlpp::impl::Scalar<V>;
+
+    using HessType = M (const Eigen::Ref<const V>&);
+
+    Hessian (const std::function<HessType>& hessian) : hessian(hessian) {}
+
+
+    M operator () (const Eigen::Ref<const V>& x)
+    {
+        return hessian(x);
+    }
+
+
+    std::function<HessType> hessian;
+};
+
+
 
 } // namespace poly
 

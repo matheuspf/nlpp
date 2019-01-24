@@ -81,3 +81,5 @@ if(${lib_name_upper}_BUILD_DOCS)
 endif()
 
 add_subdirectory(include/${lib_name})
+
+add_subdirectory(python)
