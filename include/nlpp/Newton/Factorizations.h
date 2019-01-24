@@ -76,7 +76,7 @@ struct CholeskyIdentity
 };
 
 
-template <typename Float>
+template <typename Float = types::Float>
 struct CholeskyFactorization
 {
 	CholeskyFactorization (Float delta = 1e-3) : delta(delta) {}

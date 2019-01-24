@@ -28,11 +28,6 @@ struct GradientDescent : public ::nlpp::params::GradientOptimizer<LineSearch, St
 } // namespace params
 
 
-// template <bool Poly = false, class LineSearch = ::nlpp::Goldstein<>, class Stop = ::nlpp::stop::GradientOptimizer<>, class Output = ::nlpp::out::GradientOptimizer<0>>
-// struct GradientDescent : public std::conditional_t<Poly, ::nlpp::poly::GradientDescent
-// public params::GradientDescent<LineSearch, Stop, Output>
-
-
 template <class Params_>
 struct GradientDescent : public Params_
 {

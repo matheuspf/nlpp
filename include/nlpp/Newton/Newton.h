@@ -18,14 +18,16 @@
 namespace nlpp
 {
 
+namespace impl
+{
+
 namespace params
 {
 
-template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe<>,
-		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct Newton : public GradientOptimizer<LineSearch, Stop, Output>
+template <class Params_, class Factorization = ::nlpp::fact::SmallIdentity<>>
+struct Newton : public Params_
 {
-	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
+	CPPOPT_USING_PARAMS(Params, Params_);
 	using Params::Params;
 
 	Factorization factorization;
@@ -36,18 +38,15 @@ struct Newton : public GradientOptimizer<LineSearch, Stop, Output>
 
 
 
-template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe<>,
-		  class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct Newton : public GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>,
-								 params::Newton<Factorization, LineSearch, Stop, Output>>
+template <class Params_, class Factorization = ::nlpp::fact::SmallIdentity<>>
+struct Newton : public params::Newton<Params_, Factorization>
 {
-	CPPOPT_USING_PARAMS_NEWTON(Params, GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>,
-								 		 		 params::Newton<Factorization, LineSearch, Stop, Output>>);
+	CPPOPT_USING_PARAMS_NEWTON(Params, params::Newton<Params_, Factorization>);
 	using Params::Params;
 
 
-	template <class Function, class V, class Hessian>
-	auto optimize (Function f, V x, Hessian hess)
+	template <class Function, class Hessian, class V>
+	V optimize (Function f, Hessian hess, V x)
 	{
 		impl::Scalar<V> fx;
 		V gx;
@@ -57,7 +56,7 @@ struct Newton : public GradientOptimizer<Newton<Factorization, LineSearch, Stop,
 		stop.init(*this, x, fx, gx);
 		output.init(*this, x, fx, gx);
 
-		for(int iter = 0; iter < stop.maxIterations; ++iter)
+		for(int iter = 0; iter < stop.maxIterations(); ++iter)
 		{
 			auto dir = factorization(gx, hess(x));
 
@@ -80,5 +79,49 @@ struct Newton : public GradientOptimizer<Newton<Factorization, LineSearch, Stop,
 	}
 };
 
-} // namespace nlpp
+} // namespace impl
 
+
+template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe<>,
+		class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+struct Newton : public impl::Newton<params::GradientOptimizer<LineSearch, Stop, Output>, Factorization>,
+                public GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>>
+{
+   	CPPOPT_USING_PARAMS(Impl, impl::Newton<params::GradientOptimizer<LineSearch, Stop, Output>, Factorization>);
+	using Impl::Impl;
+
+	template <class Function, class Hessian, class V>
+	V optimize (Function f, Hessian hess, V x)
+	{
+		return Impl::optimize(f, hess, x);
+	} 
+
+	// template <class Function, class V>
+	// V optimize (Function f, V x)
+	// {
+	// 	return Impl::optimize(f, ::nlpp::fd::hessian(f), x);
+	// }
+};
+
+
+namespace poly
+{
+
+template <class Factorization = ::nlpp::fact::SmallIdentity<>, class V = ::nlpp::Vec>
+struct Newton : public ::nlpp::impl::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>
+{
+	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>);
+	using Impl::Impl;
+
+	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, ::nlpp::wrap::poly::Hessian<V> hess, V x)
+	{
+		return Impl::optimize(f, hess, x);
+	}
+
+	virtual Newton* clone_impl () const { return new Newton(*this); }
+};
+
+} // namespace poly
+
+
+} // namespace nlpp

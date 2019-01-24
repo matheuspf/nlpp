@@ -32,7 +32,7 @@ PYBIND11_MODULE(nlpy, m)
 
     gradientOptimizer
         .def(py::init<>())
-        .def("optimize", &nlpp::poly::GradientOptimizer<>::optimize)
+        .def("optimize", (nlpp::Vec (nlpp::poly::GradientOptimizer<>::*)(nlpp::wrap::poly::FunctionGradient<>, nlpp::Vec))&nlpp::poly::GradientOptimizer<>::optimize)
         .def_readwrite("stop", &nlpp::poly::GradientOptimizer<>::stop)
         .def_readwrite("output", &nlpp::poly::GradientOptimizer<>::output)
         .def_readwrite("lineSearch", &nlpp::poly::GradientOptimizer<>::lineSearch);
@@ -40,7 +40,7 @@ PYBIND11_MODULE(nlpy, m)
     py::class_<nlpp::poly::GradientDescent<>>(m, "GradientDescent")
         .def(py::init<>())
         
-        .def("optimize", &nlpp::poly::GradientDescent<>::optimize)
+        .def("optimize", (nlpp::Vec (nlpp::poly::GradientDescent<>::*)(nlpp::wrap::poly::FunctionGradient<>, nlpp::Vec))&nlpp::poly::GradientDescent<>::optimize)
 
         // .def("__call__", (nlpp::Vec (nlpp::poly::GradientDescent<>::*)
         //                  (const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncType>&, const nlpp::Vec&))

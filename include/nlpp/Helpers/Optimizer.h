@@ -107,16 +107,41 @@ namespace poly
 template <class Impl>
 struct GradientOptimizer
 {
-    template <class Function, class Gradient, class V, typename... Args>
-    ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const V& x, Args&&... args)
+    template <class Function, class V, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<V>(function, gradient), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<V>>(function), x.eval(), std::forward<Args>(args)...);
+    }
+   
+    template <class Function, class Gradient, class V, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<V>>(function, gradient), x.eval(), std::forward<Args>(args)...);
     }
 
-    template <class Function, class V, typename... Args>
-    ::nlpp::impl::Plain<V> operator () (const Function& function, const V& x, Args&&... args)
+    template <class Function, class Gradient, class Hessian, class V, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Hessian& hessian, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<V>(function), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<V>>(function, gradient), ::nlpp::wrap::poly::Hessian<::nlpp::impl::Plain<V>>(hessian), x.eval(), std::forward<Args>(args)...);
+    }
+
+    
+    template <class Function, class T, int R, int C, typename... Args>
+    Eigen::Matrix<T, R, C> operator () (const Function& function, const Eigen::Matrix<T, R, C>& x, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function), x, std::forward<Args>(args)...);
+    }
+    
+    template <class Function, class Gradient, class T, int R, int C, typename... Args>
+    Eigen::Matrix<T, R, C> operator () (const Function& function, const Gradient& gradient, const Eigen::Matrix<T, R, C>& x, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function, gradient), x, std::forward<Args>(args)...);
+    }
+
+    template <class Function, class Gradient, class Hessian, class T, int R, int C, typename... Args>
+    Eigen::Matrix<T, R, C> operator () (const Function& function, const Gradient& gradient, const Hessian& hessian, const Eigen::Matrix<T, R, C>& x, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function, gradient), ::nlpp::wrap::poly::Hessian<Eigen::Matrix<T, R, C>>(hessian), x, std::forward<Args>(args)...);
     }
 };
 
@@ -137,7 +162,8 @@ struct GradientOptimizer : public CloneBase<GradientOptimizer<V>>,
     CPPOPT_USING_PARAMS(Params, ::nlpp::params::poly::GradientOptimizer_);
     using Params::Params;
 
-    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) = 0;
+    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) { return V{}; }
+    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::wrap::poly::Hessian<V>, V) { return V{}; };
 };
 
 } // namespace poly
