@@ -376,7 +376,7 @@ struct FunctionGradient<Func, fd::Gradient<Func, Difference, Step>> : Function<F
     }
 
     template <class V>
-    auto functionGradient (const Eigen::MatrixBase<V>& x, Eigen::Ref<::nlpp::impl::Plain<V>> g)
+    auto functionGradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Ref<V> g)
     {
         auto f = function(x);
 
@@ -400,7 +400,7 @@ struct FunctionGradient<Func, fd::Gradient<Func, Difference, Step>> : Function<F
     }
 
     template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x, Eigen::Ref<::nlpp::impl::Plain<V>> g)
+    auto operator () (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Ref<V> g)
     {
         return functionGradient(x, g);
     }
@@ -612,15 +612,20 @@ struct Gradient
 
     Gradient () {}
 
-    Gradient (const std::function<GradType_1>& grad_1) : grad_1(grad_1)
+    Gradient (const std::function<GradType_1>& grad_1, ::nlpp::impl::Precedence<0>) : grad_1(grad_1)
     {
         init();
     }
 
-    Gradient (const std::function<GradType_2>& grad_2) : grad_2(grad_2)
+    Gradient (const std::function<GradType_2>& grad_2, ::nlpp::impl::Precedence<1>) : grad_2(grad_2)
     {
         init();
     }
+
+
+    template <class G>
+    Gradient (const G& grad) : Gradient(grad, ::nlpp::impl::Precedence<0>{}) {}
+
 
 
     V gradient (const Eigen::Ref<const V>& x)
@@ -695,31 +700,37 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
     using FuncGradType_2 = Float (const Eigen::Ref<const V>&, Eigen::Ref<V>);
 
 
-
-    FunctionGradient (const std::function<FuncGradType_1>& grad_1) : funcGrad_1(funcGrad_1)
+    FunctionGradient (const std::function<FuncGradType_1>& grad_1, ::nlpp::impl::Precedence<0>) : funcGrad_1(funcGrad_1)
     {
         init();
     }
 
-    FunctionGradient (const std::function<FuncGradType_2>& grad_2) : funcGrad_2(funcGrad_2)
+    FunctionGradient (const std::function<FuncGradType_2>& grad_2, ::nlpp::impl::Precedence<1>) : funcGrad_2(funcGrad_2)
     {
         init();
     }
 
-    FunctionGradient (const std::function<FuncType>& func, const std::function<GradType_1>& grad_1) : Func(func), Grad(grad_1)
+    FunctionGradient (const std::function<FuncType>& func, const std::function<GradType_2>& grad_1, ::nlpp::impl::Precedence<0>) : Func(func), Grad(grad_1)
     {
         init();
     }
 
-    FunctionGradient (const std::function<FuncType>& func, const std::function<GradType_2>& grad_2) : Func(func), Grad(grad_2)
+    FunctionGradient (const std::function<FuncType>& func, const std::function<GradType_2>& grad_2, ::nlpp::impl::Precedence<1>) : Func(func), Grad(grad_2)
     {
         init();
     }
 
-    FunctionGradient (const std::function<FuncType>& func) : Func(func)
+    FunctionGradient (const std::function<FuncType>& func, ::nlpp::impl::Precedence<0>) : Func(func)
     {
         init();
     }
+
+
+    template <class F, std::enable_if_t<(::nlpp::wrap::IsFunction<F>::value >= 0) || (::nlpp::wrap::IsFunctionGradient<F>::value >= 0), int> = 0>
+    FunctionGradient(const F& func) : FunctionGradient(func, ::nlpp::impl::Precedence<0>{}) {}
+    
+    template <class F, class G, std::enable_if_t<(::nlpp::wrap::IsFunction<F>::value >= 0) && (::nlpp::wrap::IsGradient<G>::value >= 0), int> = 0>
+    FunctionGradient(const F& func, const G& grad) : FunctionGradient(func, grad, ::nlpp::impl::Precedence<0>{}) {}
 
 
 

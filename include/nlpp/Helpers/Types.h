@@ -2,6 +2,15 @@
 
 #include "Include.h"
 
+#ifndef NLPP_FLOAT
+	#define NLPP_FLOAT double
+#endif
+
+#ifndef NLPP_INT
+	#define NLPP_INT int
+#endif
+
+
 
 namespace nlpp
 {
@@ -9,8 +18,8 @@ namespace nlpp
 /// Default types
 namespace types
 {
-	using Float = double;
-	using Int = int;
+	using Float = NLPP_FLOAT;
+	using Int = NLPP_INT;
 }
 
 

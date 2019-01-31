@@ -79,6 +79,9 @@ struct NullFunctor
 };
 
 
+template <typename>
+struct PrintType;
+
 /** @name
  *  @brief Tells if @c T is an Eigen::EigenBase (a vector/matrix) or an scalar (a float or int)
 */
@@ -131,6 +134,9 @@ using Scalar = typename V::Scalar;
 
 template <class V>
 using Plain2D = Eigen::Matrix<Scalar<V>, V::SizeAtCompileTime, V::SizeAtCompileTime>;
+
+template <class V>
+using Ref = Eigen::Ref<Plain<V>>;
 
 template <typename T, class V>
 constexpr decltype(auto) cast (V&& v)

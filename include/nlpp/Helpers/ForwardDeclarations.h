@@ -51,6 +51,9 @@ namespace poly
 {
 
 template <typename Float = types::Float>
+struct LineSearch;
+
+template <typename Float = types::Float>
 struct LineSearch_;
 
 template <typename Float = types::Float>

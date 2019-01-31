@@ -26,7 +26,7 @@ struct SmallIdentity
 	SmallIdentity (Float alpha = 1e-5) : alpha(alpha) {}
 
 	template <class V, class U>
-	impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess)
+	impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, U hess)
 	{
 		auto minDiag = hess.diagonal().array().minCoeff();
 

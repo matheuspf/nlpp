@@ -71,7 +71,7 @@ struct GradientDescent : public Params_
 } // namespace impl
 
 
-template <class LineSearch = Goldstein<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+template <class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 struct GradientDescent : public impl::GradientDescent<params::GradientOptimizer<LineSearch, Stop, Output>>,
 						 public GradientOptimizer<GradientDescent<LineSearch, Stop, Output>>
 {

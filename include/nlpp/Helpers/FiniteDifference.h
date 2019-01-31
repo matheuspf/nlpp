@@ -168,8 +168,14 @@ struct FiniteDifference
         return static_cast<Impl&>(*this).gradient(x, f(x));
     }
 
-    template <class V, class U>
-    auto gradient (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<U>& g)
+    // template <class V, class U>
+    // auto gradient (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<U>& g)
+    // {
+    //     return static_cast<Impl&>(*this).gradient(x, g, f(x));
+    // }
+
+    template <class V>
+    auto gradient (const Eigen::Ref<const V>& x, ::nlpp::impl::Ref<V> g)
     {
         return static_cast<Impl&>(*this).gradient(x, g, f(x));
     }
@@ -318,7 +324,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     template <class Derived>
     auto gradient (const Eigen::MatrixBase<Derived>& x, typename Derived::Scalar fx)
     {
-        Eigen::Matrix<typename Derived::Scalar, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime> g(x.rows(), x.cols());
+        ::nlpp::impl::Plain<Derived> g(x.rows(), x.cols());
 
         gradient(x, g, fx);
 
@@ -326,12 +332,13 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     }
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g, typename Derived::Scalar fx)
+    void gradient (const Eigen::MatrixBase<Derived>& x, ::nlpp::impl::Ref<Derived> g, typename Derived::Scalar fx)
     {
         step.init(x);
         
-        changeEval([&](const auto& x, int i, double h){ g(i) = (this->f(x) - fx) / h; }, x, step);
+        changeEval([&](const auto& x, int i, double h){ static_cast<::nlpp::impl::Plain<Derived>>(g)(i) = (this->f(x) - fx) / h; }, x, step);
     }
+
 
     /** @brief Directional gradient calculation
     *   @param x Eigen::MatrixBase vector/matrix
@@ -370,17 +377,17 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     *   @param fx Scalar result of @c f(x)
     *   @returns @f$ \nabla^2 f(x) @f$
     */
-    template <class Derived>
-    auto hessian (const Eigen::MatrixBase<Derived>& x, typename Derived::Scalar fx)
+    template <class V>
+    auto hessian (const V& x, typename V::Scalar fx)
     {
-        using Float = typename Derived::Scalar;
+        using Float = typename V::Scalar;
 
         Float temp1, temp2;
         Float h = step(x);
         Float h2 = h * h;
 
-        Eigen::Matrix<Float, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime> fxi(x.rows(), x.cols());
-        Eigen::Matrix<Float, Derived::SizeAtCompileTime, Derived::SizeAtCompileTime> hess(x.size(), x.size());
+        impl::Plain<V> fxi(x.rows(), x.cols());
+        impl::Plain2D<V> hess(x.size(), x.size());
 
         changeEval([&](const auto& x, int i, double){ fxi(i) = this->f(x); }, x, h);
 
@@ -555,7 +562,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
     {
         step.init(x);
 
-        changeEval([&](const auto& x, int i, double h){ g(i) = (fx - this->f(x)) / h; }, x, step);
+        changeEval([&](const auto& x, int i, double h){ static_cast<impl::Plain<Derived>>(g)(i) = (fx - this->f(x)) / h; }, x, step);
     }
 
     // template <class Derived>
@@ -781,7 +788,7 @@ struct Central : public FiniteDifference<Central<Function, Step>>
     void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g)
     {
         step.init(x);
-        Eigen::Matrix<typename Derived::Scalar, Derived::RowsAtCompileTime, Derived::ColsAtCompileTime> y = x;
+        impl::Plain<Derived> y = x;
 
         for(int i = 0; i < x.size(); ++i)
         {
@@ -793,7 +800,7 @@ struct Central : public FiniteDifference<Central<Function, Step>>
 
             y(i) = x(i) + h;
 
-            g(i) = (f(y) - fl) / (2 * h);
+            static_cast<impl::Plain<Derived>>(g)(i) = (f(y) - fl) / (2 * h);
 
             y(i) = x(i);
         }
@@ -970,6 +977,12 @@ struct Hessian : public Difference<wrap::Function<Function>, Step>
     {
         return hessian(std::forward<Args>(args)...);
     }
+
+    // template <class V>
+    // auto operator () (const Eigen::Ref<const V>& x)
+    // {
+    //     return hessian(x);
+    // }
 };
 //@}
 

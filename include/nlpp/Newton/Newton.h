@@ -96,11 +96,11 @@ struct Newton : public impl::Newton<params::GradientOptimizer<LineSearch, Stop, 
 		return Impl::optimize(f, hess, x);
 	} 
 
-	// template <class Function, class V>
-	// V optimize (Function f, V x)
-	// {
-	// 	return Impl::optimize(f, ::nlpp::fd::hessian(f), x);
-	// }
+	template <class Function, class V>
+	V optimize (Function f, V x)
+	{
+		return optimize(f, ::nlpp::fd::hessian(f), x);
+	}
 };
 
 
@@ -117,6 +117,12 @@ struct Newton : public ::nlpp::impl::Newton<::nlpp::poly::GradientOptimizer<V>, 
 	{
 		return Impl::optimize(f, hess, x);
 	}
+
+	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
+	{
+		return optimize(f, ::nlpp::wrap::poly::Hessian<V>(::nlpp::fd::hessian(f.func)), x);
+	}
+
 
 	virtual Newton* clone_impl () const { return new Newton(*this); }
 };
