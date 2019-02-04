@@ -17,14 +17,17 @@
 namespace nlpp
 {
 
+namespace impl
+{
+
 namespace params
 {
 
-template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>,
-          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
+
+template <class Params_, class InitialHessian = BFGS_Diagonal<>>
+struct LBFGS : public Params_
 {
-	CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
+	CPPOPT_USING_PARAMS(Params, Params_);
 	using Params::Params;
 
 
@@ -36,16 +39,12 @@ struct LBFGS : public GradientOptimizer<LineSearch, Stop, Output>
 } // namespace params
 
 
-template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>, 
-          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>, 
-                                        params::LBFGS<InitialHessian, LineSearch, Stop, Output>>
+template <class Params_, class InitialHessian = BFGS_Diagonal<>>
+struct LBFGS : public params::LBFGS<Params_, InitialHessian>
 {
-	CPPOPT_USING_PARAMS_LBFGS(Params, GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>, 
-                                                        params::LBFGS<InitialHessian, LineSearch, Stop, Output>>);
-	
-	using Params::Params;
-	
+    CPPOPT_USING_PARAMS_BFGS(Params, params::LBFGS<Params_, InitialHessian>);
+    using Params::Params;
+
 
 	template <class Function, class V>
 	V optimize (Function f, V x0)
@@ -63,7 +62,7 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
         std::deque<V> vs;
         std::deque<V> vy;
 
-        for(int iter = 0; iter < stop.maxIterations; ++iter)
+        for(int iter = 0; iter < stop.maxIterations(); ++iter)
         {
             auto H = initialHessian(f, x0);
 
@@ -84,7 +83,7 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
             vs.push_back(s);
             vy.push_back(y);
 
-            if(iter > std::min(m, (int)x0.size()))
+            if(iter > std::min(Params::m, (int)x0.size()))
             {
                 vs.pop_front();
                 vy.pop_front();
@@ -129,6 +128,45 @@ struct LBFGS : public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, 
         return r;
     }
 };
+
+} // namespace impl
+
+
+
+template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>,
+          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
+struct LBFGS : public impl::LBFGS<params::GradientOptimizer<LineSearch, Stop, Output>, InitialHessian>,
+			   public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>>
+{
+    CPPOPT_USING_PARAMS(Impl, impl::LBFGS<params::GradientOptimizer<LineSearch, Stop, Output>, InitialHessian>);
+    using Impl::Impl;
+
+    template <class Function, class V>
+    V optimize (Function f, V x)
+    {
+        return Impl::optimize(f, x);
+    }
+};
+
+
+namespace poly
+{
+
+template <class InitialHessian = BFGS_Diagonal<>, class V = ::nlpp::Vec>
+struct LBFGS : public ::nlpp::impl::LBFGS<::nlpp::poly::GradientOptimizer<V>, InitialHessian>
+{
+	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::LBFGS<::nlpp::poly::GradientOptimizer<V>, InitialHessian>);
+	using Impl::Impl;
+
+	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
+	{
+		return Impl::optimize(f, x);
+	}
+
+	virtual LBFGS* clone_impl () const { return new LBFGS(*this); }
+};
+
+} // namespace poly
 
 
 } // namespace nlpp

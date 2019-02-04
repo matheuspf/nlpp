@@ -24,31 +24,29 @@ template <typename Float = types::Float>
 struct BFGS_Diagonal;
 
 
+namespace impl
+{
+
 namespace params
 {
 
-template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>,
-          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct BFGS : public GradientOptimizer<LineSearch, Stop, Output>
+template <class Params_, class InitialHessian = BFGS_Diagonal<>>
+struct BFGS : public Params_
 {
-    CPPOPT_USING_PARAMS(Params, GradientOptimizer<LineSearch, Stop, Output>);
+    CPPOPT_USING_PARAMS(Params, Params_);
     using Params::Params;
 
     InitialHessian initialHessian;
 };
 
-
 } // namespace params
 
 
 
-template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>,
-          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Output>, 
-                                       params::BFGS<InitialHessian, LineSearch, Stop, Output>>
-{   
-    CPPOPT_USING_PARAMS_BFGS(Params, GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Output>, 
-                                       params::BFGS<InitialHessian, LineSearch, Stop, Output>>);
+template <class Params_, class InitialHessian = BFGS_Diagonal<>>
+struct BFGS : public params::BFGS<Params_, InitialHessian>
+{
+    CPPOPT_USING_PARAMS_BFGS(Params, params::BFGS<Params_, InitialHessian>);
     using Params::Params;
 
 
@@ -71,7 +69,7 @@ struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Ou
         stop.init(*this, x0, f0, g0);
         output.init(*this, x0, f0, g0);
 
-        for(int iter = 0; iter < stop.maxIterations; ++iter)
+        for(int iter = 0; iter < stop.maxIterations(); ++iter)
         {
             dir = -hess * g0;
 
@@ -104,6 +102,42 @@ struct BFGS : public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Ou
     }
 };
 
+} // namespace impl
+
+template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>,
+          class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
+struct BFGS : public impl::BFGS<params::GradientOptimizer<LineSearch, Stop, Output>, InitialHessian>,
+			  public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Output>>
+{
+    CPPOPT_USING_PARAMS(Impl, impl::BFGS<params::GradientOptimizer<LineSearch, Stop, Output>, InitialHessian>);
+    using Impl::Impl;
+
+    template <class Function, class V>
+    V optimize (Function f, V x)
+    {
+        return Impl::optimize(f, x);
+    }
+};
+
+
+namespace poly
+{
+
+template <class InitialHessian = BFGS_Diagonal<>, class V = ::nlpp::Vec>
+struct BFGS : public ::nlpp::impl::BFGS<::nlpp::poly::GradientOptimizer<V>, InitialHessian>
+{
+	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::BFGS<::nlpp::poly::GradientOptimizer<V>, InitialHessian>);
+	using Impl::Impl;
+
+	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
+	{
+		return Impl::optimize(f, x);
+	}
+
+	virtual BFGS* clone_impl () const { return new BFGS(*this); }
+};
+
+} // namespace poly
 
 
 template <typename Float>
@@ -117,7 +151,7 @@ struct BFGS_Diagonal
         impl::Plain2D<Derived> hess = impl::Plain2D<Derived>::Constant(x.rows(), x.rows(), 0.0);
 
         hess.diagonal() = (2*h) / (f.gradient((x.array() + h).matrix()) - f.gradient((x.array() - h).matrix())).array();
-
+        
         return hess;
     }
 
@@ -157,6 +191,9 @@ struct BFGS_Identity
         return impl::Plain2D<Derived>::Identity(x.rows(), x.rows());
     }
 };
+
+
+
 
 
 } // namespace nlpp

@@ -86,6 +86,8 @@ struct LineSearch
 
 	std::pair<Float, Float> operator () (Float a)
 	{
+		//::nlpp::impl::PrintType<V>{};
+
 		auto fx = f(x + a * d, gx);
 
 		return std::make_pair(fx, gx.dot(d));

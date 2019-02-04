@@ -175,7 +175,7 @@ struct FiniteDifference
     // }
 
     template <class V>
-    auto gradient (const Eigen::Ref<const V>& x, ::nlpp::impl::Ref<V> g)
+    auto gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
     {
         return static_cast<Impl&>(*this).gradient(x, g, f(x));
     }
@@ -332,11 +332,11 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     }
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, ::nlpp::impl::Ref<Derived> g, typename Derived::Scalar fx)
+    void gradient (const Eigen::MatrixBase<Derived>& x, ::nlpp::impl::Plain<Derived>& g, typename Derived::Scalar fx)
     {
         step.init(x);
         
-        changeEval([&](const auto& x, int i, double h){ static_cast<::nlpp::impl::Plain<Derived>>(g)(i) = (this->f(x) - fx) / h; }, x, step);
+        changeEval([&](const auto& x, int i, double h){ g(i) = (this->f(x) - fx) / h; }, x, step);
     }
 
 
@@ -558,7 +558,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
     }
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g, typename Derived::Scalar fx)
+    void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g, typename Derived::Scalar fx)
     {
         step.init(x);
 
@@ -779,13 +779,13 @@ struct Central : public FiniteDifference<Central<Function, Step>>
 
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g, typename Derived::Scalar)
+    void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g, typename Derived::Scalar)
     {
         gradient(x, g);
     }
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, Eigen::Ref<impl::Plain<Derived>> g)
+    void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g)
     {
         step.init(x);
         impl::Plain<Derived> y = x;
@@ -979,7 +979,7 @@ struct Hessian : public Difference<wrap::Function<Function>, Step>
     }
 
     // template <class V>
-    // auto operator () (const Eigen::Ref<const V>& x)
+    // auto operator () (const Eigen::MatrixBase<V>& x)
     // {
     //     return hessian(x);
     // }

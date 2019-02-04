@@ -114,13 +114,13 @@ struct FunctionGradient;
 } // namespace impl
 
 
-template <class T, class V = Mat>
+template <class T, class V = Vec>
 struct IsFunction;
 
-template <class T, class V = Mat>
+template <class T, class V = Vec>
 struct IsGradient;
 
-template <class T, class V = Mat>
+template <class T, class V = Vec>
 struct IsFunctionGradient;
 
 
