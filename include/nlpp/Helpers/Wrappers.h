@@ -349,6 +349,7 @@ struct FunctionGradient<Func, fd::Gradient<Func, Difference, Step>> : Function<F
 
     using Function::function;
     using Gradient::gradient;
+    using Gradient::directional;
 
 
     FunctionGradient (const Function& f = Function{}) : Function(f), Gradient(f) {} 
@@ -650,6 +651,12 @@ struct Gradient
     }
 
 
+    Float directional (const V& x, const V& e, Float fx)
+    {
+        return direc(x, e, fx);
+    }
+
+
     void init ()
     {
         if(!grad_1)
@@ -698,6 +705,8 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
 
     using FuncGradType_1 = std::pair<Float, V> (const V&);
     using FuncGradType_2 = Float (const V&, ::nlpp::impl::Plain<V>&);
+    
+    using DirectionalType = Float (const V&, const V&, Float);
 
 
     FunctionGradient (const std::function<FuncGradType_1>& grad_1, ::nlpp::impl::Precedence<0>) : funcGrad_1(funcGrad_1)
@@ -734,18 +743,18 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
 
 
 
-    std::pair<Float, V> functionGradient (const Eigen::MatrixBase<V>& x)
+    std::pair<Float, V> functionGradient (const V& x)
     {
         return funcGrad_1(x);
     }
 
-    Float functionGradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
+    Float functionGradient (const V& x, ::nlpp::impl::Plain<V>& g)
     {
         return funcGrad_2(x, g);
     }
 
 
-    std::pair<Float, V> operator () (const Eigen::MatrixBase<V>& x)
+    std::pair<Float, V> operator () (const V& x)
     {
         return functionGradient(x);
     }
@@ -756,6 +765,15 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
     }
 
 
+    Float directional (const V& x, const V& e)
+    {
+        return directional(x, e, func(x));
+    }
+
+    Float directional (const V& x, const V& e, Float fx)
+    {
+        return direc(x, e, fx);
+    }
 
 
     template <class FuncGradImpl>
@@ -849,12 +867,18 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
                     gradImpl(x, g);
                 };
         }
+
+        direc = [funcGrad = ::nlpp::wrap::functionGradient(func)](const V& x, const V& e, Float fx) mutable -> Float
+        {
+            return funcGrad.directional(x, e, fx);
+        };
     }
 
 
 
     std::function<FuncGradType_1> funcGrad_1;
     std::function<FuncGradType_2> funcGrad_2;
+    std::function<DirectionalType> direc;
 };
 
 

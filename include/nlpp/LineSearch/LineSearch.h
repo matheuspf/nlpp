@@ -86,11 +86,17 @@ struct LineSearch
 
 	std::pair<Float, Float> operator () (Float a)
 	{
-		//::nlpp::impl::PrintType<V>{};
+		// auto fx = f(x + a * d, gx);
 
-		auto fx = f(x + a * d, gx);
+		// return std::make_pair(fx, gx.dot(d));
 
-		return std::make_pair(fx, gx.dot(d));
+		V xn = x + a * d;
+
+		Float fx = f.function(xn);
+
+		Float gx = f.directional(xn, d, fx);
+
+		return std::make_pair(fx, gx);
 	}
 
 	Float function (Float a)
@@ -100,9 +106,11 @@ struct LineSearch
 
 	Float gradient (Float a)
 	{
-		f.gradient(x + a * d, gx);
+		// f.gradient(x + a * d, gx);
 
-		return gx.dot(d);
+		// return gx.dot(d);
+
+		return f.directional(x, d);
 	}
 
 

@@ -168,12 +168,6 @@ struct FiniteDifference
         return static_cast<Impl&>(*this).gradient(x, f(x));
     }
 
-    // template <class V, class U>
-    // auto gradient (const Eigen::MatrixBase<V>& x, Eigen::MatrixBase<U>& g)
-    // {
-    //     return static_cast<Impl&>(*this).gradient(x, g, f(x));
-    // }
-
     template <class V>
     auto gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
     {
@@ -207,11 +201,11 @@ struct FiniteDifference
      *        - x.rows() == e.rows()
      *        - x.cols() == e.cols()
     */
-    // template <class Derived>
-    // auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e)
-    // {
-    //     return static_cast<Impl&>(*this).gradient(x, e, f(x));
-    // }
+    template <class Derived>
+    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e)
+    {
+        return static_cast<Impl&>(*this).gradient(x, e, f(x));
+    }
 
 
 
@@ -346,11 +340,11 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     *   @param fx Scalar result of @c f(x)
     *   @returns @f$\lim_{h\to0} \frac{f(x+e) - f(x)}{h}@f$
     */
-    // template <class Derived>
-    // auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, Float fx)
-    // {
-    //     return directional(x, e, fx);
-    // }
+    template <class Derived, typename Float>
+    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, Float fx)
+    {
+        return directional(x, e, fx);
+    }
 
     //@}
 
