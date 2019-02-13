@@ -719,7 +719,7 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
         init();
     }
 
-    FunctionGradient (const std::function<FuncType>& func, const std::function<GradType_2>& grad_1, ::nlpp::impl::Precedence<0>) : Func(func), Grad(grad_1)
+    FunctionGradient (const std::function<FuncType>& func, const std::function<GradType_1>& grad_1, ::nlpp::impl::Precedence<0>) : Func(func), Grad(grad_1)
     {
         init();
     }
