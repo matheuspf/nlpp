@@ -94,6 +94,7 @@ struct GradientDescent : public ::nlpp::impl::GradientDescent<::nlpp::poly::Grad
 {
 	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::GradientDescent<::nlpp::poly::GradientOptimizer<V>>);
 	using Impl::Impl;
+	using Vec = V;
 
 	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
 	{

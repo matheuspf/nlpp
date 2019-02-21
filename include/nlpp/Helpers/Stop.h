@@ -116,6 +116,8 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
 {
     using Float = ::nlpp::impl::Scalar<V>;
     using Impl = ::nlpp::stop::GradientOptimizer<Exclusive, ::nlpp::impl::Scalar<V>>;
+    using Impl::Impl;
+    using Impl::xTol, Impl::gTol, Impl::fTol;
 
 
     virtual void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)

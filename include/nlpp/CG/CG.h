@@ -198,6 +198,7 @@ struct CG : public ::nlpp::impl::CG<::nlpp::poly::GradientOptimizer<V>, CGType>
 {
 	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::CG<::nlpp::poly::GradientOptimizer<V>, CGType>);
 	using Impl::Impl;
+	using Vec = V;
 
     CG () {}
 

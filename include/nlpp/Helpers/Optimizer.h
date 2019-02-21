@@ -161,6 +161,7 @@ struct GradientOptimizer : public CloneBase<GradientOptimizer<V>>,
 {
     CPPOPT_USING_PARAMS(Params, ::nlpp::params::poly::GradientOptimizer_);
     using Params::Params;
+    using Vec = V;
 
     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) { return V{}; }
     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::wrap::poly::Hessian<V>, V) { return V{}; };
