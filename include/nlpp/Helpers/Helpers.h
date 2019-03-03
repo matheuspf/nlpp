@@ -34,10 +34,10 @@ struct CloneBase
 template <class Base>
 struct PolyClass
 {
-	//virtual ~PolyClass () {}
+	virtual ~PolyClass () {}
 
-    PolyClass (Base* base) : impl(base) {}
-    PolyClass& operator= (Base* base) { impl.reset(base); return *this; }
+    PolyClass (std::unique_ptr<Base> ptr) : impl(std::move(ptr)) {}
+    PolyClass& operator= (std::unique_ptr<Base> ptr) { impl = std::move(ptr); return *this; }
 
     PolyClass (const PolyClass& PolyClass) : impl(PolyClass.impl ? PolyClass.impl->clone() : nullptr) {}
     PolyClass (PolyClass&& PolyClass) = default;

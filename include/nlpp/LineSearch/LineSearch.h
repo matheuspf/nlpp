@@ -224,7 +224,7 @@ struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearch<Float>>,
     using V = typename LineSearch<Float>::V;
 
 
-	LineSearch_ () : Base(new StrongWolfe<Float>()) {}
+	LineSearch_ () : Base(std::make_unique<StrongWolfe<Float>>()) {}
 
 
 	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V> f)

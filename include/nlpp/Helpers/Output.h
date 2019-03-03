@@ -152,7 +152,7 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
     using Float = ::nlpp::impl::Scalar<V>;
 
 
-    GradientOptimizer_ () : Base(new GradientOptimizer<0, V>()) {}
+    GradientOptimizer_ () : Base(std::make_unique<GradientOptimizer<0, V>>()) {}
 
 
     void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)

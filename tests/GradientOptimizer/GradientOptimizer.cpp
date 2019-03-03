@@ -46,7 +46,7 @@ TEST_F(GradientOptimizerTest, CGTest)
 
     ::nlpp::poly::CG<> opt;
 
-    opt.stop = new ::nlpp::stop::poly::GradientOptimizer<>(10000, 1e-4, 1e-4, 1e-4);
+    opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(10000, 1e-4, 1e-4, 1e-4);
     
     ::nlpp::Rosenbrock func;
 
@@ -65,9 +65,9 @@ TEST_F(GradientOptimizerTest, GradientDescentTest)
 
     ::nlpp::poly::GradientDescent<> opt;
 
-    opt.lineSearch = new ::nlpp::poly::Goldstein<>();
+    opt.lineSearch = std::make_unique<::nlpp::poly::Goldstein<>>();
 
-    opt.stop = new ::nlpp::stop::poly::GradientOptimizer<false>(10000, 1e-3, 1e-3, 1e-3);
+    opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<false>>(10000, 1e-3, 1e-3, 1e-3);
     
     ::nlpp::Rosenbrock func;
 
@@ -121,7 +121,7 @@ TEST_F(GradientOptimizerTest, LBFGSTest)
 
     ::nlpp::poly::LBFGS<> opt;
 
-    opt.stop = new ::nlpp::stop::poly::GradientOptimizer<>(10000, 1e-4, 1e-4, 1e-4);
+    opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(10000, 1e-4, 1e-4, 1e-4);
     
     ::nlpp::Rosenbrock func;
 
