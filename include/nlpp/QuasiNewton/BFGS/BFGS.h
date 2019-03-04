@@ -123,7 +123,7 @@ struct BFGS : public impl::BFGS<params::GradientOptimizer<LineSearch, Stop, Outp
 namespace poly
 {
 
-template <class InitialHessian = BFGS_Diagonal<>, class V = ::nlpp::Vec>
+template <class InitialHessian = BFGS_Constant<>, class V = ::nlpp::Vec>
 struct BFGS : public ::nlpp::impl::BFGS<::nlpp::poly::GradientOptimizer<V>, InitialHessian>
 {
 	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::BFGS<::nlpp::poly::GradientOptimizer<V>, InitialHessian>);
@@ -192,6 +192,62 @@ struct BFGS_Identity
     }
 };
 
+
+
+namespace out
+{
+
+template <typename Float = types::Float>
+struct BFGS : public GradientOptimizer<1, Float>
+{
+    using Base = GradientOptimizer<1, Float>;
+    using Base::Base;
+    using Base::init;
+    using Base::operator();
+    using Base::finish;
+
+    template <class Params, class InitialHessian, class V>
+    void operator() (const ::nlpp::impl::params::BFGS<Params, InitialHessian>& optimizer,
+                     const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx)
+    {
+        Base::operator()(optimizer, x, fx, gx);
+        std::cout << optimizer.hess << "\n\n\n";
+    }
+};
+
+
+namespace poly
+{
+
+template <class V = ::nlpp::Vec>
+struct BFGS : public GradientOptimizerBase<V>,
+              public ::nlpp::out::BFGS<::nlpp::impl::Scalar<V>>
+{
+    using Float = ::nlpp::impl::Scalar<V>;
+    using Impl = ::nlpp::out::BFGS<::nlpp::impl::Scalar<V>>;
+
+    virtual void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        Impl::init(optimizer, x, fx, gx);
+    }
+
+    virtual void operator() (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        return Impl::operator()(static_cast<const ::nlpp::impl::params::BFGS<::nlpp::poly::GradientOptimizer<V>>&>(optimizer), x, fx, gx);
+    }
+
+    virtual void finish (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    {
+        Impl::finish(optimizer, x, fx, gx);
+    }
+
+    virtual BFGS* clone_impl () const { return new BFGS(*this); }
+};
+
+
+} // namespace poly
+
+} // namespace out
 
 
 

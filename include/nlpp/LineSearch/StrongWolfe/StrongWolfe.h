@@ -13,7 +13,7 @@ template <typename Float>
 struct StrongWolfe
 {
 	StrongWolfe (Float a0 = 1.0, Float c1 = 1e-4, Float c2 = 0.9, Float aMaxC = 100.0, Float rho = constants::phi, 
-				 int maxIterBrack = 20, int maxIterInt = 1e2, Float tol = constants::eps) :
+				 int maxIterBrack = 20, int maxIterInt = 1e2, Float tol = constants::eps_<Float>) :
 				 a0(a0), c1(c1), c2(c2), aMaxC(aMaxC), rho(rho), 
 				 maxIterBrack(maxIterBrack), maxIterInt(maxIterInt), tol(tol)
 	{
@@ -63,7 +63,11 @@ struct StrongWolfe
 
 			a = b, fa = fb, ga = gb;
 
-			b = next - tol <= b ? b + rho * (b - a) : next;
+			if(next - std::sqrt(tol) <= b)
+				b = b + rho * (b - a);
+			
+			else
+				b = next;
 		}
 
 
@@ -107,7 +111,7 @@ struct StrongWolfe
 				l = a, fl = fa, gl = ga;
 			}
 
-			if(u - l < 2 * constants::eps)
+			if(u - l < 2 * tol)
 				break;
 		}
 
@@ -120,9 +124,41 @@ struct StrongWolfe
 		Float d1 = ga + gb - 3 * ((fa - fb) / (a - b));
 		Float d2 = sign(b - a) * std::sqrt(d1 * d1 - ga * gb);
 
-		return b - (b - a) * ((gb + d2 - d1) / (gb - ga + 2 * d2));
+		Float next = b - (b - a) * ((gb + d2 - d1) / (gb - ga + 2 * d2));
+
+		if(std::isnan(next) || std::isinf(next))
+			return (a + b) / 2.0;
+		
+		return next;
 	}
 
+
+	// Float interpolate (Float a, Float fa, Float ga, Float b, Float fb, Float gb)
+	// {
+	// 	Eigen::Matrix3d A;
+	// 	Eigen::Vector3d c;
+
+	// 	A(0, 0) = a*a, A(0, 2) = a, A(0, 2) = 1.0;
+	// 	A(1, 0) = b*b, A(1, 2) = b, A(1, 2) = 1.0;
+	// 	A(2, 0) = 2*a, A(2, 2) = 1, A(2, 2) = 0.0;
+
+	// 	c(0) = fa, c(1) = fb, c(2) = ga;
+
+
+	// 	Eigen::LLT<Eigen::Matrix3d> llt(A);
+
+	// 	if(llt.info() != Eigen::Success)
+	// 		return (a + b) / 2;
+
+	// 	Eigen::Vector3d x = -llt.solve(c);
+
+	// 	Float res = -x(1) / (2 * x(0));
+		
+	// 	if(res <= std::min(a, b) || res >= std::max(a, b))
+	// 		return (a + b) / 2;
+
+	// 	return res;
+	// }
 
 
 
@@ -144,4 +180,4 @@ NLPP_LINE_SEARCH_D(StrongWolfe)
 
 
 
-} // namespace nlpp
+} // namespace 
