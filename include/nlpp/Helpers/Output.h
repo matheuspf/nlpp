@@ -107,6 +107,8 @@ namespace poly
 template <class V = ::nlpp::Vec>
 struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V>>
 {
+    virtual ~GradientOptimizerBase () {}
+
     using Float = ::nlpp::impl::Scalar<V>;
 
     virtual void init (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;

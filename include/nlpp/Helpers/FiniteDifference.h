@@ -175,17 +175,17 @@ struct FiniteDifference
     }
 
 
-    template <typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
-    auto gradient (Float x)
-    {
-        return static_cast<Impl&>(*this).gradient(x, f(x));
-    }
+    // template <typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
+    // auto gradient (Float x)
+    // {
+    //     return static_cast<Impl&>(*this).gradient(x, f(x));
+    // }
 
-    template <typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
-    auto gradient (Float x, Float& g)
-    {
-        return static_cast<Impl&>(*this).gradient(x, g, f(x));
-    }
+    // template <typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
+    // auto gradient (Float x, Float& g)
+    // {
+    //     return static_cast<Impl&>(*this).gradient(x, g, f(x));
+    // }
     //@}
 
 
@@ -201,8 +201,8 @@ struct FiniteDifference
      *        - x.rows() == e.rows()
      *        - x.cols() == e.cols()
     */
-    template <class Derived>
-    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e)
+    template <class V>
+    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
     {
         return static_cast<Impl&>(*this).gradient(x, e, f(x));
     }
@@ -216,8 +216,8 @@ struct FiniteDifference
         @returns If @c x is an Eigen::MatrixBase, returns an Eigen matrix of dimensions @f$N \times N@f$, where
                 @c N = @c x.size(). If @c x is a scalar, returns the second derivative of @c f at @c x.
     */
-    template <typename X>
-    auto hessian (const X& x)
+    template <class V>
+    auto hessian (const Eigen::MatrixBase<V>& x)
     {
         return static_cast<Impl&>(*this).hessian(x, f(x));
     }
@@ -234,8 +234,8 @@ struct FiniteDifference
               - x.rows() == e.rows()
               - e.cols() == 1
     */
-    template <class Derived>
-    auto hessian (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e)
+    template <class V>
+    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
     {
         return static_cast<Impl&>(*this).hessian(x, e, f(x));
     }
@@ -254,15 +254,15 @@ struct FiniteDifference
      *             # (@c x.size() == @c e.size()) OR (@c x and @c e are scalars )
      *          
     */
-    template <typename X>
-    auto directional (const X& x, const X& e)
+    template <class V>
+    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
     {
         return directional(x, e, f(x));
     }
 
     ///@copydoc directional()
-    template <typename X, typename Float>
-    auto directional (const X& x, const X& e, Float fx)
+    template <class V>
+    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e, typename V::Scalar fx)
     {
         return static_cast<Impl&>(*this).directional(x, e, fx, step(x));
     }
@@ -341,7 +341,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     *   @returns @f$\lim_{h\to0} \frac{f(x+e) - f(x)}{h}@f$
     */
     template <class Derived, typename Float>
-    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, Float fx)
+    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx)
     {
         return directional(x, e, fx);
     }
@@ -358,13 +358,13 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
      *  @param fx Scalar result of @c f(x)
      *  @returns @f$ \frac{\partial f}{\partial x} @f$
     */
-    template <typename Float>
-    auto hessian (Float x, Float fx)
-    {
-        Float h = step(x);
+    // template <typename Float>
+    // auto hessian (Float x, Float fx)
+    // {
+    //     Float h = step(x);
 
-        return (f(x - h) - 2 * fx + f(x + h)) / (h * h);
-    }
+    //     return (f(x - h) - 2 * fx + f(x + h)) / (h * h);
+    // }
 
     /** @brief Hessian calculation for multivariable function at the point @c x
     *   @param x Eigen::MatrixBase vector/matrix
@@ -372,7 +372,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     *   @returns @f$ \nabla^2 f(x) @f$
     */
     template <class V>
-    auto hessian (const V& x, typename V::Scalar fx)
+    auto hessian (const Eigen::MatrixBase<V>& x, typename V::Scalar fx)
     {
         using Float = typename V::Scalar;
 
@@ -406,17 +406,17 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
      *  @param fx Vector result of @c f(x)
      *  @returns @f$ \nabla f(x) @f$
      */
-    template <class Derived>
-    auto hessian (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& fx)
-    {
-        step.init(x);
+    // template <class Derived>
+    // auto hessian (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& fx)
+    // {
+    //     step.init(x);
 
-        Eigen::Matrix<typename Derived::Scalar, Derived::SizeAtCompileTime, Derived::SizeAtCompileTime> hess(x.size(), x.size());
+    //     Eigen::Matrix<typename Derived::Scalar, Derived::SizeAtCompileTime, Derived::SizeAtCompileTime> hess(x.size(), x.size());
 
-        changeEval([&](const auto& x, int i, double h){ hess.col(i) = (this->f(x) - fx) / h; }, x, step);
+    //     changeEval([&](const auto& x, int i, double h){ hess.col(i) = (this->f(x) - fx) / h; }, x, step);
 
-        return hess;
-    }
+    //     return hess;
+    // }
 
     /** @brief Hessian vector product calculation at point @c x with direction @c e
      * 
@@ -447,8 +447,8 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
      *  @param h The infinitezimal step size
      *  @returns f(x)
     */
-    template <typename Derived, typename Fx, typename Float>
-    auto directional (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, const Fx& fx, Float h)
+    template <class Derived>
+    auto directional (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx, typename Derived::Scalar h)
     {
         return (f(x + h * e) - fx) / h;
     }
@@ -959,7 +959,7 @@ struct Hessian : public Difference<wrap::Function<Function>, Step>
      *  @brief Default constructor must have @c h equal to @f$u^{\frac{3}{4}}$@f
     */
     //@{
-    Hessian (const Function& f) : Hessian(f, std::pow(constants::eps_<Float>, 3.0 / 4)) {}
+    Hessian (const Function& f) : Hessian(f, std::pow(constants::eps_<Float>, 1.0 / 2)) {}
 
     Hessian (const Function& f, const Step& step) : Base(f, step) {}
     //@}
@@ -1074,7 +1074,7 @@ auto gradient (const Function& f, const Step& step)
 }
 
 
-template <class Function, template <class, class> class Difference = Forward, class Step = AutoStep>
+template <class Function, template <class, class> class Difference = Forward, class Step = SimpleStep<>>
 auto hessian (const Function& f)
 {
     return Hessian<Function, Difference, Step>(f);

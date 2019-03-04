@@ -14,13 +14,8 @@ if(${lib_name_upper}_COVERAGE AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 
-#add_subdirectory(CG)
-#add_subdirectory(GradientDescent)
-#add_subdirectory(LineSearch)
-#add_subdirectory(QuasiNewton)
-#add_subdirectory(HyperbolicPenalty)
-#add_subdirectory(Newton)
 add_subdirectory(GradientOptimizer)
+add_subdirectory(Helpers)
 
 
 enable_testing()

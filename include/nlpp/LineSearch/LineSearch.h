@@ -209,6 +209,8 @@ namespace poly
 template <typename Float>
 struct LineSearch : public ::nlpp::poly::CloneBase<LineSearch<Float>>
 {
+	virtual ~LineSearch ()	{}
+
     using V = ::nlpp::VecX<Float>;
 	
 	virtual Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V>) = 0;

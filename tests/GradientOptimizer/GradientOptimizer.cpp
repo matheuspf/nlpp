@@ -79,35 +79,36 @@ TEST_F(GradientOptimizerTest, GradientDescentTest)
     }
 }
 
-// TEST_F(GradientOptimizerTest, NewtonTest)
-// {
-//     SCOPED_TRACE("Newton Test");
+TEST_F(GradientOptimizerTest, NewtonTest)
+{
+    SCOPED_TRACE("Newton Test");
 
-//     ::nlpp::poly::Newton<> opt;
+    ::nlpp::poly::Newton<> opt;
 
-//     opt.stop = new ::nlpp::stop::poly::GradientOptimizer<>(1000, 1e-4, 1e-4, 1e-4);
+    opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(1000, 1e-4, 1e-4, 1e-4);
     
-//     ::nlpp::Rosenbrock func;
+    ::nlpp::Rosenbrock func;
 
-//     for(int numVariables = 10; numVariables <= 100; numVariables += 10)
-//     {
-//         SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
+    for(int numVariables = 10; numVariables <= 100; numVariables += 10)
+    {
+        SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
 
-//         convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 5.0));
-//     }
-// }
+        convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 5.0));
+    }
+}
 
 // TEST_F(GradientOptimizerTest, BFGSTest)
 // {
-//     SCOPED_TRACE("BFGS Test");
+//     SCOPED_TRACE("BFGS Test\n");
 
 //     ::nlpp::poly::BFGS<> opt;
 
-//     opt.stop = new ::nlpp::stop::poly::GradientOptimizer<>(10000, 1e-4, 1e-4, 1e-4);
+//     opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(50, 1e-4, 1e-4, 1e-4);
+//     opt.output = std::make_unique<nlpp::out::poly::GradientOptimizer<1>>();
     
 //     ::nlpp::Rosenbrock func;
 
-//     for(int numVariables = 10; numVariables <= 50; numVariables += 10)
+//     for(int numVariables = 5; numVariables <= 5; numVariables += 10)
 //     {
 //         SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
 

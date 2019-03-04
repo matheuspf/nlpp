@@ -1,1 +1,0 @@
-target_sources(tests PUBLIC CG/CG.cpp)

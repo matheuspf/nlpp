@@ -143,6 +143,17 @@ constexpr decltype(auto) cast (V&& v)
 {
 	return v.template cast<T>();
 }
+
+template <class V>
+std::string toString (const V& x)
+{
+	std::stringstream ss;
+
+	ss << x;
+
+	return ss.str();
+}
+
 //@}
 
 
