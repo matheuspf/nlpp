@@ -152,7 +152,7 @@ struct LBFGS : public impl::LBFGS<params::GradientOptimizer<LineSearch, Stop, Ou
 namespace poly
 {
 
-template <class InitialHessian = BFGS_Diagonal<>, class V = ::nlpp::Vec>
+template <class InitialHessian = BFGS_Constant<>, class V = ::nlpp::Vec>
 struct LBFGS : public ::nlpp::impl::LBFGS<::nlpp::poly::GradientOptimizer<V>, InitialHessian>
 {
 	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::LBFGS<::nlpp::poly::GradientOptimizer<V>, InitialHessian>);

@@ -43,7 +43,7 @@ struct BFGS : public Params_
 
 
 
-template <class Params_, class InitialHessian = BFGS_Diagonal<>>
+template <class Params_, class InitialHessian = BFGS_Constant<>>
 struct BFGS : public params::BFGS<Params_, InitialHessian>
 {
     CPPOPT_USING_PARAMS_BFGS(Params, params::BFGS<Params_, InitialHessian>);

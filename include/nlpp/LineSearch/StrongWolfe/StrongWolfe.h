@@ -2,6 +2,7 @@
 
 #include "../LineSearch.h"
 
+#include "LineSearch/Interpolation/Interpolation.h"
 
 namespace nlpp
 {
@@ -39,7 +40,8 @@ struct StrongWolfe
 		int iter = 0;
 
 		//Float aMax = aMaxC * std::max(xNorm, Float(N));
-		Float aMax = 100.0;
+		Float aMax = 20.0;
+		Float fMax = f.function(aMax);
 
 		while(iter++ < maxIterBrack && b + tol < aMax)
 		{
@@ -59,7 +61,7 @@ struct StrongWolfe
 				return zoom(f, b, fb, gb, a, fa, ga, f0, g0);
 
 
-			Float next = interpolate(a, fa, ga, b, fb, gb);
+			Float next = interpolate(b, aMax, fb, fMax, gb);
 
 			a = b, fa = fb, ga = gb;
 
@@ -85,7 +87,7 @@ struct StrongWolfe
 
 		while(iter++ < maxIterInt)
 		{
-			Float next = interpolate(l, fl, gl, u, fu, gu);
+			Float next = interpolate(l, u, fl, fu, gl, gu);
 
 			if(a - tol <= l || a + tol >= u || std::abs(next - a) < tol)
 				a = (u + l) / 2.0;
@@ -119,45 +121,17 @@ struct StrongWolfe
 	}
 
 
-	Float interpolate (Float a, Float fa, Float ga, Float b, Float fb, Float gb)
-	{
-		Float d1 = ga + gb - 3 * ((fa - fb) / (a - b));
-		Float d2 = sign(b - a) * std::sqrt(d1 * d1 - ga * gb);
-
-		Float next = b - (b - a) * ((gb + d2 - d1) / (gb - ga + 2 * d2));
-
-		if(std::isnan(next) || std::isinf(next))
-			return (a + b) / 2.0;
-		
-		return next;
-	}
-
-
 	// Float interpolate (Float a, Float fa, Float ga, Float b, Float fb, Float gb)
 	// {
-	// 	Eigen::Matrix3d A;
-	// 	Eigen::Vector3d c;
+	// 	Float d1 = ga + gb - 3 * ((fa - fb) / (a - b));
+	// 	Float d2 = sign(b - a) * std::sqrt(d1 * d1 - ga * gb);
 
-	// 	A(0, 0) = a*a, A(0, 2) = a, A(0, 2) = 1.0;
-	// 	A(1, 0) = b*b, A(1, 2) = b, A(1, 2) = 1.0;
-	// 	A(2, 0) = 2*a, A(2, 2) = 1, A(2, 2) = 0.0;
+	// 	Float next = b - (b - a) * ((gb + d2 - d1) / (gb - ga + 2 * d2));
 
-	// 	c(0) = fa, c(1) = fb, c(2) = ga;
-
-
-	// 	Eigen::LLT<Eigen::Matrix3d> llt(A);
-
-	// 	if(llt.info() != Eigen::Success)
-	// 		return (a + b) / 2;
-
-	// 	Eigen::Vector3d x = -llt.solve(c);
-
-	// 	Float res = -x(1) / (2 * x(0));
+	// 	if(std::isnan(next) || std::isinf(next))
+	// 		return (a + b) / 2.0;
 		
-	// 	if(res <= std::min(a, b) || res >= std::max(a, b))
-	// 		return (a + b) / 2;
-
-	// 	return res;
+	// 	return next;
 	// }
 
 

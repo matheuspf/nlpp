@@ -45,6 +45,9 @@ struct PolyClass
     PolyClass& operator= (const PolyClass& PolyClass) { if(PolyClass.impl) impl = PolyClass.impl->clone(); return *this; }
     PolyClass& operator= (PolyClass&& PolyClass) = default;
 
+	Base* get () const { return impl.get(); }
+	Base* operator-> () const { return get(); }
+
 
     std::unique_ptr<Base> impl;
 };

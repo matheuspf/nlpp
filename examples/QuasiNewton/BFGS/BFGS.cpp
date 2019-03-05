@@ -1,8 +1,11 @@
 #include "QuasiNewton/BFGS/BFGS.h"
+#include "QuasiNewton/LBFGS/LBFGS.h"
 
 #include "LineSearch/Goldstein/Goldstein.h"
 
 #include "TestFunctions/Rosenbrock.h"
+
+#include "Newton/Newton.h"
 
 
 using namespace nlpp;
@@ -11,12 +14,21 @@ using namespace nlpp;
 int main ()
 {
     //BFGS<BFGS_Diagonal<>, StrongWolfe<>, stop::GradientOptimizer<>, out::BFGS<>> bfgs;
-    poly::BFGS<> bfgs;
+    // poly::BFGS<> bfgs;
+    poly::LBFGS<> bfgs;
+    //poly::Newton<fact::CholeskyIdentity<>> bfgs;
 
     // bfgs.output = std::make_unique<out::poly::BFGS<>>();
     bfgs.stop = std::make_unique<stop::poly::GradientOptimizer<>>(10000, 1e-4, 1e-4, 1e-4);
 
-    auto x = bfgs(Rosenbrock{}, fd::gradient(Rosenbrock{}), Vec::Constant(100, -5.0));
+    Rosenbrock func;
+    auto grad = fd::gradient(func);
+    Vec x0(1000);
+
+    std::for_each(x0.data(), x0.data() + x0.size(), [](auto& xi){ xi = handy::rand(-10.0, 10.0); });
+
+
+    auto x = bfgs(func, grad, x0);
 
     handy::print(x.transpose());
 
