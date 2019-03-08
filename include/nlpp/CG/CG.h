@@ -138,11 +138,6 @@ struct CG : public params::CG<Params_, CGType>
 
 		dir = -fa;
 
-		stop.init(*this, x, fxOld, fa);
-		output.init(*this, x, fxOld, fa);
-		// lineSearch.init(*this, x, fxOld, fa);
-
-
 		for(int iter = 0; iter < stop.maxIterations(); ++iter)
 		{
 			double alpha = lineSearch(f, x, dir);
@@ -168,8 +163,6 @@ struct CG : public params::CG<Params_, CGType>
 
 			output(*this, x, fx, fb);
 		}
-
-		output.finish(*this, x, fx, fb);
 
 		return x;
 	}

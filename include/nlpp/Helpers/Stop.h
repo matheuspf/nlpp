@@ -16,15 +16,11 @@ template <class Impl, typename Float>
 struct GradientOptimizer
 {
     GradientOptimizer(int maxIterations_ = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) : 
-                      maxIterations_(maxIterations_), xTol(xTol), fTol(fTol), gTol(gTol) {}
+                      maxIterations_(maxIterations_), xTol(xTol), fTol(fTol), gTol(gTol), initialized(false) {}
 
-    template <class LineSearch, class Stop, class Output, class V>
-    void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
-               const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx) 
+    void initialize ()
     {
-        fx0 = fx;
-        x0 = ::nlpp::impl::cast<Float>(x);
-        gx0 = ::nlpp::impl::cast<Float>(gx);
+        initialized = false;
     }
 
 
@@ -32,15 +28,23 @@ struct GradientOptimizer
     bool operator () (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                       const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx) 
     {
-        bool fStop = std::abs(fx - fx0) < fTol;
-        bool xStop = (::nlpp::impl::cast<Float>(x) - x0).norm() < xTol;
-        bool gStop = gx.norm() < gTol;
+        bool doStop = false;
+
+        if(initialized)
+        {
+            bool fStop = std::abs(fx - fx0) < fTol;
+            bool xStop = (::nlpp::impl::cast<Float>(x) - x0).norm() < xTol;
+            bool gStop = gx.norm() < gTol;
+
+            doStop = static_cast<Impl&>(*this).stop(xStop, fStop, gStop);
+        }
 
         fx0 = fx;
         x0 = ::nlpp::impl::cast<Float>(x);
         gx0 = ::nlpp::impl::cast<Float>(gx);
+        initialized = true;
 
-        return static_cast<Impl&>(*this).stop(xStop, fStop, gStop);
+        return doStop;
     }
 
 
@@ -63,6 +67,7 @@ struct GradientOptimizer
 
     Float gTol;            ///< Minimum tolerance on the norm of the gradient (@c g) between iterations
 
+    bool initialized;
 };
 
 
@@ -104,7 +109,7 @@ struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerB
 
     using Float = ::nlpp::impl::Scalar<V>;
 
-    virtual void init (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
+    virtual void initialize () = 0;
 
     virtual bool operator () (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
 
@@ -124,9 +129,9 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
     using Impl::fTol;
 
 
-    virtual void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual void initialize ()
     {
-        Impl::init(optimizer, x, fx, gx);
+        Impl::initialize();
     }
 
     virtual bool operator () (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
@@ -151,9 +156,9 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
     using Float = ::nlpp::impl::Scalar<V>;
 
 
-    void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    void initialized ()
     {
-        impl->init(optimizer, x, fx, gx);
+        impl->initialize();
     }
 
     bool operator () (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)

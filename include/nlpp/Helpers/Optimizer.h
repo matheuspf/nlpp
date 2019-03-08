@@ -66,6 +66,14 @@ struct GradientOptimizer// : public Parameters_
     // GradientOptimizer(const Parameters& params = Parameters()) : Parameters(params) {}
 
 
+    void init ()
+    {
+        static_cast<Impl&>(*this).initialize();
+        static_cast<Impl&>(*this).lineSearch.initialize();
+        static_cast<Impl&>(*this).stop.initialize();
+        static_cast<Impl&>(*this).output.initialize();
+    }
+
     /** @name
      *  @brief Ensure uniform interface, wrapping arguments before delegation
      * 
@@ -107,6 +115,14 @@ namespace poly
 template <class Impl>
 struct GradientOptimizer
 {
+    void init ()
+    {
+        static_cast<Impl&>(*this).initialize();
+        static_cast<Impl&>(*this).lineSearch.initialize();
+        static_cast<Impl&>(*this).stop.initialize();
+        static_cast<Impl&>(*this).output.initialize();
+    }
+
     template <class Function, class V, typename... Args>
     ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
@@ -162,6 +178,8 @@ struct GradientOptimizer : public CloneBase<GradientOptimizer<V>>,
     CPPOPT_USING_PARAMS(Params, ::nlpp::params::poly::GradientOptimizer_);
     using Params::Params;
     using Vec = V;
+
+    virtual void initialize () {}
 
     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) { return V{}; }
     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::wrap::poly::Hessian<V>, V) { return V{}; };

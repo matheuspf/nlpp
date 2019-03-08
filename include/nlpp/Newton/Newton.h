@@ -53,9 +53,6 @@ struct Newton : public params::Newton<Params_, Factorization>
 
 		std::tie(fx, gx) = f(x);
 
-		stop.init(*this, x, fx, gx);
-		output.init(*this, x, fx, gx);
-
 		for(int iter = 0; iter < stop.maxIterations(); ++iter)
 		{
 			auto dir = factorization(gx, hess(x));
@@ -72,8 +69,6 @@ struct Newton : public params::Newton<Params_, Factorization>
 
 			output(*this, x, fx, gx);
 		}
-
-		output.finish(*this, x, fx, gx);
 
 		return x;
 	}

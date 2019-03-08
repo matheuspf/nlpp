@@ -66,9 +66,6 @@ struct BFGS : public params::BFGS<Params_, InitialHessian>
         Float f0 = f(x0, g0);
         Float f1;
 
-        stop.init(*this, x0, f0, g0);
-        output.init(*this, x0, f0, g0);
-
         for(int iter = 0; iter < stop.maxIterations(); ++iter)
         {
             dir = -hess * g0;
@@ -95,8 +92,6 @@ struct BFGS : public params::BFGS<Params_, InitialHessian>
 
             output(*this, x1, f1, g1);
         }
-
-        output.finish(*this, x1, f1, g1);
 
         return x1;
     }

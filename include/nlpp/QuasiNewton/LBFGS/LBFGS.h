@@ -56,9 +56,6 @@ struct LBFGS : public params::LBFGS<Params_, InitialHessian>
 
         fx0 = f(x0, gx0);
         
-        stop.init(*this, x0, fx0, gx0);
-        output.init(*this, x0, fx0, gx0);
-
         std::deque<V> vs;
         std::deque<V> vy;
 
@@ -93,8 +90,6 @@ struct LBFGS : public params::LBFGS<Params_, InitialHessian>
 
             output(*this, x, fx, gx);
         }
-
-        output.finish(*this, x0, fx, gx);
 
         return x0;
 	}

@@ -43,9 +43,6 @@ struct GradientDescent : public Params_
 		
 		std::tie(fx, gx) = f(x);
 
-		stop.init(*this, x, fx, gx);
-		output.init(*this, x, fx, gx);
-
 		for(int iter = 0; iter < stop.maxIterations(); ++iter)
 		{
 			dir = -gx;
@@ -61,8 +58,6 @@ struct GradientDescent : public Params_
 
 			output(*this, x, fx, gx);
 		}
-
-		output.finish(*this, x, fx, gx);
 
 		return x;
 	}

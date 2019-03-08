@@ -31,6 +31,9 @@ struct GradientOptimizer
     //@}
 
 
+    void initialize () {}
+
+
     LineSearch lineSearch;  ///< The line search method
 
     Stop stop;      ///< Stopping condition

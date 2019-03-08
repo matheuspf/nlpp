@@ -13,18 +13,12 @@ namespace out
 template <typename Float>
 struct GradientOptimizer<0, Float>
 {
-    template <typename... Args>
-    void init (Args&&...) 
+    void initialize () 
     {
     }
 
     template <typename... Args>
     void operator() (Args&&...)
-    {
-    }
-
-    template <typename... Args>
-    void finish (Args&&...)
     {
     }
 };
@@ -33,11 +27,8 @@ struct GradientOptimizer<0, Float>
 template <typename Float>
 struct GradientOptimizer<1, Float>
 {
-    template <class LineSearch, class Stop, class Output, class V>
-    void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
-               const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx) 
+    void initialize ()
     {
-        handy::print("Init\n\n", "x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose(), "\n") << std::flush;
     }
 
     template <class LineSearch, class Stop, class Output, class V>
@@ -46,47 +37,22 @@ struct GradientOptimizer<1, Float>
     {
         handy::print("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose(), "\n") << std::flush;
     }
-
-    template <class LineSearch, class Stop, class Output, class V>
-    void finish (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
-               const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx)
-    {
-        handy::print("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose(), "\n\nFinish") << std::flush;
-    }
 };
 
 
 template <class Float>
 struct GradientOptimizer<2, Float>
 {
-    template <class LineSearch, class Stop, class Output, class V>
-    void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
-               const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx) 
+    void initialize () 
     {
         vFx.clear();
         vX.clear();
         vGx.clear();
-
-        pushBack(x, fx, gx);
     }
 
     template <class LineSearch, class Stop, class Output, class V>
     void operator() (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
                      const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx)
-    {
-        pushBack(x, fx, gx);
-    }
-
-    template <class LineSearch, class Stop, class Output, class V>
-    void finish (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
-                 const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx)
-    {
-        pushBack(x, fx, gx);
-    }
-
-
-    template <class V>
-    void pushBack (const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx)
     {
         vFx.push_back(fx);
         vX.push_back(::nlpp::impl::cast<Float>(x));
@@ -111,11 +77,9 @@ struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerB
 
     using Float = ::nlpp::impl::Scalar<V>;
 
-    virtual void init (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
+    virtual void initialize () = 0;
 
     virtual void operator() (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
-    
-    virtual void finish (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
 };
 
 
@@ -127,20 +91,16 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
     using Impl = ::nlpp::out::GradientOptimizer<Level, ::nlpp::impl::Scalar<V>>;
 
 
-    virtual void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual void initialize ()
     {
-        Impl::init(optimizer, x, fx, gx);
+        Impl::initialize();
     }
 
     virtual void operator() (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
     {
         return Impl::operator()(optimizer, x, fx, gx);
     }
-
-    virtual void finish (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
-    {
-        Impl::finish(optimizer, x, fx, gx);
-    }
+    
 
     virtual GradientOptimizer* clone_impl () const { return new GradientOptimizer(*this); }
 };
@@ -157,19 +117,14 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
     GradientOptimizer_ () : Base(std::make_unique<GradientOptimizer<0, V>>()) {}
 
 
-    void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    void initialize ()
     {
-        impl->init(optimizer, x, fx, gx);
+        impl->initialize();
     }
 
     void operator () (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
     {
         impl->operator()(optimizer, x, fx, gx);
-    }
-
-    void finish (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
-    {
-        impl->finish(optimizer, x, fx, gx);
     }
 };
 
