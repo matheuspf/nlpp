@@ -140,6 +140,7 @@ struct CG : public params::CG<Params_, CGType>
 
 		stop.init(*this, x, fxOld, fa);
 		output.init(*this, x, fxOld, fa);
+		// lineSearch.init(*this, x, fxOld, fa);
 
 
 		for(int iter = 0; iter < stop.maxIterations(); ++iter)

@@ -4,33 +4,41 @@
 
 #include "LineSearch/Interpolation/Interpolation.h"
 
+#include "LineSearch/InitialStep/Constant.h"
+
+
 namespace nlpp
 {
 
 namespace impl
 {
 
-template <typename Float>
-struct StrongWolfe
+template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
+struct StrongWolfe : public LineSearchBase<Float, InitialStep>
 {
-	StrongWolfe (Float a0 = 1.0, Float c1 = 1e-4, Float c2 = 0.9, Float aMaxC = 100.0, Float rho = constants::phi, 
-				 int maxIterBrack = 20, int maxIterInt = 1e2, Float tol = constants::eps_<Float>) :
-				 a0(a0), c1(c1), c2(c2), aMaxC(aMaxC), rho(rho), 
-				 maxIterBrack(maxIterBrack), maxIterInt(maxIterInt), tol(tol)
+	using Base = LineSearchBase<Float, InitialStep>;
+	using Base::f0;
+	using Base::g0;
+	using Base::initialStep;
+
+
+	StrongWolfe (Float c1 = 1e-4, Float c2 = 0.9, const InitialStep& initialStep = InitialStep(), Float aMaxC = 100.0, 
+				 Float rho = constants::phi, int maxIterBrack = 20, int maxIterInt = 1e2, Float tol = constants::eps_<Float>) :
+				 c1(c1), c2(c2), Base(initialStep), aMaxC(aMaxC), rho(rho), maxIterBrack(maxIterBrack), maxIterInt(maxIterInt), tol(tol)
 	{
-		assert(a0 > 0.0 && "a0 must be positive");
+		// assert(a0 > 0.0 && "a0 must be positive");
 		assert(c1 > 0.0  && c2 > 0.0 && "c1 and c2 must be positive");
 		assert(c1 < c2 && "c1 must be smaller than c2");
-		assert(a0 < aMaxC && "a0 must be smaller than aMaxC");
+		// assert(a0 < aMaxC && "a0 must be smaller than aMaxC");
 	}
 
 
 	template <class Function>
 	Float lineSearch (Function f)
 	{
-		Float f0, g0;
-		
 		std::tie(f0, g0) = f(0.0);
+
+		Float a0 = initialStep(f0, g0);
 
 		Float a = 0.0, fa = f0, ga = g0;
 		Float b = a0, fb, gb;
@@ -136,7 +144,6 @@ struct StrongWolfe
 
 
 
-	Float a0;
 	Float c1;
 	Float c2;
 	Float aMaxC;

@@ -10,6 +10,8 @@
 
 #include "../Helpers/FiniteDifference.h"
 
+#include "InitialStep/Constant.h"
+
 
 #define NLPP_TEMPLATE_PARAMS7(T7, ...) typename T7, NLPP_TEMPLATE_PARAMS6(__VA_ARGS__)
 #define NLPP_TEMPLATE_PARAMS6(T6, ...) typename T6, NLPP_TEMPLATE_PARAMS5(__VA_ARGS__) 
@@ -40,6 +42,13 @@ struct Name : public impl::Name<Float, ## __VA_ARGS__>,					\
 {																		\
 	NLPP_LINE_SEARCH_ALIASES(Name, Name<Float, ## __VA_ARGS__>)			\
 																		\
+	template <class LineSearch, class Stop, class Output, class V>										\
+    void initialize (const ::nlpp::params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,		\
+               const Eigen::MatrixBase<V>& x, typename V::Scalar fx, const Eigen::MatrixBase<V>& gx) 	\
+	{																									\
+		Impl::initialize(optimizer, x, fx, gx);															\
+	}																									\
+																		\
 	template <class Function>											\
 	auto lineSearch (Function f)										\
 	{																	\
@@ -56,6 +65,11 @@ struct Name : public impl::Name<Float, ## __VA_ARGS__>, \
 {	\
 	NLPP_LINE_SEARCH_ALIASES(Name, Name<Float, ## __VA_ARGS__>)	\
 	\
+	void initialize (const nlpp::params::poly::GradientOptimizer_& optimizer, const ::nlpp::MatX<Float>& x, Float fx, const ::nlpp::MatX<Float>& gx)	\
+	{																																					\
+		Impl::initialize(optimizer, x, fx, gx);																											\
+	}																																					\
+																																						\
 	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec> f)	\
 	{	\
 		return Impl::lineSearch(f);	\
@@ -146,6 +160,12 @@ struct LineSearch
 	template <class I>
 	static constexpr bool isImplPoly = std::is_same<I, poly::LineSearch<>>::value || std::is_same<I, poly::LineSearch_<>>::value;
 
+	template <class LineSearch, class Stop, class Output, class V>
+    void init (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               const Eigen::MatrixBase<V>& x, typename V::Scalar fx, const Eigen::MatrixBase<V>& gx) 
+	{
+		static_cast<Impl&>(*this).init(optimizer, x, fx, gx);		
+	}
 
     template <class Function, class V>
 	auto impl (Function f, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
@@ -212,7 +232,9 @@ struct LineSearch : public ::nlpp::poly::CloneBase<LineSearch<Float>>
 	virtual ~LineSearch ()	{}
 
     using V = ::nlpp::VecX<Float>;
-	
+
+	virtual void initialize (const nlpp::params::poly::GradientOptimizer_& optimizer, const ::nlpp::MatX<Float>& x, Float fx, const ::nlpp::MatX<Float>& gx) = 0;	
+
 	virtual Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V>) = 0;
 };
 
@@ -228,6 +250,10 @@ struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearch<Float>>,
 
 	LineSearch_ () : Base(std::make_unique<StrongWolfe<Float>>()) {}
 
+    void initialize (const nlpp::params::poly::GradientOptimizer_& optimizer, const ::nlpp::MatX<Float>& x, Float fx, const ::nlpp::MatX<Float>& gx)
+	{
+		return impl->initialize(optimizer, x, fx, gx);
+	}
 
 	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V> f)
 	{
@@ -240,8 +266,25 @@ struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearch<Float>>,
 
 
 
-//template <class Impl, bool Polymorphic, typename... Args>
-//using LineSearchPick = std::conditional_t<Polymorphic, poly::LineSearch<Args...>, LineSearch<Impl>>;
+template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
+struct LineSearchBase
+{
+	LineSearchBase (const InitialStep& initialStep) : initialStep(initialStep) {}
+
+
+	template <class LineSearch, class Stop, class Output, class V>
+    void initialize (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+               	     const Eigen::MatrixBase<V>& x, typename V::Scalar fx, const Eigen::MatrixBase<V>& gx) 
+	{
+		initialStep.initialize();
+	}
+
+
+	Float f0;
+	Float g0;
+
+	InitialStep initialStep;
+};
 
 
 
