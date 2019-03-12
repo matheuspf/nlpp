@@ -43,8 +43,11 @@ struct GradientOptimizer_;
 } // namespace stop
 
 
-/// Because this is used as the default line search procedure in many cases
 template <typename Float = types::Float>
+struct ConstantStep;
+
+/// Because this is used as the default line search procedure in many cases
+template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
 struct StrongWolfe;
 
 namespace poly
@@ -56,7 +59,7 @@ struct LineSearch;
 template <typename Float = types::Float>
 struct LineSearch_;
 
-template <typename Float = types::Float>
+template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
 struct StrongWolfe;
 
 } // namespace poly

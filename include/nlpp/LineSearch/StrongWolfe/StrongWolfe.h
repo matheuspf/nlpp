@@ -5,6 +5,7 @@
 #include "LineSearch/Interpolation/Interpolation.h"
 
 #include "LineSearch/InitialStep/Constant.h"
+#include "LineSearch/InitialStep/FirstOrder.h"
 
 
 namespace nlpp
@@ -156,9 +157,50 @@ struct StrongWolfe : public LineSearchBase<Float, InitialStep>
 } // namespace impl
 
 
-NLPP_LINE_SEARCH_D(StrongWolfe)
+template <typename Float, class InitialStep>
+struct StrongWolfe : public impl::StrongWolfe<Float, InitialStep>,
+					 public LineSearch<StrongWolfe<Float, InitialStep>>
+{
+	using Interface = LineSearch<StrongWolfe<Float, InitialStep>>;
+	using Impl = impl::StrongWolfe<Float, InitialStep>;
+	using Impl::Impl;
 
+	void initialize ()
+	{
+		Impl::initialize();
+	}
 
+	template <class Function>
+	auto lineSearch (Function f)
+	{
+		return Impl::lineSearch(f);
+	}
+};
 
+namespace poly
+{
 
-} // namespace 
+template <typename Float, class InitialStep>
+struct StrongWolfe : public impl::StrongWolfe<Float, InitialStep>,
+					 public LineSearch<Float>
+{
+	using Interface = LineSearch<Float>;
+	using Impl = impl::StrongWolfe<Float, InitialStep>;
+	using Impl::Impl;
+
+	void initialize ()
+	{
+		Impl::initialize();
+	}
+
+	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec> f)
+	{
+		return Impl::lineSearch(f);
+	}
+
+	virtual StrongWolfe* clone_impl () const {	return new StrongWolfe(*this);	}
+};
+
+} // namespace poly
+
+} // namespace nlpp

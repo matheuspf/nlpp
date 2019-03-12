@@ -80,9 +80,53 @@ struct Goldstein : public LineSearchBase<Float, InitialStep>
 } // namespace impl
 
 
+template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
+struct Goldstein : public impl::Goldstein<Float, InitialStep>,
+				   public LineSearch<Goldstein<Float, InitialStep>>
+{
+	using Interface = LineSearch<Goldstein<Float, InitialStep>>;
+	using Impl = impl::Goldstein<Float, InitialStep>;
+	using Impl::Impl;
+
+	void initialize ()
+	{
+		Impl::initialize();
+	}
+
+	template <class Function>
+	auto lineSearch (Function f)
+	{
+		return Impl::lineSearch(f);
+	}
+};
+
+namespace poly
+{
+
+template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
+struct Goldstein : public impl::Goldstein<Float, InitialStep>,
+				   public LineSearch<Float>
+{
+	using Interface = LineSearch<Float>;
+	using Impl = impl::Goldstein<Float, InitialStep>;
+	using Impl::Impl;
+
+	void initialize ()
+	{
+		Impl::initialize();
+	}
+
+	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec> f)
+	{
+		return Impl::lineSearch(f);
+	}
+
+	virtual Goldstein* clone_impl () const { return new Goldstein(*this); }
+};
+
+} // namespace poly
 
 
-NLPP_LINE_SEARCH(Goldstein)
 
 
 } // namespace nlpp

@@ -2,45 +2,34 @@
 
 #include "TestFunctions/Rosenbrock.h"
 
-//#include "LineSearch/Goldstein/Goldstein.h"
+#include "LineSearch/Goldstein/Goldstein.h"
 
-
+#include "Newton/Newton.h"
 
 using namespace nlpp;
 
 
+
 int main ()
 {
-	params::CG<FR_PR, StrongWolfe<>> params(StrongWolfe<>{}, stop::GradientOptimizer<>{});
+    Newton<fact::CholeskyIdentity<double>, StrongWolfe<double, FirstOrderStep<double>>, stop::GradientOptimizer<true>, out::GradientOptimizer<0>> opt;
 
-	params.stop.fTol = 0.0;
+    opt.stop = stop::GradientOptimizer<true>(10000, 1e-4, 1e-4, 1e-4);
 
-	CG<FR_PR, StrongWolfe<>> cg(params);
+	int count = 0;
 
-	Rosenbrock func;
+	auto func = [&]{ Rosenbrock func; return [&](const auto& x){ count++; return func(x); }; }();
 
+    auto grad = fd::gradient(func);
 
-	auto grad = fd::gradient(func);
+    Vec x0(100);
 
-	auto ff = wrap::function(func);
+    std::for_each(x0.data(), x0.data() + x0.size(), [](auto& xi){ xi = handy::rand(-10.0, 10.0); });
 
-	//auto grad = [](const auto& x){ return x; };
+    auto x = opt(func, grad, x0);
 
-	Eigen::VectorXd x = Eigen::VectorXd::Constant(10, 5.0);
-	//Eigen::VectorXf x = Eigen::VectorXf::Constant(10, 5.0);
-	
-	handy::print(handy::benchmark([&]
-	{
-		//x = cg(func, x);
-		x = cg(func, grad, x);
-		//x = cg([&](const auto& x){ return std::make_pair(func(x), grad(x)); }, x);
-		//x = cg([&](const auto& x, auto& g){ g = grad(x); return func(x); }, x);
-	}), "\n");
+    handy::print(x.transpose(), "\n\n");
+	handy::print(count);
 
-	handy::print("x: ", x.transpose());
-
-
-
-
-	return 0;
+    return 0;
 }

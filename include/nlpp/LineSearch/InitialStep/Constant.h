@@ -8,12 +8,12 @@
 namespace nlpp
 {
 
-template <typename Float = types::Float>
+template <typename Float>
 struct ConstantStep
 {
     ConstantStep (Float a0 = 1.0) : a0(a0) {}
 
-    void initialize (...) {}
+    void initialize () {}
 
     Float operator () (...) const { return a0; }
 

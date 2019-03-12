@@ -13,72 +13,6 @@
 #include "InitialStep/Constant.h"
 
 
-#define NLPP_TEMPLATE_PARAMS7(T7, ...) typename T7, NLPP_TEMPLATE_PARAMS6(__VA_ARGS__)
-#define NLPP_TEMPLATE_PARAMS6(T6, ...) typename T6, NLPP_TEMPLATE_PARAMS5(__VA_ARGS__) 
-#define NLPP_TEMPLATE_PARAMS5(T5, ...) typename T5, NLPP_TEMPLATE_PARAMS4(__VA_ARGS__) 
-#define NLPP_TEMPLATE_PARAMS4(T4, ...) typename T4, NLPP_TEMPLATE_PARAMS3(__VA_ARGS__) 
-#define NLPP_TEMPLATE_PARAMS3(T3, ...) typename T3, NLPP_TEMPLATE_PARAMS2(__VA_ARGS__) 
-#define NLPP_TEMPLATE_PARAMS2(T2, ...) typename T2, NLPP_TEMPLATE_PARAMS1(__VA_ARGS__) 
-#define NLPP_TEMPLATE_PARAMS1(T1)      typename T1
-
-#define NLPP_TEMPLATE_PARAMS(...) APPLY_N(NLPP_TEMPLATE_PARAMS, __VA_ARGS__)
-
-
-#define NLPP_LINE_SEARCH_ALIASES(Name, ...)		using Interface = LineSearch<Name>;	\
-												using Impl = impl::__VA_ARGS__;				\
-												using Impl::Impl;						\
-
-
-#define NLPP_LINE_SEARCH(Name, ...) NLPP_LINE_SEARCH_IMPL(Name, Float = types::Float, ## __VA_ARGS__)
-
-#define NLPP_LINE_SEARCH_D(Name, ...) NLPP_LINE_SEARCH_IMPL(Name, Float, ## __VA_ARGS__)
-
-
-#define NLPP_LINE_SEARCH_IMPL(Name, Float_Template, ...)	\
-\
-template <EXPAND(NLPP_TEMPLATE_PARAMS(Float_Template, ## __VA_ARGS__))>					\
-struct Name : public impl::Name<Float, ## __VA_ARGS__>,					\
-			  public LineSearch<Name<Float, ## __VA_ARGS__>>			\
-{																		\
-	NLPP_LINE_SEARCH_ALIASES(Name, Name<Float, ## __VA_ARGS__>)			\
-																		\
-    void initialize ()																					\
-	{																									\
-		Impl::initialize();															\
-	}																									\
-																		\
-	template <class Function>											\
-	auto lineSearch (Function f)										\
-	{																	\
-		return Impl::lineSearch(f);										\
-	}																	\
-};																		\
-																		\
-namespace poly	\
-{\
-\
-template <EXPAND(NLPP_TEMPLATE_PARAMS(Float_Template, ## __VA_ARGS__))> \
-struct Name : public impl::Name<Float, ## __VA_ARGS__>, \
-			  public LineSearch<Float>	\
-{	\
-	NLPP_LINE_SEARCH_ALIASES(Name, Name<Float, ## __VA_ARGS__>)	\
-	\
-	void initialize ()	\
-	{																																					\
-		Impl::initialize();																											\
-	}																																					\
-																																						\
-	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec> f)	\
-	{	\
-		return Impl::lineSearch(f);	\
-	}	\
-	\
-	virtual Name* clone_impl () const {	return new Name(*this);	}	\
-};	\
-\
-} // namespace poly
-
-
 
 namespace nlpp
 {
@@ -274,6 +208,7 @@ struct LineSearchBase
 	}
 
 
+	Float aStart;
 	Float f0;
 	Float g0;
 
