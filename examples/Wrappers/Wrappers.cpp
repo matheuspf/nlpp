@@ -54,6 +54,20 @@ struct FuncGrad2
     }
 };
 
+struct Hessian
+{
+    // template <class V, class U>
+    // impl::Plain<V> operator () (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
+    // {
+    //     return x + e;
+    // }
+
+    template <class V>
+    impl::Plain2D<V> operator () (const Eigen::MatrixBase<V>& x)
+    {
+        return x * x.transpose();
+    }
+};
 
 
 
@@ -71,7 +85,9 @@ int main ()
     auto funcGrad2 = wrap::functionGradient(FuncGrad2{});
 
     auto funcGrad3 = wrap::functionGradient(Func{});
-    
+
+    auto hess = wrap::hessian(Hessian{});
+
 
     handy::print(func(x), func(y));
     handy::print(func(x+x), func(y+y), "\n");
@@ -89,7 +105,10 @@ int main ()
     handy::print(funcGrad2.function(y+y), funcGrad2.gradient(x+x).transpose(), "\n");
 
     //handy::print(std::get<0>(funcGrad3(x+x)), std::get<1>(funcGrad3(y+y)).transpose());
-    handy::print(funcGrad3(x+x, gx), gx.transpose());
+    handy::print(funcGrad3(x+x, gx), gx.transpose(), "\n");
+
+    handy::print(hess(x+x, x).transpose(), "\n");
+    handy::print(hess(x+x).transpose());
 
     
 

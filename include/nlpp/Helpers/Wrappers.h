@@ -19,7 +19,7 @@
 
 #include "Helpers.h"
 
-//#include "FiniteDifference.h"
+#include "FiniteDifference.h"
 
 
 namespace nlpp
@@ -130,13 +130,13 @@ template <class T, class V>
 //@}
 
 
-template <class T, class V>
+template <class T, class V, class V2>
 struct IsHessian
 {
-    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().hessian(std::declval<V>(), std::declval<V>()))>, int> = 0>
+    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().hessian(std::declval<V>(), std::declval<V2>()))>, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<0>) { return 0; }
 
-    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>(), std::declval<V>()))>, int> = 0>
+    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>(), std::declval<V2>()))>, int> = 0>
     static constexpr int impl (::nlpp::impl::Precedence<1>) { return 1; }
 
 
@@ -564,8 +564,8 @@ struct Hessian : public Impl_
     }
 
 
-    template <class V, class I = Impl, std::enable_if_t<IsHessian<I, V>::value < 2, int> = 0>
-    ::nlpp::impl::Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+    template <class V, class U, class I = Impl, std::enable_if_t<IsHessian<I, V>::value < 2, int> = 0>
+    ::nlpp::impl::Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
     {
         return delegate(x, e);
     }
@@ -576,8 +576,8 @@ struct Hessian : public Impl_
     // }
 
 
-    template <class V, class I = Impl, std::enable_if_t<IsGradient<I, V>::value >= 2, int> = 0>
-    ::nlpp::impl::Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+    template <class V, class U, class I = Impl, std::enable_if_t<IsGradient<I, V>::value >= 2, int> = 0>
+    ::nlpp::impl::Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
     {
         return delegate(x) * e;
     }
@@ -589,8 +589,8 @@ struct Hessian : public Impl_
     }
 
 
-    template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+    template <class V, class U>
+    auto operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
     {
         return hessian(x, e);
     }
