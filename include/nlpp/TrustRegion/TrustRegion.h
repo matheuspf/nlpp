@@ -47,8 +47,9 @@ struct TrustRegion
 
 			if(std::isnan(rho))
 			{
+				handy::print("FAIL HARD");
 				handy::print("\n\n\n", fx, "     ", fy, "          ", gx.transpose(), "          ", dir, "\n\n");
-				handy::print(hx); exit(0);
+				std::cout << hx << "\n\n"; exit(0);
 			}
 
 

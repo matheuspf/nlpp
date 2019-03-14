@@ -126,6 +126,8 @@ struct IsGradient;
 template <class T, class V = Vec>
 struct IsFunctionGradient;
 
+template <class T, class V = Vec>
+struct IsHessian;
 
 
 template <class Impl>

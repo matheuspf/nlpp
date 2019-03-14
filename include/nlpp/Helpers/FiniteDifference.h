@@ -237,7 +237,7 @@ struct FiniteDifference
     template <class V>
     auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
     {
-        return static_cast<Impl&>(*this).hessian(x, e, f(x));
+        return static_cast<Impl&>(*this).hessian(x, e, gradient(x));
     }
 
     /** @brief General directional derivative calculation @f$\nabla^2 f(x)^\intercal e$@f.
@@ -430,9 +430,11 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
      *  @returns @f$ \nabla^2 f(x) \intercal e @f$
      */
     template <class Derived>
-    auto hessian (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx)
+    auto hessian (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, const Eigen::MatrixBase<Derived>& gx)
     {
-        return directional(x, e, fx);
+        auto h = step(x);
+        
+        return (gradient(x + h * e) - gx) / h;
     }
     //@}
 

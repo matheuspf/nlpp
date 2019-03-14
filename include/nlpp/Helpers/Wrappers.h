@@ -130,6 +130,28 @@ template <class T, class V>
 //@}
 
 
+template <class T, class V>
+struct IsHessian
+{
+    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().hessian(std::declval<V>(), std::declval<V>()))>, int> = 0>
+    static constexpr int impl (::nlpp::impl::Precedence<0>) { return 0; }
+
+    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>(), std::declval<V>()))>, int> = 0>
+    static constexpr int impl (::nlpp::impl::Precedence<1>) { return 1; }
+
+
+    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().hessian(std::declval<V>()))>, int> = 0>
+    static constexpr int impl (::nlpp::impl::Precedence<2>) { return 2; }
+
+    template <class U = T, std::enable_if_t<::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>()))>, int> = 0>
+    static constexpr int impl (::nlpp::impl::Precedence<3>) { return 3; }
+
+
+
+    enum{ value = impl(::nlpp::impl::Precedence<0>{}) };
+};
+
+
 
 namespace impl
 {
@@ -521,6 +543,65 @@ struct FunctionGradient<Impl_> : public Impl_
 } // namespace impl
 
 
+template <class Impl_>
+struct Hessian : public Impl_
+{
+    using Impl = Impl_;
+    
+    Hessian (const Impl& impl) : Impl(impl) {}
+
+
+    template <class V, typename... Args, class I = Impl, std::enable_if_t<IsHessian<I, V>::value % 2 == 0, int> = 0>
+    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return Impl::hessian(x, std::forward<Args>(args)...);
+    }
+
+    template <class V, typename... Args, class I = Impl, std::enable_if_t<IsHessian<I, V>::value % 2 == 1, int> = 0>
+    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return Impl::operator()(x, std::forward<Args>(args)...);
+    }
+
+
+    template <class V, class I = Impl, std::enable_if_t<IsHessian<I, V>::value < 2, int> = 0>
+    ::nlpp::impl::Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+    {
+        return delegate(x, e);
+    }
+
+    // template <class V, class I = Impl, std::enable_if_t<IsHessian<I, V>::value < 2, int> = 0>
+    // auto gradient (const Eigen::MatrixBase<V>& x)
+    // {
+    // }
+
+
+    template <class V, class I = Impl, std::enable_if_t<IsGradient<I, V>::value >= 2, int> = 0>
+    ::nlpp::impl::Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+    {
+        return delegate(x) * e;
+    }
+
+    template <class V, class I = Impl, std::enable_if_t<IsGradient<I, V>::value >= 2, int> = 0>
+    ::nlpp::impl::Plain2D<V> hessian (const Eigen::MatrixBase<V>& x)
+    {
+        return delegate(x);
+    }
+
+
+    template <class V>
+    auto operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+    {
+        return hessian(x, e);
+    }
+
+    template <class V>
+    auto operator() (const Eigen::MatrixBase<V>& x)
+    {
+        return hessian(x);
+    }
+};
+
 
 /** @name 
  *  @brief Functions used only to delegate the call with automatic type deduction
@@ -563,6 +644,13 @@ template <class Impl>
 auto functionGradient (const Impl& impl)
 {
     return FunctionGradient<Impl>(impl);
+}
+
+
+template <class Impl>
+auto hessian (const Impl& impl)
+{
+    return Hessian<Impl>(impl);
 }
 //@}
 
