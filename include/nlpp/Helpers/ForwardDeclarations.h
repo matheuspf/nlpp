@@ -68,13 +68,18 @@ struct StrongWolfe;
 namespace params
 {
 
+template <class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
+struct Optimizer;
+
 template <class = StrongWolfe<>, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
-struct GradientOptimizer;
+struct LineSearchOptimizer;
 
 namespace poly
 {
 
-using GradientOptimizer_ = ::nlpp::params::GradientOptimizer<::nlpp::poly::LineSearch_<>, ::nlpp::stop::poly::GradientOptimizer_<>, ::nlpp::out::poly::GradientOptimizer_<>>;
+using Optimizer_ = ::nlpp::params::Optimizer<::nlpp::stop::poly::GradientOptimizer_<>, ::nlpp::out::poly::GradientOptimizer_<>>;
+
+using LineSearchOptimizer_ = ::nlpp::params::LineSearchOptimizer<::nlpp::poly::LineSearch_<>, ::nlpp::stop::poly::GradientOptimizer_<>, ::nlpp::out::poly::GradientOptimizer_<>>;
 
 } // namespace poly
 

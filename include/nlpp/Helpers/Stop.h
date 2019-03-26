@@ -25,7 +25,7 @@ struct GradientOptimizer
 
 
     template <class LineSearch, class Stop, class Output, class V>
-    bool operator () (const params::GradientOptimizer<LineSearch, Stop, Output>& optimizer,
+    bool operator () (const params::LineSearchOptimizer<LineSearch, Stop, Output>& optimizer,
                       const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx) 
     {
         bool doStop = false;
@@ -111,7 +111,7 @@ struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerB
 
     virtual void initialize () = 0;
 
-    virtual bool operator () (const nlpp::params::poly::GradientOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
+    virtual bool operator () (const nlpp::params::poly::LineSearchOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
 
     virtual int maxIterations () = 0;
 };
@@ -134,7 +134,7 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
         Impl::initialize();
     }
 
-    virtual bool operator () (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual bool operator () (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
     {
         return Impl::operator()(optimizer, x, fx, gx);
     }
@@ -161,7 +161,7 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
         impl->initialize();
     }
 
-    bool operator () (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    bool operator () (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
     {
         return impl->operator()(optimizer, x, fx, gx);
     }

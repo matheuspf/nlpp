@@ -171,10 +171,10 @@ struct CG : public params::CG<Params_, CGType>
 } // namespace impl
 
 template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct CG : public impl::CG<params::GradientOptimizer<LineSearch, Stop, Output>, CGType>,
+struct CG : public impl::CG<params::LineSearchOptimizer<LineSearch, Stop, Output>, CGType>,
 			public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>>
 {
-	CPPOPT_USING_PARAMS(Impl, impl::CG<params::GradientOptimizer<LineSearch, Stop, Output>, CGType>);
+	CPPOPT_USING_PARAMS(Impl, impl::CG<params::LineSearchOptimizer<LineSearch, Stop, Output>, CGType>);
 	using Impl::Impl;
 
 	template <class Function, class V>

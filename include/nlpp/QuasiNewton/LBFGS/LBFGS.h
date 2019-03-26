@@ -130,10 +130,10 @@ struct LBFGS : public params::LBFGS<Params_, InitialHessian>
 
 template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>,
           class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct LBFGS : public impl::LBFGS<params::GradientOptimizer<LineSearch, Stop, Output>, InitialHessian>,
+struct LBFGS : public impl::LBFGS<params::LineSearchOptimizer<LineSearch, Stop, Output>, InitialHessian>,
 			   public GradientOptimizer<LBFGS<InitialHessian, LineSearch, Stop, Output>>
 {
-    CPPOPT_USING_PARAMS(Impl, impl::LBFGS<params::GradientOptimizer<LineSearch, Stop, Output>, InitialHessian>);
+    CPPOPT_USING_PARAMS(Impl, impl::LBFGS<params::LineSearchOptimizer<LineSearch, Stop, Output>, InitialHessian>);
     using Impl::Impl;
 
     template <class Function, class V>

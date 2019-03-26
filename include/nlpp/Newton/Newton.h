@@ -79,10 +79,10 @@ struct Newton : public params::Newton<Params_, Factorization>
 
 template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe<>,
 		class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct Newton : public impl::Newton<params::GradientOptimizer<LineSearch, Stop, Output>, Factorization>,
+struct Newton : public impl::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>,
                 public GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>>
 {
-   	CPPOPT_USING_PARAMS(Impl, impl::Newton<params::GradientOptimizer<LineSearch, Stop, Output>, Factorization>);
+   	CPPOPT_USING_PARAMS(Impl, impl::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>);
 	using Impl::Impl;
 
 	template <class Function, class Hessian, class V>

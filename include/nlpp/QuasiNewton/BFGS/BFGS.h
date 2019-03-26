@@ -101,10 +101,10 @@ struct BFGS : public params::BFGS<Params_, InitialHessian>
 
 template <class InitialHessian = BFGS_Diagonal<>, class LineSearch = StrongWolfe<>,
           class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct BFGS : public impl::BFGS<params::GradientOptimizer<LineSearch, Stop, Output>, InitialHessian>,
+struct BFGS : public impl::BFGS<params::LineSearchOptimizer<LineSearch, Stop, Output>, InitialHessian>,
 			  public GradientOptimizer<BFGS<InitialHessian, LineSearch, Stop, Output>>
 {
-    CPPOPT_USING_PARAMS(Impl, impl::BFGS<params::GradientOptimizer<LineSearch, Stop, Output>, InitialHessian>);
+    CPPOPT_USING_PARAMS(Impl, impl::BFGS<params::LineSearchOptimizer<LineSearch, Stop, Output>, InitialHessian>);
     using Impl::Impl;
 
     template <class Function, class V>
@@ -221,17 +221,17 @@ struct BFGS : public GradientOptimizerBase<V>,
     using Float = ::nlpp::impl::Scalar<V>;
     using Impl = ::nlpp::out::BFGS<::nlpp::impl::Scalar<V>>;
 
-    virtual void init (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual void init (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
     {
         Impl::init(optimizer, x, fx, gx);
     }
 
-    virtual void operator() (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual void operator() (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
     {
         return Impl::operator()(static_cast<const ::nlpp::impl::params::BFGS<::nlpp::poly::GradientOptimizer<V>>&>(optimizer), x, fx, gx);
     }
 
-    virtual void finish (const nlpp::params::poly::GradientOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual void finish (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
     {
         Impl::finish(optimizer, x, fx, gx);
     }

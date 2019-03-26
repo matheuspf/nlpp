@@ -19,9 +19,9 @@ namespace params
 {
 
 template <class LineSearch = ::nlpp::Goldstein<>, class Stop = ::nlpp::stop::GradientOptimizer<>, class Output = ::nlpp::out::GradientOptimizer<0>>
-struct GradientDescent : public ::nlpp::params::GradientOptimizer<LineSearch, Stop, Output>
+struct GradientDescent : public ::nlpp::params::LineSearchOptimizer<LineSearch, Stop, Output>
 {
-	CPPOPT_USING_PARAMS(Params, ::nlpp::params::GradientOptimizer<LineSearch, Stop, Output>);
+	CPPOPT_USING_PARAMS(Params, ::nlpp::params::LineSearchOptimizer<LineSearch, Stop, Output>);
 	using Params::Params;
 };
 
@@ -67,10 +67,10 @@ struct GradientDescent : public Params_
 
 
 template <class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct GradientDescent : public impl::GradientDescent<params::GradientOptimizer<LineSearch, Stop, Output>>,
+struct GradientDescent : public impl::GradientDescent<params::LineSearchOptimizer<LineSearch, Stop, Output>>,
 						 public GradientOptimizer<GradientDescent<LineSearch, Stop, Output>>
 {
-	CPPOPT_USING_PARAMS(Impl, impl::GradientDescent<params::GradientOptimizer<LineSearch, Stop, Output>>);
+	CPPOPT_USING_PARAMS(Impl, impl::GradientDescent<params::LineSearchOptimizer<LineSearch, Stop, Output>>);
 	using Impl::Impl;
 
 	template <class Function, class V>

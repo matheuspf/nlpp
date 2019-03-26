@@ -56,7 +56,7 @@ namespace nlpp
  *  @note We inherit from the parameter classes here, so we create a single inheritance chain, not having to 
  *        resort to multiple inheritance. Also, this way we can have easy access to any member of the parameters class
 */
-template <class Impl>//, class Parameters_ = params::GradientOptimizer<>>
+template <class Impl>//, class Parameters_ = params::LineSearchOptimizer<>>
 struct GradientOptimizer// : public Parameters_
 {
     // CPPOPT_USING_PARAMS(Parameters, Parameters_);
@@ -173,9 +173,9 @@ namespace poly
 template <class V = ::nlpp::Vec>
 struct GradientOptimizer : public CloneBase<GradientOptimizer<V>>,
                            public ::nlpp::wrap::poly::GradientOptimizer<GradientOptimizer<V>>,
-                           public ::nlpp::params::poly::GradientOptimizer_
+                           public ::nlpp::params::poly::LineSearchOptimizer_
 {
-    CPPOPT_USING_PARAMS(Params, ::nlpp::params::poly::GradientOptimizer_);
+    CPPOPT_USING_PARAMS(Params, ::nlpp::params::poly::LineSearchOptimizer_);
     using Params::Params;
     using Vec = V;
 
