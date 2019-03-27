@@ -82,4 +82,6 @@ endif()
 
 add_subdirectory(include/${lib_name})
 
+add_subdirectory(benchmark)
+
 #add_subdirectory(python)
