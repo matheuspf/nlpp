@@ -100,6 +100,12 @@ struct GradientOptimizer// : public Parameters_
     {
         return static_cast<Impl&>(*this).optimize(wrap::functionGradient(function), x.eval(), std::forward<Args>(args)...);
     }
+
+    template <class Function, class Gradient, class Hessian, class V, typename... Args>
+    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Hessian& hessian, const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(wrap::functionGradient(function, gradient), wrap::hessian(hessian), x.eval(), std::forward<Args>(args)...);
+    }
     //@}
 };
 

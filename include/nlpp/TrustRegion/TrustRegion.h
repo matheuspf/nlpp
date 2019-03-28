@@ -1,18 +1,52 @@
 #pragma once
 
 #include "../Helpers/Helpers.h"
-
 #include "../Helpers/FiniteDifference.h"
+#include "../Helpers/Parameters.h"
+
 
 
 namespace nlpp
 {
 
-template <class Direction>
-struct TrustRegion
+namespace params
 {
-	template <class Function, class Gradient, class Hessian>
-	Vec operator () (Function function, Gradient gradient, Hessian hessian, Vec x)
+
+template <class LocalOptimizer, class Params, typename Float = types::Float>
+struct TrustRegion : public Params
+{
+	using Params::Params;
+	using Params::stop;
+	using Params::output;
+
+	TrustRegion (Float delta0 = 10.0, Float alpha = 0.25, Float beta = 2.0, Float eta = 0.1, Float maxDelta = 1e2) :
+				 delta0(delta0), alpha(alpha), beta(beta), eta(eta), maxDelta(maxDelta) {}
+
+
+	LocalOptimizer localOptimizer;
+
+	Float delta0;
+	Float alpha;
+	Float beta;
+	Float eta;
+	Float maxDelta;
+};
+
+} // namespace params
+
+
+namespace impl
+{
+
+template <class LocalOptimizer, class Params_, typename Float = types::Float>
+struct TrustRegion : public ::nlpp::params::TrustRegion<Params_>
+{
+	using Params = ::nlpp::params::TrustRegion<Params_>;
+	using Params::Params;
+
+
+	template <class Function, class Hessian, class V>
+	V optimize (Function function, Hessian hessian, V x)
 	{
 		double delta = delta0;
 
@@ -21,14 +55,12 @@ struct TrustRegion
 		Mat hx = hessian(x);
 
 
-		//db(x.transpose(), "       ", gx.transpose(), "\n\n", hx); exit(0);
 
-
-		for(int iter = 0; iter < maxIter; ++iter)
+		for(int iter = 0; iter < static_cast<Impl&>(*this).stop.maxIterations(); ++iter)
 		{
 			/** Making a call to the actual function that generates the direction whitin the trust region.
-			  *	I am using CRTP here, so the 'Direction' class inherits from this class. **/
-			Vec dir = static_cast<Direction&>(*this).direction(function, gradient, hessian, x, delta, fx, gx, hx);
+			  *	I am using CRTP here, so the 'Impl' class inherits from this class. **/
+			Vec dir = static_cast<Impl&>(*this).direction(function, gradient, hessian, x, delta, fx, gx, hx);
 
 			Vec y = x + dir;			/// New point and
 			double fy = function(y);	/// and its fitness
@@ -75,6 +107,8 @@ struct TrustRegion
 			if(delta < 2 * constants::eps) 
 				return x;
 
+			if(static_cast<Impl&>(*this).stop())
+
 			/// We only update the actual x if rho is greater than eta and the function value is actually reduced
 			if(rho > eta)
 			{
@@ -87,41 +121,59 @@ struct TrustRegion
 
 		return x;
 	}
-
-
-
-	template <class Function, class Gradient>
-	Vec operator () (Function f, Gradient g, const Vec& x)
-	{
-		return this->operator()(f, g, fd::hessian(f), x);
-	}
-
-	template <class Function>
-	Vec operator () (Function f, const Vec& x)
-	{
-		return this->operator()(f, fd::gradient(f), x);
-	}
-
-
-
-	double delta0;
-	double alpha;
-	double beta;
-	double eta;
-
-	int maxIter;
-	double maxDelta;
-
-
-private:
-
-	TrustRegion (double delta0 = 10.0, double alpha = 0.25, double beta = 2.0,
-			 double eta = 0.1, int maxIter = 1e5, double maxDelta = 1e2) :
-			 delta0(delta0), alpha(alpha), beta(beta), eta(eta),
-			 maxIter(maxIter), maxDelta(maxDelta) {}
-
-
-	friend Direction;
 };
+
+} // namespace impl
+
+
+template <class LocalMinimizer, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>, typename Float = types::Float>
+struct TrustRegion : public impl::TrustRegion<LocalMinimizer, params::Optimizer<Stop, Output>, Float>,
+					 public GradientOptimizer<TrustRegion<LocalMinimizer, Stop, Output, Float>>
+{
+	using Impl = impl::TrustRegion<LocalMinimizer, params::Optimizer<Stop, Output>, Float>;
+	using Impl::Impl;
+
+	template <class Function, class Hessian, class V>
+	V optimize (Function f, Hessian hess, V x)
+	{
+		return Impl::optimize(f, hess, x);
+	} 
+
+	template <class Function, class V>
+	V optimize (Function f, V x)
+	{
+		return optimize(f, ::nlpp::fd::hessian(f), x);
+	}	
+};
+
+
+namespace poly
+{
+
+template <class LocalMinimizer, class V = ::nlpp::Vec>
+struct TrustRegion : public ::nlpp::impl::TrustRegion<LocalMinimizer, params::Optimizer_>
+{
+	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>);
+	using Impl::Impl;
+
+	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, ::nlpp::wrap::poly::Hessian<V> hess, V x)
+	{
+		return Impl::optimize(f, hess, x);
+	}
+
+	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
+	{
+		return optimize(f, ::nlpp::wrap::poly::Hessian<V>(::nlpp::fd::hessian(f.func)), x);
+	}
+
+
+	virtual Newton* clone_impl () const { return new Newton(*this); }
+};
+
+} // namespace poly
+
+
+
+
 
 } // namespace nlpp

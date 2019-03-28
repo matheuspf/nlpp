@@ -123,16 +123,16 @@ struct FunctionGradient;
 
 
 template <class T, class V = Vec>
-struct IsFunction;
+struct FunctionType;
 
 template <class T, class V = Vec>
-struct IsGradient;
+struct GradientType;
 
 template <class T, class V = Vec>
-struct IsFunctionGradient;
+struct FunctionGradientType;
 
 template <class T, class V = Vec, class U = Vec>
-struct IsHessian;
+struct HessianType;
 
 
 template <class Impl>
@@ -155,7 +155,7 @@ template <class Func, class Grad = void>
 using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
     std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value,
         Func,
-        std::conditional_t<wrap::IsFunction<Func>::value >= 0 && wrap::IsFunctionGradient<Func>::value < 0,
+        std::conditional_t<wrap::FunctionType<Func>::value >= 0 && wrap::FunctionGradientType<Func>::value < 0,
             impl::FunctionGradient<Func, fd::Gradient<Func>>,
             impl::FunctionGradient<Func>
         >
