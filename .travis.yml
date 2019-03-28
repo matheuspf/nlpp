@@ -16,7 +16,7 @@ script:
 - cd ${TRAVIS_BUILD_DIR}
 - mkdir build
 - cd build
-- CXX=/usr/bin/g++-7 cmake .. -DNLPP_INCLUDE_INSTALL_DIR=${TRAVIS_BUILD_DIR}/build -DEIGEN_INCLUDE_LOCAL=ON
+- CXX=/usr/bin/g++-7 cmake .. -DNLPP_INCLUDE_INSTALL_DIR=${TRAVIS_BUILD_DIR}/build -DEIGEN_INCLUDE_LOCAL=ON -DNLPP_BUILD_EXAMPLES=OFF -DHANDY_BuildExamples=OFF
 - make tests -j4
 - ./tests/tests
 
