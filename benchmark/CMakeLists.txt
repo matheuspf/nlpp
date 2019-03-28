@@ -17,8 +17,8 @@ else()
 
     message(STATUS "Google Benchmark not found. Downloading and installing now.")
 
+    set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable Google Benchmark tests")
+
     include(external/gbench.cmake EXCLUDE_FROM_ALL)
 
 endif()
-
-add_test(allTests tests)
