@@ -9,11 +9,11 @@ using namespace nlpp;
 
 int main ()
 {
-	CauchyPoint cp;
+	CauchyPoint<> opt;
 
 	Vec x = Vec::Constant(2, 1.2);
 
-	x = cp(Rosenbrock{}, x);
+	x = opt(Rosenbrock{}, x);
 
 	handy::print(x.transpose());
 

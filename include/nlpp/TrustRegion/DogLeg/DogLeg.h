@@ -6,53 +6,85 @@
 namespace nlpp
 {
 
-struct DogLeg : public TrustRegion<DogLeg>
+namespace impl
 {
-	template <class Function, class Gradient, class Hessian>
-	Vec direction (Function function, Gradient gradient, Hessian hessian, Vec x, 
-				   double delta, double fx, const Vec& gx, Mat hx)
+
+struct DogLeg
+{
+	template <class Function, class Hessian, class V, class M, typename Float>
+	auto operator() (Function function, Hessian hessia, const V& x, const V& gx, const M& hx, Float delta)
 	{
-		Vec pb = -hx.ldlt().solve(gx);
+		V pb = -hx.ldlt().solve(gx);
 
 		if(pb.norm() <= delta)
-			return pb;
+			return std::tuple_cat(std::make_tuple(pb), function(x + pb));
 
-			
-		Vec pu = -(gx.dot(gx) / (gx.transpose() * hx * gx)) * gx;
+		V pu = -(gx.dot(gx) / (gx.transpose() * hx * gx)) * gx;
+		V diff = (pb - pu);
 
-		Vec diff = (pb - pu);
-
-
-		double a = diff.squaredNorm();
-
-		double b = 2 * (pu.dot(diff) - a);
-
-		double c = a - std::pow(delta, 2) - 2 * pu.dot(diff) + pu.dot(pu);
-
-		double d = std::sqrt(b*b - 4 * a * c);
-
-
+		Float a = diff.squaredNorm();
+		Float b = 2 * (pu.dot(diff) - a);
+		Float c = a - std::pow(delta, 2) - 2 * pu.dot(diff) + pu.dot(pu);
+		Float d = std::sqrt(b*b - 4 * a * c);
 		
-		double tl = -(b + d) / (2 * a), tu =  -(b - d) / (2 * a), tau;
+		Float tl = -(b + d) / (2 * a);
+		Float tu = -(b - d) / (2 * a);
 
-		Vec dl = pu + (tl - 1.0) * diff, du = pu + (tu - 1.0) * diff, dir;
+		V dl = pu + (tl - 1.0) * diff;
+		V du = pu + (tu - 1.0) * diff;
+
+		auto lEval = function(x + dl);
+		auto uEval = function(x + du);
 		
-		if(function(x + dl) < function(x + du))
-			dir = dl;
+		if(lEval.first < uEval.first)
+			return std::tuple_cat(std::make_tuple(dl), lEval);
 		
-		else
-			dir = du;
-
-
-		return dir;
-	}
-
-
-	template <class Function, class Gradient, class Hessian>
-	Vec direction (Function function, Gradient gradient, Hessian hessian, Vec x, double delta)
-	{
-		return this->operator()(function, gradient, hessian, x, delta, function(x), gradient(x), hessian(x));
+		return std::tuple_cat(std::make_tuple(du), uEval);
 	}
 };
+
+} // namespace impl
+
+template <class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>, typename Float = types::Float>
+using DogLeg = TrustRegion<impl::DogLeg, Stop, Output, Float>;
+
+
+namespace poly
+{
+
+namespace impl
+{
+
+template <class V = ::nlpp::Vec, class M = ::nlpp::Mat>
+struct DogLeg : public LocalMinimizerBase<V, M>,
+				public ::nlpp::impl::DogLeg
+{
+	using Interface = LocalMinimizerBase<V, M>;
+	using Impl = ::nlpp::impl::DogLeg;
+	using Float = ::nlpp::impl::Scalar<V>;
+
+	virtual std::tuple<V, Float, V> operator () (::nlpp::wrap::poly::FunctionGradient<V> function, ::nlpp::wrap::poly::Hessian<V, M> hessian,
+												 const V& x, const V& gx, const M& hx, Float delta)
+	{
+		return Impl::operator()(function, hessian, x, gx, hx, delta);
+	}
+};
+
+} // namespace impl
+
+
+template <class V = ::nlpp::Vec, class M = ::nlpp::Mat>
+struct DogLeg : public TrustRegion<V, M>
+{
+	using Base = TrustRegion<V, M>;
+
+	template <typename... Args>
+	DogLeg (Args&&... args) : Base(std::forward<Args>(args)...)
+	{
+		Base::localOptimizer = std::make_unique<impl::DogLeg<V, M>>();
+	}
+};
+
+} // namespace poly
 
 } // namespace nlpp

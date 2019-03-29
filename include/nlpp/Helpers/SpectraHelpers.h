@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Helpers.h"
-#include <spectra/SymEigsSolver.h>
+#include <Spectra/SymEigsSolver.h>
 
 
 namespace nlpp

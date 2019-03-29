@@ -12,15 +12,17 @@
 namespace nlpp
 {
 
-struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
+namespace impl
 {
-	template <class Function, class Gradient, class Hessian>
-	Vec direction (Function function, Gradient gradient, Hessian hessian, 
-				   const Vec& x, double delta, double fx, const Vec& gx, const Mat& hx)
+
+struct IndefiniteDogLeg
+{
+	template <class Function, class Hessian, class V, class M, typename Float>
+	auto operator () (Function function, Hessian hessian, const V& x, const V& gx, const M& hx, Float delta)
 	{
 		int N = x.rows();
 
-		Vec v, u;
+		V v, u;
 
 		Eigen::LLT<Mat> llt(hx);
 
@@ -28,53 +30,46 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 		{
 			Eigen::EigenSolver<Mat> es(hx);
 
-			double alpha = 1e20;
+			Float alpha = 1e20;
 			int pos = 0;
 
 			for(int i = 0; i < es.eigenvalues().rows(); ++i)
 				if(es.eigenvalues().real()(i) < alpha)
 					alpha = es.eigenvalues().real()(i), pos = i;
 			
-			Vec v1 = es.eigenvectors().real().col(pos);
+			V v1 = es.eigenvectors().real().col(pos);
 			alpha = 2.0*abs(alpha);
 
-
 			if(alpha < constants::eps)
-			{
-				//db("DDD");
-
-				CauchyPoint cp;
-
-				return cp.direction(function, gradient, hessian, x, delta, fx, gx, hx);
-			}
+				return CauchyPoint{}(function, hessian, x, gx, hx, delta);
 
 
-			Vec dx = -(hx + alpha * Mat::Identity(N, N)).inverse() * gx;
+			V dx = -(hx + alpha * Mat::Identity(N, N)).inverse() * gx;
 			
-
 			if(dx.norm() < delta)
 			{
-				double a = v1.dot(v1);
-				double b = 2.0*dx.dot(v1);
-				double c = dx.dot(dx) - delta*delta;
+				Float a = v1.dot(v1);
+				Float b = 2.0*dx.dot(v1);
+				Float c = dx.dot(dx) - delta*delta;
 
-				double lx = (-b + std::sqrt(b*b - 4.0*a*c)) / (2.0*a), ux = (-b - std::sqrt(b*b - 4.0*a*c)) / (2.0*a);
-				double fl = function(x + (dx + lx*v1)), fu = function(x + (dx + ux*v1));
-				double e;
+				Float lx = (-b + std::sqrt(b*b - 4.0*a*c)) / (2.0*a);
+				Float ux = (-b - std::sqrt(b*b - 4.0*a*c)) / (2.0*a);
 
-				e = fl < fu ? lx : ux;
+				auto fl = function(x + (dx + lx*v1));
+				auto fu = function(x + (dx + ux*v1));
 
-				return dx + e * v1;
+				if(fl.first < fu.first)
+					return std::tuple_cat(std::make_tuple((dx + lx * v1).eval()), fl);
+
+				return std::tuple_cat(std::make_tuple((dx + ux * v1).eval()), fu);
 			}
 
 			v = gx;
 			u = -dx;
-
-			//db("AAA");
 		}
 
 		else
-		{//db("BBB");
+		{
 			v = gx;
 			u = hx.inverse() * gx;
 		}
@@ -93,18 +88,12 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 		Vec dir = -h.inverse() * g;
 
 		dir = dir(0) * v + dir(1) * u;
-
-
 		
 		if(dir.norm() <= delta)
-			return dir;
+			return std::tuple_cat(std::make_tuple(dir), function(x + dir));
 
 		
-
-		//db("CCC");
-
-		
-		return findRoot(function, gradient, hessian, fx, x, gx, hx, delta);
+		return findRoot(function, hessian, x, gx, hx, delta);
 	}
 
 	template <class Function, class Gradient, class Hessian>
@@ -113,25 +102,24 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 		return this->operator()(function, gradient, hessian, x, delta, function(x), gradient(x), hessian(x));
 	}
 
-
-	template <class F, class G, class H>
-	Vec findRoot (F f, G g, H h, double fx, const Vec& x, const Vec& gx, const Mat& hx, double delta)
+	template <class Function, class Hessian, class V, class M, typename Float>
+	auto findRoot (Function function, Hessian hessian, const V& x, const V& gx, const M& hx, Float delta)
 	{
-		std::complex<double> a = delta*delta;
-		std::complex<double> b = 2.0 * a * hx.trace();
-		std::complex<double> c = (a * std::pow(hx.trace(), 2.0) + 2.0 * a * hx.determinant() - gx.dot(gx));
-		std::complex<double> d = (2.0 * a * hx.determinant() * hx.trace() - 2.0 * (gx.transpose() * hx.adjoint().transpose()).dot(gx));
-		std::complex<double> e = (a * std::pow(hx.determinant(), 2.0) - (gx.transpose() * hx.adjoint().transpose()).dot(hx.adjoint() * gx));
+		std::complex<Float> a = delta*delta;
+		std::complex<Float> b = 2.0 * a * hx.trace();
+		std::complex<Float> c = (a * std::pow(hx.trace(), 2.0) + 2.0 * a * hx.determinant() - gx.dot(gx));
+		std::complex<Float> d = (2.0 * a * hx.determinant() * hx.trace() - 2.0 * (gx.transpose() * hx.adjoint().transpose()).dot(gx));
+		std::complex<Float> e = (a * std::pow(hx.determinant(), 2.0) - (gx.transpose() * hx.adjoint().transpose()).dot(hx.adjoint() * gx));
 
-		std::complex<double> p1 = 2.0*std::pow(c, 3.0) - 9.0*b*c*d + 27.0*a*std::pow(d, 2.0) + 27.0*std::pow(b, 2.0)*e - 72.0*a*c*e;
-		std::complex<double> p2 = p1 + std::sqrt(-4.0*std::pow(std::pow(c, 2.0) -3.0*b*d + 12.0*a*e, 3.0) + std::pow(p1, 2.0));
-		std::complex<double> p3 = ((std::pow(c, 2.0) - 3.0*b*d + 12.0*a*e) / (3.0*a*std::pow(p2/2.0, 1.0/3.0))) + ((std::pow(p2/2.0, 1.0/3.0)) / (3.0*a));
-		std::complex<double> p4 = std::sqrt((std::pow(b, 2.0) / (4.0*std::pow(a, 2.0))) - ((2.0*c) / (3.0*a)) + p3);
-		std::complex<double> p5 = (std::pow(b, 2.0) / (2.0*std::pow(a, 2.0))) - ((4.0*c) / (3.0*a)) - p3;
-		std::complex<double> p6 = ((-std::pow(b, 3.0) / std::pow(a, 3.0)) + ((4.0*b*c) / std::pow(a, 2.0)) - ((8.0*d) / a)) / (4.0*p4);
+		std::complex<Float> p1 = 2.0*std::pow(c, 3.0) - 9.0*b*c*d + 27.0*a*std::pow(d, 2.0) + 27.0*std::pow(b, 2.0)*e - 72.0*a*c*e;
+		std::complex<Float> p2 = p1 + std::sqrt(-4.0*std::pow(std::pow(c, 2.0) -3.0*b*d + 12.0*a*e, 3.0) + std::pow(p1, 2.0));
+		std::complex<Float> p3 = ((std::pow(c, 2.0) - 3.0*b*d + 12.0*a*e) / (3.0*a*std::pow(p2/2.0, 1.0/3.0))) + ((std::pow(p2/2.0, 1.0/3.0)) / (3.0*a));
+		std::complex<Float> p4 = std::sqrt((std::pow(b, 2.0) / (4.0*std::pow(a, 2.0))) - ((2.0*c) / (3.0*a)) + p3);
+		std::complex<Float> p5 = (std::pow(b, 2.0) / (2.0*std::pow(a, 2.0))) - ((4.0*c) / (3.0*a)) - p3;
+		std::complex<Float> p6 = ((-std::pow(b, 3.0) / std::pow(a, 3.0)) + ((4.0*b*c) / std::pow(a, 2.0)) - ((8.0*d) / a)) / (4.0*p4);
 
 
-		std::vector<std::complex<double>> roots(4);
+		std::vector<std::complex<Float>> roots(4);
 		
 		roots[0] = (-b / (4.0*a)) - (p4 / 2.0) - (std::sqrt(p5 - p6) / 2.0);
 		roots[1] = (-b / (4.0*a)) - (p4 / 2.0) + (std::sqrt(p5 - p6) / 2.0);
@@ -139,36 +127,81 @@ struct IndefiniteDogLeg : public TrustRegion<IndefiniteDogLeg>
 		roots[3] = (-b / (4.0*a)) + (p4 / 2.0) + (std::sqrt(p5 + p6) / 2.0);
 
 
-		Vec dir = Vec::Constant(x.rows(), 0.0);
-		double bestF = f(x + dir);
+		V best = Vec::Constant(x.rows(), 0.0);
+		auto fBest = function(x + best);
 
 		for(int i = 0; i < roots.size(); ++i)
 		{
-			Vec aux = -(hx + roots[i].real() * Mat::Identity(hx.rows(), hx.rows())).inverse() * gx;
+			V aux = -(hx + roots[i].real() * Mat::Identity(hx.rows(), hx.rows())).inverse() * gx;
 
 			//if(aux.norm() > delta)
 			aux *= (delta / aux.norm());
 
 
-			double faux = f(x + aux);
+			auto fAux = function(x + aux);
 
-			if(faux < bestF)
-				bestF = faux, dir = aux;
+			if(fAux.first < fBest.first)
+				std::tie(best, fBest) = std::tie(aux, fAux);
 		}
 
-		if(dir.norm() == 0.0)
+		if(best.norm() == 0.0)
 		{
-			//db("DDD");
-
 			if(hx.llt().info() == Eigen::Success)
-				return DogLeg().direction(f, g, h, x, delta, fx, gx, hx);
+				return DogLeg{}(function, hessian, x, gx, hx, delta);
 			
-			return CauchyPoint().direction(f, g, h, x, delta, fx, gx, hx);
+			return CauchyPoint{}(function, hessian, x, gx, hx, delta);
 		}
 
-
-		return dir;
+		return std::tuple_cat(std::make_tuple(best), fBest);
 	}
 };
+
+} // namespace impl
+
+
+template <class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>, typename Float = types::Float>
+using IndefiniteDogLeg = TrustRegion<impl::IndefiniteDogLeg, Stop, Output, Float>;
+
+
+namespace poly
+{
+
+namespace impl
+{
+
+template <class V = ::nlpp::Vec, class M = ::nlpp::Mat>
+struct IndefiniteDogLeg : public LocalMinimizerBase<V, M>,
+				public ::nlpp::impl::IndefiniteDogLeg
+{
+	using Interface = LocalMinimizerBase<V, M>;
+	using Impl = ::nlpp::impl::IndefiniteDogLeg;
+	using Float = ::nlpp::impl::Scalar<V>;
+
+	virtual std::tuple<V, Float, V> operator () (::nlpp::wrap::poly::FunctionGradient<V> function, ::nlpp::wrap::poly::Hessian<V, M> hessian,
+												 const V& x, const V& gx, const M& hx, Float delta)
+	{
+		return Impl::operator()(function, hessian, x, gx, hx, delta);
+	}
+};
+
+} // namespace impl
+
+
+template <class V = ::nlpp::Vec, class M = ::nlpp::Mat>
+struct IndefiniteDogLeg : public TrustRegion<V, M>
+{
+	using Base = TrustRegion<V, M>;
+
+	template <typename... Args>
+	IndefiniteDogLeg (Args&&... args) : Base(std::forward<Args>(args)...)
+	{
+		Base::localOptimizer = std::make_unique<impl::IndefiniteDogLeg<V, M>>();
+	}
+};
+
+} // namespace poly
+
+
+
 
 } // namespace nlpp
