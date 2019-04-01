@@ -17,82 +17,62 @@ struct IterativeTR
 	auto operator() (Function function, Hessian hessian, const V& x, const V& gx, const M& hx, Float delta)
 	{
         int N = x.rows();
-
         V p, q;
-        
         M In = Mat::Identity(N, N);
-        
 
-        if(tryFactorize(gx, hx, p, delta))
-            return std::tuple_cat(std::make_tuple(p), function(x + p));
+        Eigen::LLT<M> llt(hx);
 
+        if(llt.info() == Eigen::Success)
+        {
+            p = -llt.solve(gx);
+
+            if(p.norm() <= delta)
+                return trReturn(function, x, p);
+        }
 
 
         TopEigen<Spectra::SELECT_EIGENVALUE::SMALLEST_ALGE> topEigen(hx, 2);
         
-        Float lambda = 2 * std::abs(topEigen.eigenvalues()(0));
+        Float lambda1 = std::abs(topEigen.eigenvalues()(0));
 
         V v1 = topEigen.eigenvectors().col(0);
 
 
-        if(std::abs(gx.dot(v1)) < 1e-4)
+        if(std::abs(gx.dot(v1)) < std::sqrt(constants::eps_<Float>))
         {
-            Eigen::LLT<M> llt(hx + std::abs(topEigen.eigenvalues()(0)) * In);
+            llt.compute(hx + lambda1 * In);
 
             p = -llt.solve(gx);
-
             p = p + v1 * ((delta - p.norm()) / v1.norm());
 
-            return std::tuple_cat(std::make_tuple(p), function(x + p));
+            return trReturn(function, x, p);
         }
         
+        
+        Float lambda = 2 * lambda1;
+        int iters = maxIterations;
 
-        int maxIters = 3;
-
-        while(maxIters--)
+        while(iters--)
         {
-            Eigen::LLT<M> llt(hx + lambda * In);
-
-            // if(llt.info() == Eigen::NumericalIssue)
-            // {
-            //     maxIters = 3;
-            //     lambda = 4 * std::abs(topEigen.eigenvalues()(0));
-            //     continue;
-            // }
-
-            // db(abs(p.norm() - delta), "     ", (abs(p.norm() - delta) <= 1e-4));
-
+            llt.compute(hx + lambda * In);
 
             p = -llt.solve(gx);
 
-            if(std::abs(p.norm() - delta) <= 1e-4)
-                return std::tuple_cat(std::make_tuple(p), function(x + p));
+            if(std::abs(p.norm() - delta) <= terminationTol)
+                return trReturn(function, x, p);
 
 
-            M L = llt.matrixL();
-
-            q = L. template triangularView<Eigen::Lower>().solve(p);
-            
+            q = static_cast<const M&>(llt.matrixL()). template triangularView<Eigen::Lower>().solve(p);
             
             lambda = lambda + (p.squaredNorm() / q.squaredNorm()) * ((p.norm() - delta) / delta);
         }
 
-        return std::tuple_cat(std::make_tuple(p), function(x + p));
+        return trReturn(function, x, p);
 	}
 
 
-    template <class V, class M, typename Float>
-    bool tryFactorize (const V& gx, const M& hx, V& p, Float delta)
-    {
-        Eigen::LLT<M> llt(hx);
-        
-        p = -llt.solve(gx);
-
-        if(p.norm() <= delta)
-            return true;
-
-        return false;
-    }
+    int maxIterations = 3;
+    double terminationTol = 1e-2;
 };
 
 } // namespace impl

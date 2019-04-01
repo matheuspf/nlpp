@@ -1,0 +1,1 @@
+target_sources(bench PUBLIC ${PROJECT_SOURCE_DIR}/benchmark/TrustRegion/IterativeTR/IterativeTR.cpp)

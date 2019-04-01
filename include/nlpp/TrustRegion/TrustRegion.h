@@ -214,6 +214,12 @@ struct TrustRegion : public ::nlpp::impl::TrustRegion<LocalMinimizer_<V, M>, ::n
 } // namespace poly
 
 
+template <class Function, class V>
+auto trReturn (Function function, const V& x, const V& p)
+{
+	return std::tuple_cat(std::make_tuple(p), function(x + p));
+}
+
 
 
 } // namespace nlpp

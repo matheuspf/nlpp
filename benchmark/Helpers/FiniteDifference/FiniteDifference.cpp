@@ -1,4 +1,4 @@
-#include "benchmark/benchmark.h"
+#include <benchmark/benchmark.h>
 
 #include "Helpers/FiniteDifference.h"
 #include "TestFunctions/Rosenbrock.h"
@@ -17,7 +17,4 @@ static void BM_finiteGradient (benchmark::State& state, Function func)
 }
 
 
-BENCHMARK_CAPTURE(BM_finiteGradient, rosenbrock, nlpp::Rosenbrock{})->Range(10, 100)->Complexity();
-
-
-BENCHMARK_MAIN();
+BENCHMARK_CAPTURE(BM_finiteGradient, rosenbrock, nlpp::Rosenbrock{})->Range(10, 100);

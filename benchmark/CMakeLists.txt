@@ -5,6 +5,7 @@ target_include_directories(bench PUBLIC ${PROJECT_SOURCE_DIR}/include/nlpp)
 target_compile_options(bench PRIVATE -std=c++17 -O2)
 
 add_subdirectory(Helpers)
+add_subdirectory(TrustRegion)
 
 find_package(benchmark QUIET)
 
