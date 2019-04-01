@@ -8,15 +8,11 @@ using namespace nlpp;
 
 int main ()
 {
-	IterativeTR idl;
+	IterativeTR<> opt;
 
-    idl.maxIter = 1e3;
-    //idl.delta0 = 50;
+	Vec x = Vec::Constant(1000, 5.0);
 
-	Vec x = Vec::Constant(10, 5.0);
-	//Vec x(2); x << -1.0, 1.2;
-
-	x = idl(Rosenbrock{}, x);
+	x = opt(Rosenbrock{}, x);
 
 	handy::print(x.transpose());
 
