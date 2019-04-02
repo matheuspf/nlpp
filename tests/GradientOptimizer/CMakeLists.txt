@@ -1,1 +1,0 @@
-target_sources(tests PUBLIC ${PROJECT_SOURCE_DIR}/tests/GradientOptimizer/GradientOptimizer.cpp)

@@ -12,9 +12,9 @@
 namespace
 {
 
-struct GradientOptimizerTest : public ::testing::Test
+struct LineSearchOptimizerTest : public ::testing::Test
 {
-    virtual ~GradientOptimizerTest () {}
+    virtual ~LineSearchOptimizerTest () {}
     
     template <class Optimizer, class Function, class Vec>
     void convergenceTest (Optimizer optimizer, Function func, Vec x0)
@@ -40,7 +40,7 @@ struct GradientOptimizerTest : public ::testing::Test
 };
 
 
-TEST_F(GradientOptimizerTest, CGTest)
+TEST_F(LineSearchOptimizerTest, CGTest)
 {
     SCOPED_TRACE("CG Test");
 
@@ -59,7 +59,7 @@ TEST_F(GradientOptimizerTest, CGTest)
 }
 
 
-TEST_F(GradientOptimizerTest, GradientDescentTest)
+TEST_F(LineSearchOptimizerTest, GradientDescentTest)
 {
     SCOPED_TRACE("Gradient Descent Test");
 
@@ -79,7 +79,7 @@ TEST_F(GradientOptimizerTest, GradientDescentTest)
     }
 }
 
-TEST_F(GradientOptimizerTest, NewtonTest)
+TEST_F(LineSearchOptimizerTest, NewtonTest)
 {
     SCOPED_TRACE("Newton Test");
 
@@ -97,7 +97,7 @@ TEST_F(GradientOptimizerTest, NewtonTest)
     }
 }
 
-TEST_F(GradientOptimizerTest, BFGSTest)
+TEST_F(LineSearchOptimizerTest, BFGSTest)
 {
     SCOPED_TRACE("BFGS Test\n");
 
@@ -115,7 +115,7 @@ TEST_F(GradientOptimizerTest, BFGSTest)
     }
 }
 
-TEST_F(GradientOptimizerTest, LBFGSTest)
+TEST_F(LineSearchOptimizerTest, LBFGSTest)
 {
     SCOPED_TRACE("LBFGS Test");
 

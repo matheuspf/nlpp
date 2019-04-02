@@ -1,0 +1,1 @@
+target_sources(tests PUBLIC ${PROJECT_SOURCE_DIR}/tests/TrustRegion/TrustRegion.cpp)
