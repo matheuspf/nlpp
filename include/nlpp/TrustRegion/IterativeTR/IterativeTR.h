@@ -61,7 +61,6 @@ struct IterativeTR
             if(std::abs(p.norm() - delta) <= terminationTol)
                 return trReturn(function, x, p);
 
-
             q = static_cast<const M&>(llt.matrixL()). template triangularView<Eigen::Lower>().solve(p);
             
             lambda = lambda + (p.squaredNorm() / q.squaredNorm()) * ((p.norm() - delta) / delta);
@@ -72,7 +71,7 @@ struct IterativeTR
 
 
     int maxIterations = 3;
-    double terminationTol = 1e-2;
+    double terminationTol = 1e-4;
 };
 
 } // namespace impl

@@ -2,6 +2,8 @@
 
 #include "TrustRegion/CauchyPoint/CauchyPoint.h"
 #include "TrustRegion/DogLeg/DogLeg.h"
+#include "TrustRegion/IndefiniteDogLeg/IndefiniteDogLeg.h"
+#include "TrustRegion/IterativeTR/IterativeTR.h"
 
 #include "TestFunctions/Rosenbrock.h"
 
@@ -39,10 +41,10 @@ struct TrustRegionTest : public ::testing::Test
 
 TEST_F(TrustRegionTest, CauchyPoint)
 {
-    SCOPED_TRACE("CauchyPoint Test");
+    SCOPED_TRACE("Cauchy Point Test");
 
-    ::nlpp::CauchyPoint<> opt;
-    opt.stop = ::nlpp::stop::GradientOptimizer<>(10000, 1.0, 1e-2, 1e-2);
+    ::nlpp::CauchyPoint<::nlpp::stop::GradientNorm<>> opt;
+    opt.stop = ::nlpp::stop::GradientNorm<>(10000, 1e-3);
     
     ::nlpp::Rosenbrock func;
 
@@ -56,10 +58,10 @@ TEST_F(TrustRegionTest, CauchyPoint)
 
 TEST_F(TrustRegionTest, DogLeg)
 {
-    SCOPED_TRACE("DogLeg Test");
+    SCOPED_TRACE("Dog Leg Test");
 
-    ::nlpp::DogLeg<> opt;
-    opt.stop = ::nlpp::stop::GradientOptimizer<>(1000, 1e-4, 1e-4, 1e-4);
+    ::nlpp::DogLeg<::nlpp::stop::GradientNorm<>> opt;
+    opt.stop = ::nlpp::stop::GradientNorm<>(10000, 1e-4);
     
     ::nlpp::Rosenbrock func;
 
@@ -68,6 +70,40 @@ TEST_F(TrustRegionTest, DogLeg)
         SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
 
         convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 2.0));
+    }
+}
+
+TEST_F(TrustRegionTest, IndefiniteDogLeg)
+{
+    SCOPED_TRACE("Indefinite Dog Leg Test");
+
+    ::nlpp::IndefiniteDogLeg<::nlpp::stop::GradientNorm<>> opt;
+    opt.stop = ::nlpp::stop::GradientNorm<>(10000, 1e-4);
+    
+    ::nlpp::Rosenbrock func;
+
+    for(int numVariables = 10; numVariables <= 100; numVariables += 10)
+    {
+        SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
+
+        convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 2.0));
+    }
+}
+
+TEST_F(TrustRegionTest, IterativeTR)
+{
+    SCOPED_TRACE("Iterative Trust Region Test");
+
+    ::nlpp::IterativeTR<::nlpp::stop::GradientNorm<>> opt;
+    opt.stop = ::nlpp::stop::GradientNorm<>(10000, 1e-4);
+    
+    ::nlpp::Rosenbrock func;
+
+    for(int numVariables = 50; numVariables <= 100; numVariables += 10)
+    {
+        SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
+
+        convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 5.0));
     }
 }
 

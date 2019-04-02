@@ -99,6 +99,35 @@ struct GradientOptimizer<false, Float> : public impl::GradientOptimizer<Gradient
 };
 
 
+template <typename Float = types::Float>
+struct GradientNorm
+{
+    GradientNorm (int maxIterations_ = 1e3, Float norm = 1e-4) : maxIterations_(maxIterations_), norm(norm)
+    {
+    }
+
+    void initialize ()
+    {
+    }
+
+
+    template <class Stop, class Output, class V>
+    bool operator () (const params::Optimizer<Stop, Output>& optimizer, const Eigen::MatrixBase<V>&, double, const Eigen::MatrixBase<V>& gx) 
+    {
+        return (gx.norm() / gx.size()) < norm;
+    }
+
+
+    int maxIterations () { return maxIterations_; }
+
+
+    int maxIterations_;
+    Float norm;
+};
+
+
+
+
 namespace poly
 {
 

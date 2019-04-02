@@ -120,8 +120,9 @@ struct TrustRegion : public ::nlpp::params::TrustRegion<LocalOptimizer, Params_,
 			if(std::pow(delta, 2) < 2 * constants::eps_<Float>) 
 				return x;
 
-			// if(stop(*this, x, fx, gx))
-            //     return x;
+
+			if(stop(*this, x, fx, gx))
+				return x;
 
 			/// We only update the actual x if rho is greater than eta and the function value is actually reduced
 			if(rho > eta)
