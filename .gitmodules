@@ -10,3 +10,6 @@
 [submodule "benchmark/external/googlebench"]
 	path = benchmark/external/googlebench
 	url = https://github.com/google/benchmark
+[submodule "include/nlpp/external/spectra"]
+	path = include/nlpp/external/spectra
+	url = https://github.com/yixuan/spectra

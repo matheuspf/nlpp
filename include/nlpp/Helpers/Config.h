@@ -16,6 +16,10 @@
 #define HANDY_INCLUDE_GLOBAL 0
 
 
+#define SPECTRA_INCLUDE_LOCAL 1
+#define SPECTRA_INCLUDE_LOCAL_RELEASE 0
+#define SPECTRA_INCLUDE_GLOBAL 0
+
 
 /** @name
  *  @brief Semantic versioning
