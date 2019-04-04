@@ -795,10 +795,8 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
     using Func = Function<V>;
     using Grad = Gradient<V>;
 
-    using Func::Function;
     using Func::function;
     using Func::func;
-    using Grad::Gradient;
     using Grad::gradient;
     using Grad::grad_1;
     using Grad::grad_2;
