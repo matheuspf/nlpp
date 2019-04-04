@@ -28,7 +28,18 @@ set(lib_name_version ${lib_name_major_version}.${lib_name_minor_version}.${lib_n
 project(${lib_name} VERSION ${lib_name_version} LANGUAGES CXX)
 
 
-## Options
+## Bindings
+option(BUILD_PYTHON_LIB "If the Python lib should be built" OFF)
+
+if(${BUILD_PYTHON_LIB})
+    add_subdirectory(bindings/python)
+endif()
+##
+
+
+
+
+## Dependency options
 option(EIGEN_INCLUDE_LOCAL "If Eigen will be included from a submodule" OFF)
 option(HANDY_INCLUDE_LOCAL "If Handy will be included from a submodule" ON)
 option(SPECTRA_INCLUDE_LOCAL "If Spectra will be included from a submodule" ON)
