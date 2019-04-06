@@ -178,7 +178,7 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
 template <class V>
 struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>
 {
-    NLPP_USING_POLY_CLASS(Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);
+    NLPP_USING_POLY_CLASS(GradientOptimizer_, Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);
 
     GradientOptimizer_ () : Base(std::make_unique<GradientOptimizer<true, V>>()) {}
 

@@ -12,6 +12,7 @@ void add_gradientDescent(py::module& m)
 {
     py::class_<nlpp::poly::GradientDescent<>>(m, "GradientDescent")
         .def(py::init<>())
+        .def(py::init<const nlpp::poly::LineSearch_<>&>())
         
         .def("optimize", static_cast<nlpp::Vec (nlpp::poly::GradientDescent<>::*)
                                      (const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncType>&, const nlpp::Vec&)>

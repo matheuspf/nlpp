@@ -11,10 +11,15 @@
 #include "Types.h"
 #include "ForwardDeclarations.h"
 
-#define NLPP_USING_POLY_CLASS(Name, ...)  using Name = __VA_ARGS__;  \
-										  using Name::Name;		 	 \
-										  using Name::operator=; 	 \
-										  using Name::impl;
+#define NLPP_USING_POLY_CLASS(ClassName, BaseName, ...) \
+	using BaseName = __VA_ARGS__;	\
+	using BaseName::BaseName;		\
+	using BaseName::operator=; 		\
+	using BaseName::impl;			\
+									\
+	template <typename... Args>		\
+	ClassName(Args&&...args) : BaseName(std::forward<Args>(args)...) {}
+
 
 namespace nlpp
 {
@@ -37,7 +42,16 @@ struct PolyClass
 	virtual ~PolyClass () {}
 
     PolyClass (std::unique_ptr<Base> ptr) : impl(std::move(ptr)) {}
+
+	template <class Derived_, class Derived = std::decay_t<Derived_>,
+		 	  std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
+	PolyClass (Derived_&& derived) : impl(std::make_unique<Derived>(std::forward<Derived>(derived))) {}
+
     PolyClass& operator= (std::unique_ptr<Base> ptr) { impl = std::move(ptr); return *this; }
+
+	template <class Derived_, class Derived = std::decay_t<Derived_>,
+		 	  std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
+	PolyClass& operator= (Derived_&& derived) { impl = std::make_unique<Derived>(std::forward<Derived>(derived)); return *this; }
 
     PolyClass (const PolyClass& PolyClass) : impl(PolyClass.impl ? PolyClass.impl->clone() : nullptr) {}
     PolyClass (PolyClass&& PolyClass) = default;

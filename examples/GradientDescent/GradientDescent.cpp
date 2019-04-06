@@ -2,39 +2,22 @@
 
 #include "TestFunctions/Rosenbrock.h"
 
-using namespace nlpp;
-
 
 
 int main ()
 {
-	using F = long double;
+	nlpp::poly::GradientDescent<> opt(//std::make_unique<nlpp::poly::Goldstein<>>(), 
+									  nlpp::poly::StrongWolfe<>(),
+									  std::make_unique<nlpp::stop::poly::GradientOptimizer<0>>(),
+									  std::make_unique<nlpp::out::poly::GradientOptimizer<1>>());
 
-	using LS = Goldstein<F>;
-	using Stop = stop::GradientOptimizer<>;
-	using Out = out::GradientOptimizer<2>;
+	nlpp::Vec x = nlpp::Vec::Constant(10, 1.2);
 
-	params::GradientDescent<LS, Stop, Out> params(LS{}, Stop(1000, 1e-6, 1e-6, 1e-6), Out{});
+	nlpp::Rosenbrock func;
 
-	GradientDescent<LS, Stop, Out> gd(params);
+	auto res = opt(func, x);
 
-
-	Eigen::VectorXd x = Eigen::VectorXd::Constant(10, 1.2);
-
-	Rosenbrock func;
-
-	auto grad = fd::gradient(func);
-
-	handy::print("tm: ", handy::benchmark([&]{
-		x = gd(func, x);
-		// x = gd(func, grad, x);
-		// x = gd([&](const auto& x){ return std::make_pair(func(x), grad(x)); }, x);
-		// x = gd([&](const auto& x, auto& g) { g = grad(x); return func(x); }, x);
-	}), "\n");
-
-	handy::print("fx: ", func(x), "\n\nx:", x.transpose(), "\n");
-
-	handy::print(gd.output.vFx.size());
+	handy::print(res.transpose());
 
 
 
