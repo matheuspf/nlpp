@@ -14,7 +14,7 @@
 #define NLPP_USING_POLY_CLASS(ClassName, BaseName, ...) \
 	using BaseName = __VA_ARGS__;	\
 	using BaseName::BaseName;		\
-	using BaseName::operator=; 		\
+	using BaseName::set;	 		\
 	using BaseName::impl;			\
 									\
 	template <typename... Args>		\
@@ -41,26 +41,63 @@ struct PolyClass
 {
 	virtual ~PolyClass () {}
 
-    PolyClass (std::unique_ptr<Base> ptr) : impl(std::move(ptr)) {}
+    PolyClass (std::unique_ptr<Base> ptr) : impl(std::move(ptr))
+	{
+	}
 
 	template <class Derived_, class Derived = std::decay_t<Derived_>,
 		 	  std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
-	PolyClass (Derived_&& derived) : impl(std::make_unique<Derived>(std::forward<Derived>(derived))) {}
+	PolyClass (Derived_&& derived) : impl(std::make_unique<Derived>(std::forward<Derived>(derived)))
+	{
+	}
 
-    PolyClass& operator= (std::unique_ptr<Base> ptr) { impl = std::move(ptr); return *this; }
+    PolyClass& operator= (std::unique_ptr<Base> ptr)
+	{
+		impl = std::move(ptr);
+		return *this;
+	}
 
 	template <class Derived_, class Derived = std::decay_t<Derived_>,
 		 	  std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
-	PolyClass& operator= (Derived_&& derived) { impl = std::make_unique<Derived>(std::forward<Derived>(derived)); return *this; }
+	PolyClass& operator= (Derived_&& derived)
+	{
+		impl = std::make_unique<Derived>(std::forward<Derived>(derived));
+		return *this;
+	}
 
-    PolyClass (const PolyClass& PolyClass) : impl(PolyClass.impl ? PolyClass.impl->clone() : nullptr) {}
+    PolyClass (const PolyClass& PolyClass) : impl(PolyClass.impl ? PolyClass.impl->clone() : nullptr)
+	{
+	}
+
     PolyClass (PolyClass&& PolyClass) = default;
 
-    PolyClass& operator= (const PolyClass& PolyClass) { if(PolyClass.impl) impl = PolyClass.impl->clone(); return *this; }
+    PolyClass& operator= (const PolyClass& PolyClass)
+	{
+		if(PolyClass.impl)
+			impl = PolyClass.impl->clone();
+			
+		return *this;
+	}
+
     PolyClass& operator= (PolyClass&& PolyClass) = default;
 
-	Base* get () const { return impl.get(); }
-	Base* operator-> () const { return get(); }
+
+	Base* get () const
+	{
+		return impl.get();
+	}
+
+	Base* operator-> () const
+	{
+		return get();
+	}
+
+
+	template <class T>
+	void set (T&& t)
+	{
+		operator=(std::forward<T>(t));
+	}
 
 
     std::unique_ptr<Base> impl;
