@@ -173,7 +173,7 @@ template <typename Float>
 struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearch<Float>>,
 					 public ::nlpp::LineSearch<LineSearch_<Float>>
 {
-	NLPP_USING_POLY_CLASS(Base, ::nlpp::poly::PolyClass<LineSearch<Float>>);
+	NLPP_USING_POLY_CLASS(LineSearch_, Base, ::nlpp::poly::PolyClass<LineSearch<Float>>);
 
     using V = typename LineSearch<Float>::V;
 

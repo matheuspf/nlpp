@@ -106,10 +106,17 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
 };
 
 
+
+
+enum Outputs { QUIET, COMPLETE, STORE };
+
+static constexpr std::array<const char*, 3> outputNames = { "quiet", "complete", "store" };
+
+
 template <class V>
 struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>
 {
-    NLPP_USING_POLY_CLASS(Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);
+    NLPP_USING_POLY_CLASS(GradientOptimizer_, Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);
 
     using Float = ::nlpp::impl::Scalar<V>;
 
@@ -125,6 +132,27 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
     void operator () (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
     {
         impl->operator()(optimizer, x, fx, gx);
+    }
+
+
+    void set(Outputs output)
+    {
+        switch(output)
+        {
+            case QUIET:    impl = std::make_unique<GradientOptimizer<0, V>>(); break;
+            case COMPLETE: impl = std::make_unique<GradientOptimizer<1, V>>(); break;
+            case STORE:    impl = std::make_unique<GradientOptimizer<2, V>>(); break;
+        }
+    }
+
+    void set (std::string output)
+    {
+        set(Outputs(handy::find(outputNames, handy::transform(output, output, ::tolower)) - std::begin(outputNames)));
+    }
+
+    void set (int output)
+    {
+        set(Outputs(output));
     }
 };
 
