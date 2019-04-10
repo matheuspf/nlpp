@@ -148,10 +148,12 @@ struct LineSearchCRTP
 };
 
 
-template <typename Float>
-struct LineSearch : public ::nlpp::poly::CloneBase<LineSearch<Float>>,
-					public LineSearchCRTP<LineSearch<Float>, Float>
+template <typename Float_>
+struct LineSearch : public ::nlpp::poly::CloneBase<LineSearch<Float_>>,
+					public LineSearchCRTP<LineSearch<Float_>, Float_>
 {
+	using Float = Float_;
+
 	virtual ~LineSearch ()	{}
 
     using V = ::nlpp::VecX<Float>;

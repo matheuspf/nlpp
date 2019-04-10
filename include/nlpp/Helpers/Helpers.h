@@ -45,6 +45,10 @@ struct PolyClass
 	{
 	}
 
+    PolyClass (Base* ptr) : impl(ptr)
+	{
+	}
+
 	template <class Derived_, class Derived = std::decay_t<Derived_>,
 		 	  std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
 	PolyClass (Derived_&& derived) : impl(std::make_unique<Derived>(std::forward<Derived>(derived)))
@@ -54,6 +58,12 @@ struct PolyClass
     PolyClass& operator= (std::unique_ptr<Base> ptr)
 	{
 		impl = std::move(ptr);
+		return *this;
+	}
+
+	PolyClass& operator= (Base* ptr)
+	{
+		impl.reset(ptr);
 		return *this;
 	}
 
