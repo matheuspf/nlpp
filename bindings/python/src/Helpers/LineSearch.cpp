@@ -12,17 +12,16 @@ namespace py = pybind11;
 
 class PyLineSearch : public nlpp::poly::LineSearch<> {
 public:
-    /* Inherit the constructors */
+
     using Base = nlpp::poly::LineSearch<>;
     using Base::Base;
-    using Params = ::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<Base::V>, Base::V>;
 
 
     Base::Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<Base::V>, Base::V> lsWrapper)
     {
         PYBIND11_OVERLOAD_PURE(
             Base::Float,
-            nlpp::poly::LineSearch<>,
+            Base,
             lineSearch,
             lsWrapper
         );
@@ -32,23 +31,23 @@ public:
     {
         PYBIND11_OVERLOAD_PURE(
             void,
-            nlpp::poly::LineSearch<>,
+            Base,
             initialize 
         );
     }
 
-    nlpp::poly::LineSearch<>* clone_impl () const
+    Base* clone_impl () const
     {
         PYBIND11_OVERLOAD_PURE(
-            nlpp::poly::LineSearch<>*,
-            nlpp::poly::LineSearch<>,
+            Base*,
+            Base,
             clone_impl 
         );
     }
 };
 
 
-void add_lineSearch(py::module& m)
+void add_lineSearch (py::module& m)
 {
     py::class_<nlpp::poly::LineSearch<>, PyLineSearch> lineSearchBase(m, "LineSearchBase");
         lineSearchBase

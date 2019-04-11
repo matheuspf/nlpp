@@ -131,12 +131,13 @@ struct GradientNorm
 namespace poly
 {
 
-template <class V = ::nlpp::Vec>
-struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V>>
+template <class V_ = ::nlpp::Vec>
+struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V_>>
 {
-    virtual ~GradientOptimizerBase () {}
-
+    using V = V_;
     using Float = ::nlpp::impl::Scalar<V>;
+
+    virtual ~GradientOptimizerBase () {}
 
     virtual void initialize () = 0;
 
@@ -215,7 +216,7 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
     GradientOptimizer_ () : Base(std::make_unique<GradientOptimizer<true, V>>()) {}
 
 
-    void initialized ()
+    void initialize ()
     {
         impl->initialize();
     }

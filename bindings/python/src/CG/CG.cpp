@@ -13,6 +13,7 @@ void add_CG(py::module& m)
     py::class_<nlpp::poly::CG<>>(m, "CG")
         .def(py::init<>())
         .def(py::init<const nlpp::poly::LineSearch_<>&>())
+        .def(py::init<const nlpp::poly::LineSearch_<>&, const nlpp::stop::poly::GradientOptimizer_<>&>())
         
         .def("optimize", static_cast<nlpp::Vec (nlpp::poly::CG<>::*)
                                      (const std::function<::nlpp::wrap::poly::FunctionGradient<>::FuncType>&, const nlpp::Vec&)>
