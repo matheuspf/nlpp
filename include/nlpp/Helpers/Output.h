@@ -31,9 +31,8 @@ struct GradientOptimizer<1, Float>
     {
     }
 
-    template <class LineSearch, class Stop, class Output, class V>
-    void operator() (const params::LineSearchOptimizer<LineSearch, Stop, Output>& optimizer,
-                     const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx)
+    template <class Stop, class Output, class V>
+    void operator() (const params::Optimizer<Stop, Output>& optimizer, const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx)
     {
         handy::print("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose(), "\n") << std::flush;
     }
@@ -50,9 +49,8 @@ struct GradientOptimizer<2, Float>
         vGx.clear();
     }
 
-    template <class LineSearch, class Stop, class Output, class V>
-    void operator() (const params::LineSearchOptimizer<LineSearch, Stop, Output>& optimizer,
-                     const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx)
+    template <class Stop, class Output, class V>
+    void operator() (const params::Optimizer<Stop, Output>& optimizer, const Eigen::MatrixBase<V>& x, Float fx, const Eigen::MatrixBase<V>& gx)
     {
         vFx.push_back(fx);
         vX.push_back(::nlpp::impl::cast<Float>(x));
@@ -70,16 +68,17 @@ struct GradientOptimizer<2, Float>
 namespace poly
 {
 
-template <class V = ::nlpp::Vec>
-struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V>>
+template <class V_ = ::nlpp::Vec>
+struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V_>>
 {
-    virtual ~GradientOptimizerBase () {}
-
+    using V = V_;
     using Float = ::nlpp::impl::Scalar<V>;
+
+    virtual ~GradientOptimizerBase () {}
 
     virtual void initialize () = 0;
 
-    virtual void operator() (const nlpp::params::poly::LineSearchOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
+    virtual void operator() (const nlpp::params::poly::Optimizer_&, const V&, Float, const V&) = 0;
 };
 
 
@@ -96,7 +95,7 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
         Impl::initialize();
     }
 
-    virtual void operator() (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual void operator() (const nlpp::params::poly::Optimizer_& optimizer, const V& x, Float fx, const V& gx)
     {
         return Impl::operator()(optimizer, x, fx, gx);
     }
@@ -129,7 +128,7 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
         impl->initialize();
     }
 
-    void operator () (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    void operator () (const nlpp::params::poly::Optimizer_& optimizer, const V& x, Float fx, const V& gx)
     {
         impl->operator()(optimizer, x, fx, gx);
     }
