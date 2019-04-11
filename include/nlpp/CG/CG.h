@@ -96,6 +96,7 @@ struct CG : public Params_
 {
 	CPPOPT_USING_PARAMS(Params, Params_);
 
+	using Params::Params;
 	using LineSearch = typename Params::LineSearch;
 	using Stop = typename Params::Stop;
 	using Output = typename Params::Output;

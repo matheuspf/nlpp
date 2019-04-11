@@ -131,16 +131,17 @@ struct GradientNorm
 namespace poly
 {
 
-template <class V = ::nlpp::Vec>
-struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V>>
+template <class V_ = ::nlpp::Vec>
+struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V_>>
 {
-    virtual ~GradientOptimizerBase () {}
-
+    using V = V_;
     using Float = ::nlpp::impl::Scalar<V>;
+
+    virtual ~GradientOptimizerBase () {}
 
     virtual void initialize () = 0;
 
-    virtual bool operator () (const nlpp::params::poly::Optimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
+    virtual bool operator () (const nlpp::params::poly::Optimizer_&, const V&, Float, const V&) = 0;
 
     virtual int maxIterations () = 0;
 };
@@ -163,7 +164,7 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
         Impl::initialize();
     }
 
-    virtual bool operator () (const nlpp::params::poly::Optimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual bool operator () (const nlpp::params::poly::Optimizer_& optimizer, const V& x, Float fx, const V& gx)
     {
         return Impl::operator()(optimizer, x, fx, gx);
     }
@@ -175,27 +176,79 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
 };
 
 
+template <class V = ::nlpp::Vec>
+struct GradientNorm : public GradientOptimizerBase<V>,
+                      public ::nlpp::stop::GradientNorm<::nlpp::impl::Scalar<V>>
+{
+    using Float = ::nlpp::impl::Scalar<V>;
+    using Impl = ::nlpp::stop::GradientNorm<Float>;
+    using Impl::Impl;
+
+
+    virtual void initialize ()
+    {
+        Impl::initialize();
+    }
+
+    virtual bool operator () (const nlpp::params::poly::Optimizer_& optimizer, const V& x, Float fx, const V& gx)
+    {
+        return Impl::operator()(optimizer, x, fx, gx);
+    }
+
+    virtual int maxIterations () { return Impl::maxIterations(); }
+
+    virtual GradientNorm* clone_impl () const { return new GradientNorm(*this); }
+};
+
+
+
+enum Stops { IMPROVEMENT_ANY, IMPROVEMENT_ALL, GRADIENT_NORM };
+
+static constexpr std::array<const char*, 3> stopNames = { "improvement_any", "improvement_all" "gradient_norm" };
+
+
 template <class V>
 struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>
 {
-    NLPP_USING_POLY_CLASS(Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);
+    NLPP_USING_POLY_CLASS(GradientOptimizer_, Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);
+    using Float = ::nlpp::impl::Scalar<V>;
 
     GradientOptimizer_ () : Base(std::make_unique<GradientOptimizer<true, V>>()) {}
 
-    using Float = ::nlpp::impl::Scalar<V>;
 
-
-    void initialized ()
+    void initialize ()
     {
         impl->initialize();
     }
 
-    bool operator () (const nlpp::params::poly::Optimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    bool operator () (const nlpp::params::poly::Optimizer_& optimizer, const V& x, Float fx, const V& gx)
     {
         return impl->operator()(optimizer, x, fx, gx);
     }
 
     int maxIterations () { return impl->maxIterations(); }
+
+
+    void set (Stops stop)
+    {
+        handy::print(stop);
+        switch(stop)
+        {
+            case IMPROVEMENT_ANY: impl = std::make_unique<GradientOptimizer<false, V>>(); break;
+            case IMPROVEMENT_ALL: impl = std::make_unique<GradientOptimizer<true, V>>();  break;
+            case GRADIENT_NORM:   impl = std::make_unique<GradientNorm<V>>();             break;
+        }
+    }
+
+    void set (std::string stop)
+    {
+        set(Stops(handy::find(stopNames, handy::transform(stop, stop, ::tolower)) - std::begin(stopNames)));
+    }
+
+    void set (int stop)
+    {
+        set(Stops(stop));
+    }
 };
 
 

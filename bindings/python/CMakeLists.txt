@@ -4,10 +4,12 @@ set(PYTHON_DIR ${PROJECT_SOURCE_DIR}/bindings/python)
 
 add_library(nlpy MODULE)
 
-target_sources(nlpy PUBLIC ${PYTHON_DIR}/test.cpp)
-#target_sources(nlpy PUBLIC ${PYTHON_DIR}/src/nlpy.cpp)
-#target_sources(nlpy PUBLIC ${PYTHON_DIR}/src/Helpers/Wrappers.cpp)
-#target_sources(nlpy PUBLIC ${PYTHON_DIR}/src/GradientDescent/GradientDescent.cpp)
+target_sources(nlpy PUBLIC ${PYTHON_DIR}/src/nlpy.cpp)
+target_sources(nlpy PUBLIC ${PYTHON_DIR}/src/GradientDescent/GradientDescent.cpp)
+target_sources(nlpy PUBLIC ${PYTHON_DIR}/src/CG/CG.cpp)
+target_sources(nlpy PUBLIC ${PYTHON_DIR}/src/Helpers/LineSearch.cpp)
+target_sources(nlpy PUBLIC ${PYTHON_DIR}/src/Helpers/Stop.cpp)
+
 
 target_compile_options(nlpy PRIVATE -flto)
 

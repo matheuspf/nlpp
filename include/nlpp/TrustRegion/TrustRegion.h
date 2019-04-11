@@ -177,7 +177,7 @@ struct LocalMinimizerBase : public ::nlpp::poly::CloneBase<LocalMinimizerBase<V>
 template <class V = ::nlpp::Vec, class M = ::nlpp::Mat>
 struct LocalMinimizer_ : public ::nlpp::poly::PolyClass<LocalMinimizer_<V, M>>
 {
-    NLPP_USING_POLY_CLASS(Base, ::nlpp::poly::PolyClass<LocalMinimizer_<V, M>>);
+    NLPP_USING_POLY_CLASS(LocalMinimizer_, Base, ::nlpp::poly::PolyClass<LocalMinimizer_<V, M>>);
 
     // LocalMinimizer_ () : Base(std::make_unique<CauchyPoint<>>()) {}
 

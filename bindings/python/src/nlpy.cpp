@@ -7,13 +7,18 @@
 
 namespace py = pybind11;
 
-// void add_wrappers(py::module&);
+
+void add_lineSearch(py::module&);
+void add_stop(py::module&);
 void add_gradientDescent(py::module&);
+void add_CG(py::module&);
 
 
 
 PYBIND11_MODULE(nlpy, m)
 {
-    // add_wrappers(m);
+    add_lineSearch(m);
+    add_stop(m);
     add_gradientDescent(m);
+    add_CG(m);
 }
