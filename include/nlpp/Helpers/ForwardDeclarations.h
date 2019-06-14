@@ -13,6 +13,9 @@ namespace out
 {
 
 template <int Level = 0, typename Float = types::Float>
+struct Optimizer;
+
+template <int Level = 0, typename Float = types::Float>
 struct GradientOptimizer;
 
 namespace poly

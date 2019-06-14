@@ -45,6 +45,50 @@ namespace nlpp
 //@{
 
 
+template <class Impl>
+struct BoundOptimizer
+{
+    void init ()
+    {
+        static_cast<Impl&>(*this).initialize();
+    }
+
+    template <class Function, class V>
+    impl::Plain<V> operator () (Function function, const Eigen::DenseBase<V>& lower, const Eigen::DenseBase<V>& upper)
+    {
+        std::assert(lower.rows() == upper.rows() && lower.cols() == 1 && upper.cols() == 1);
+
+        return static_cast<Impl&>(*this).optimize(function, lower, upper);
+    }
+};
+
+
+namespace poly
+{
+
+template <class V = ::nlpp::Vec>
+struct BoundOptimizer : public params::Optimizer
+{
+    CPPOPT_USING_PARAMS(Params, ::nlpp::params::poly::LineSearchOptimizer_);
+    using Params::params;
+
+    virtual void init ()
+    {
+        Params::initialize();
+    }
+
+    virtual ::nlpp::impl::Plain<V> optimize (::nlpp::wrap::poly::Function<V>, const V&, const V&) = 0;
+
+    template <class Function, class V, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return optimize(::nlpp::wrap::poly::Function<::nlpp::impl::Plain<V>>(function), x.eval(), std::forward<Args>(args)...);
+    }
+};
+
+} // namespace impl
+
+
 /** @brief Base class for gradient based optimizers
  *  
  *  @details This class simply inherits base parameters and delegates the call to @c Impl by first wrapping the 
@@ -59,13 +103,6 @@ namespace nlpp
 template <class Impl>//, class Parameters_ = params::LineSearchOptimizer<>>
 struct GradientOptimizer// : public Parameters_
 {
-    // CPPOPT_USING_PARAMS(Parameters, Parameters_);
-    // using Parameters::Parameters;
-
-    // /// Simply delegate the call to the base parameters class
-    // GradientOptimizer(const Parameters& params = Parameters()) : Parameters(params) {}
-
-
     void init ()
     {
         static_cast<Impl&>(*this).initialize();
@@ -118,11 +155,6 @@ namespace poly
 template <class Impl>
 struct GradientOptimizer
 {
-    void init ()
-    {
-        static_cast<Impl&>(*this).initialize();
-    }
-
     template <class Function, class V, typename... Args>
     ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
@@ -179,7 +211,7 @@ struct GradientOptimizer : public CloneBase<GradientOptimizer<V>>,
     using Params::Params;
     using Vec = V;
 
-    virtual void initialize ()
+    virtual void init ()
     {
         Params::initialize();
     }

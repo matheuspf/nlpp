@@ -9,15 +9,83 @@
 namespace nlpp
 {
 
-template <typename Float = types::Float>
-struct Direct
+namespace params
 {
-    struct Interval;
-    struct IntervalComp;
+
+namespace impl
+{
+
+template <class Params_, typename Float = types::Float>
+struct Direct : public Params_
+{
+    CPPOPT_USING_PARAMS(Params, Params_);
+    using Params::Params;
+
+    struct Interval
+    {
+        Float fx;
+        Float size;
+        std::vector<int> k;
+        Vec x;
+    };
+
+    struct IntervalComp
+    {
+        bool operator() (float a, float b) const
+        {
+            return a < b - 1e-10;
+        }
+    };
+
+    friend bool operator< (const Interval& a, const Interval& b)
+    {
+        return a.fx < b.fx;
+    }
+
+    friend bool operator> (const Interval& a, const Interval& b)
+    {
+        return a.fx > b.fx;
+    }
+
 
     using IntervalMap = std::map<float, std::priority_queue<Interval, std::vector<Interval>, std::greater<Interval>>, IntervalComp>;
 
+    Float eps;
+    int numIterations;
+};
 
+} // namespace impl
+
+
+template <class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>, typename Float = types::Float>
+struct Direct : public impl::Direct<params::Optimizer<Stop, Output>, Float>
+{
+    CPPOPT_USING_PARAMS(Params, impl::Direct<params::Optimizer<Stop, Output>, Float>);
+    using Params::Params;
+};
+
+
+namespace poly
+{
+
+template <class Stop = stop::poly::GradientOptimizer_<>, class Output = out::poly::GradientOptimizer_<>, typename Float = types::Float>
+struct Direct : public impl::Direct<params::poly::Optimizer<Stop, Output>, Float>
+{
+    CPPOPT_USING_PARAMS(Params, impl::Direct<params::poly::Optimizer<Stop, Output>, Float>);
+    using Params::Params;
+};
+
+} // namespace poly
+
+} // namespace params
+
+namespace impl
+{
+
+// template <typename Float = types::Float>
+template <class Params_>
+struct Direct : public Params
+{
     Direct (Float eps = 1e-4, int numIterations = 1e4) : eps(eps), numIterations(numIterations)
     {
     }
@@ -177,37 +245,8 @@ struct Direct
             return sum + std::pow(3, -2*k);
         }));
     }
-
-
-    struct Interval
-    {
-        Float fx;
-        Float size;
-        std::vector<int> k;
-        Vec x;
-    };
-
-    struct IntervalComp
-    {
-        bool operator() (float a, float b) const
-        {
-            return a < b - 1e-10;
-        }
-    };
-
-    friend bool operator< (const Interval& a, const Interval& b)
-    {
-        return a.fx < b.fx;
-    }
-
-    friend bool operator> (const Interval& a, const Interval& b)
-    {
-        return a.fx > b.fx;
-    }
-
-
-    Float eps;
-    int numIterations;
 };
+
+} // namespace impl
 
 } // namespace nlpp

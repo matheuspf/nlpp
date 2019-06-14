@@ -230,7 +230,6 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
 
     void set (Stops stop)
     {
-        handy::print(stop);
         switch(stop)
         {
             case IMPROVEMENT_ANY: impl = std::make_unique<GradientOptimizer<false, V>>(); break;
