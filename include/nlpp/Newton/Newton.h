@@ -38,11 +38,12 @@ struct Newton : public Params_
 
 
 
-template <class Params_, class Factorization = ::nlpp::fact::SmallIdentity<>>
-struct Newton : public params::Newton<Params_, Factorization>
+template <class Params_>
+struct Newton : public Params_
 {
-	CPPOPT_USING_PARAMS_NEWTON(Params, params::Newton<Params_, Factorization>);
-	using Params::Params;
+	CPPOPT_USING_PARAMS_NEWTON(Params, Params_);
+
+	Newton (const Params& p = Params()) : Params(p) {}
 
 
 	template <class Function, class Hessian, class V>
@@ -79,11 +80,12 @@ struct Newton : public params::Newton<Params_, Factorization>
 
 template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe<>,
 		class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct Newton : public impl::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>,
+struct Newton : public impl::Newton<impl::params::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>>,
                 public GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>>
 {
-   	CPPOPT_USING_PARAMS(Impl, impl::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>);
+   	CPPOPT_USING_PARAMS(Impl, impl::Newton<impl::params::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>>)
 	using Impl::Impl;
+
 
 	template <class Function, class Hessian, class V>
 	V optimize (Function f, Hessian hess, V x)
@@ -103,9 +105,9 @@ namespace poly
 {
 
 template <class Factorization = ::nlpp::fact::SmallIdentity<>, class V = ::nlpp::Vec>
-struct Newton : public ::nlpp::impl::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>
+struct Newton : public ::nlpp::impl::Newton<impl::params::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>>
 {
-	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>);
+	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::Newton<impl::params::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>>)
 	using Impl::Impl;
 
 	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, ::nlpp::wrap::poly::Hessian<V> hess, V x)

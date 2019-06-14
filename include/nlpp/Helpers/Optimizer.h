@@ -69,9 +69,6 @@ struct GradientOptimizer// : public Parameters_
     void init ()
     {
         static_cast<Impl&>(*this).initialize();
-        static_cast<Impl&>(*this).lineSearch.initialize();
-        static_cast<Impl&>(*this).stop.initialize();
-        static_cast<Impl&>(*this).output.initialize();
     }
 
     /** @name
@@ -124,9 +121,6 @@ struct GradientOptimizer
     void init ()
     {
         static_cast<Impl&>(*this).initialize();
-        static_cast<Impl&>(*this).lineSearch.initialize();
-        static_cast<Impl&>(*this).stop.initialize();
-        static_cast<Impl&>(*this).output.initialize();
     }
 
     template <class Function, class V, typename... Args>
@@ -185,7 +179,10 @@ struct GradientOptimizer : public CloneBase<GradientOptimizer<V>>,
     using Params::Params;
     using Vec = V;
 
-    virtual void initialize () {}
+    virtual void initialize ()
+    {
+        Params::initialize();
+    }
 
     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) { return V{}; }
     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::wrap::poly::Hessian<V>, V) { return V{}; };

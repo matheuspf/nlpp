@@ -7,13 +7,13 @@ using namespace nlpp;
 
 int main ()
 {
-    using F = long double;
-
     using Opt = nlpp::Newton<nlpp::fact::CholeskyIdentity<>, nlpp::StrongWolfe<>,
                             nlpp::stop::GradientOptimizer<1>, nlpp::out::GradientOptimizer<>>;
                             
 
     typename Opt::Params params;
+
+    // impl::PrintType<Opt::Params>{};
 
     params.stop.xTol = 1e-4;
     params.stop.fTol = 1e-4;
@@ -22,7 +22,7 @@ int main ()
 
     int N = 10;
 
-    F x0 = 1.2;
+    double x0 = 5.0;
 
 
     nlpp::Rosenbrock func;
@@ -32,10 +32,12 @@ int main ()
 
     Opt newton(params);
 
-    nlpp::VecX<F> x = VecX<F>::Constant(N, x0);
+    newton.init();
 
+    Vec x = Vec::Constant(N, x0);
 
-	x = newton(func, grad, x, hess);
+	// x = newton(func, grad, hess, x);
+	x = newton(func, grad, x);
 
 
     handy::print("x: ", x.transpose(), "\nfx: ", func(x), "\ngx: ", grad(x).norm(), "\n");

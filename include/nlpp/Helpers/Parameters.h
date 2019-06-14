@@ -25,7 +25,11 @@ struct Optimizer
     //@}
 
 
-    void initialize () {}
+    void initialize ()
+    {
+        stop.initialize();
+        output.initialize();
+    }
 
 
     Stop stop;      ///< Stopping condition
@@ -56,6 +60,12 @@ struct LineSearchOptimizer : public Optimizer<Stop_, Output_>
     {
     }
     //@}
+
+    void initialize ()
+    {
+        Base::initialize();
+        lineSearch.initialize();
+    }
 
 
     LineSearch lineSearch;  ///< The line search method
