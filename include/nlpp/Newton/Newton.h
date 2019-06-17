@@ -9,8 +9,8 @@
 #include "Factorizations.h"
 
 
-#define CPPOPT_USING_PARAMS_NEWTON(...) CPPOPT_USING_PARAMS(__VA_ARGS__);	\
-										using Params::factorization;
+#define CPPOPT_USING_PARAMS_NEWTON(TYPE, ...) CPPOPT_USING_PARAMS(TYPE, __VA_ARGS__);	\
+											   using TYPE::factorization;
 
 
 
@@ -38,12 +38,14 @@ struct Newton : public Params_
 
 
 
-template <class Params_>
-struct Newton : public Params_
+template <class Base_>
+struct Newton : public Base_
 {
-	CPPOPT_USING_PARAMS_NEWTON(Params, Params_);
+	// CPPOPT_USING_PARAMS_NEWTON(Params, Params_);
+	CPPOPT_USING_PARAMS_NEWTON(Params, Base_);
+	using Params::Params;
 
-	Newton (const Params& p = Params()) : Params(p) {}
+	// Newton (const Params& base = Params()) : Params(base) {}
 
 
 	template <class Function, class Hessian, class V>
@@ -80,10 +82,11 @@ struct Newton : public Params_
 
 template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe<>,
 		class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct Newton : public impl::Newton<impl::params::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>>,
-                public GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>>
+struct Newton : public impl::Newton<GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>,
+													  impl::params::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>>>
 {
-   	CPPOPT_USING_PARAMS(Impl, impl::Newton<impl::params::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>>)
+   	CPPOPT_USING_PARAMS(Impl, impl::Newton<GradientOptimizer<Newton<Factorization, LineSearch, Stop, Output>,
+										   					 impl::params::Newton<params::LineSearchOptimizer<LineSearch, Stop, Output>, Factorization>>>)
 	using Impl::Impl;
 
 
@@ -105,9 +108,9 @@ namespace poly
 {
 
 template <class Factorization = ::nlpp::fact::SmallIdentity<>, class V = ::nlpp::Vec>
-struct Newton : public ::nlpp::impl::Newton<impl::params::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>>
+struct Newton : public impl::Newton<::nlpp::poly::GradientOptimizer<V, impl::params::Newton<::nlpp::params::poly::LineSearchOptimizer_, Factorization>>>
 {
-	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::Newton<impl::params::Newton<::nlpp::poly::GradientOptimizer<V>, Factorization>>)
+	CPPOPT_USING_PARAMS(Impl, impl::Newton<::nlpp::poly::GradientOptimizer<V, impl::params::Newton<::nlpp::params::poly::LineSearchOptimizer_, Factorization>>>)
 	using Impl::Impl;
 
 	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, ::nlpp::wrap::poly::Hessian<V> hess, V x)

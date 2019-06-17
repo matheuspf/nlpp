@@ -215,7 +215,7 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
     GradientOptimizer_ () : Base(std::make_unique<GradientOptimizer<true, V>>()) {}
 
 
-    void initialized ()
+    void initialize ()
     {
         impl->initialize();
     }
