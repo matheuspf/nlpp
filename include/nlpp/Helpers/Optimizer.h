@@ -44,51 +44,6 @@ namespace nlpp
 */
 //@{
 
-
-// template <class Impl>
-// struct BoundOptimizer
-// {
-//     void init ()
-//     {
-//         static_cast<Impl&>(*this).initialize();
-//     }
-
-//     template <class Function, class V>
-//     impl::Plain<V> operator () (Function function, const Eigen::DenseBase<V>& lower, const Eigen::DenseBase<V>& upper)
-//     {
-//         // std::assert(lower.rows() == upper.rows() && lower.cols() == 1 && upper.cols() == 1);
-
-//         return static_cast<Impl&>(*this).optimize(function, lower, upper);
-//     }
-// };
-
-
-// namespace poly
-// {
-
-// template <class V = ::nlpp::Vec>
-// struct BoundOptimizer : public params::Optimizer
-// {
-//     CPPOPT_USING_PARAMS(Params, ::nlpp::params::poly::LineSearchOptimizer_);
-//     using Params::params;
-
-//     virtual void init ()
-//     {
-//         Params::initialize();
-//     }
-
-//     virtual ::nlpp::impl::Plain<V> optimize (::nlpp::wrap::poly::Function<V>, const V&, const V&) = 0;
-
-//     template <class Function, class V, typename... Args>
-//     ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
-//     {
-//         return optimize(::nlpp::wrap::poly::Function<::nlpp::impl::Plain<V>>(function), x.eval(), std::forward<Args>(args)...);
-//     }
-// };
-
-// } // namespace poly
-
-
 /** @brief Base class for gradient based optimizers
  *  
  *  @details This class simply inherits base parameters and delegates the call to @c Impl by first wrapping the 
@@ -100,11 +55,15 @@ namespace nlpp
  *  @note We inherit from the parameter classes here, so we create a single inheritance chain, not having to 
  *        resort to multiple inheritance. Also, this way we can have easy access to any member of the parameters class
 */
-template <class Impl, class Params_ = params::LineSearchOptimizer<>>//, class Parameters_ = params::LineSearchOptimizer<>>
+
+template <class Impl, >
+struct Optimizer
+
+
+
+template <class Impl>
 struct GradientOptimizer : public Params_
 {
-    CPPOPT_USING_PARAMS(Params, Params_);
-
     GradientOptimizer(const Params& params) : Params(params) {}
 
     void init ()

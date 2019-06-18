@@ -9,24 +9,19 @@ namespace nlpp
 namespace stop
 {
 
-namespace impl
-{
-
-template <class Impl, typename Float>
+template <bool Exclusive = false, typename Float = types::Float>
 struct GradientOptimizer
 {
-    GradientOptimizer(int maxIterations_ = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) : 
-                      maxIterations_(maxIterations_), xTol(xTol), fTol(fTol), gTol(gTol), initialized(false) {}
+    GradientOptimizer(int maxIterations_ = 1000, double xTol = 1e-4, double fTol = 1e-4) : 
+                      maxIterations_(maxIterations_), xTol(xTol), fTol(fTol), initialized(false) {}
 
     void initialize ()
     {
         initialized = false;
     }
 
-
     template <class Stop, class Output, class V>
-    bool operator () (const params::Optimizer<Stop, Output>& optimizer,
-                      const Eigen::MatrixBase<V>& x, double fx, const Eigen::MatrixBase<V>& gx) 
+    bool operator () (const params::Optimizer<Stop, Output>& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx) 
     {
         bool doStop = false;
 
@@ -34,29 +29,38 @@ struct GradientOptimizer
         {
             bool fStop = std::abs(fx - fx0) < fTol;
             bool xStop = (::nlpp::impl::cast<Float>(x) - x0).norm() < xTol;
-            bool gStop = gx.norm() < gTol;
 
-            doStop = static_cast<Impl&>(*this).stop(xStop, fStop, gStop);
+            doStop = stop(xStop, fStop);
         }
 
         fx0 = fx;
         x0 = ::nlpp::impl::cast<Float>(x);
-        gx0 = ::nlpp::impl::cast<Float>(gx);
         initialized = true;
 
         return doStop;
     }
 
 
-    int maxIterations () { return maxIterations_; }
+    int maxIterations ()
+    {
+        return maxIterations_;
+    }
 
+
+    template <typename... Conds>
+    bool stop (Conds... conds)
+    {
+        if constexpr(Exclusive)
+            return (conds && ...);
+
+        else
+            return (conds || ...);
+    }
 
 
     Float fx0;
 
     VecX<Float> x0;
-
-    VecX<Float> gx0;
 
 
     int maxIterations_;      ///< Maximum number of outer iterations
@@ -65,13 +69,35 @@ struct GradientOptimizer
 
 	Float fTol;            ///< Minimum tolerance on the value of the function (@c x) between iterations
 
-    Float gTol;            ///< Minimum tolerance on the norm of the gradient (@c g) between iterations
-
     bool initialized;
 };
 
 
-} // namespace impl
+template <bool Exclusive = false, typename Float = types::Float>
+struct GradientOptimizer : public Optimizer<Exclusive, Float>
+{
+    using Base = Optimizer<Exclusive, Float>;
+
+    GradientOptimizer(int maxIterations_ = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) : 
+                      Base(maxIterations_, xTol, fTol), gTol(gTol), initialized(false) {}
+
+    template <class Stop, class Output, class V>
+    bool operator () (const GradientOptimizer<Stop, Output>& optimizer,
+                      const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx) 
+    {
+        bool gStop = gx.norm() < gTol;
+
+        gx0 = ::nlpp::impl::cast<Float>(gx);
+
+        return Base::stop(Base::operator()(optimizer, x, fx), gStop);
+    }
+
+
+    VecX<Float> gx0;
+
+    Float gTol;            ///< Minimum tolerance on the norm of the gradient (@c g) between iterations
+};
+
 
 
 
