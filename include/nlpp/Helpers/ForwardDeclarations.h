@@ -22,6 +22,9 @@ namespace poly
 {
 
 template <class V = ::nlpp::Vec>
+struct Optimizer_;
+
+template <class V = ::nlpp::Vec>
 struct GradientOptimizer_;
 
 } // namespace poly
@@ -33,10 +36,16 @@ namespace stop
 {
 
 template <bool Exclusive = false, typename Float = types::Float>
+struct Optimizer;
+
+template <bool Exclusive = false, typename Float = types::Float>
 struct GradientOptimizer;
 
 namespace poly
 {
+
+template <class V = ::nlpp::Vec>
+struct Optimizer_;
 
 template <class V = ::nlpp::Vec>
 struct GradientOptimizer_;
@@ -46,10 +55,11 @@ struct GradientOptimizer_;
 } // namespace stop
 
 
+
+/// Because these are used as the default line search procedure in many cases
 template <typename Float = types::Float>
 struct ConstantStep;
 
-/// Because this is used as the default line search procedure in many cases
 template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
 struct StrongWolfe;
 
@@ -68,11 +78,11 @@ struct StrongWolfe;
 } // namespace poly
 
 
-namespace params
-{
+template <class = stop::Optimizer<>, class = out::Optimizer<>>
+struct Optimizer;
 
 template <class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
-struct Optimizer;
+struct GradientOptimizer;
 
 template <class = StrongWolfe<>, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
 struct LineSearchOptimizer;
@@ -80,13 +90,17 @@ struct LineSearchOptimizer;
 namespace poly
 {
 
-using Optimizer_ = ::nlpp::params::Optimizer<::nlpp::stop::poly::GradientOptimizer_<>, ::nlpp::out::poly::GradientOptimizer_<>>;
+template <class V = Vec>
+struct Optimizer;
 
-using LineSearchOptimizer_ = ::nlpp::params::LineSearchOptimizer<::nlpp::poly::LineSearch_<>, ::nlpp::stop::poly::GradientOptimizer_<>, ::nlpp::out::poly::GradientOptimizer_<>>;
+template <class V = Vec>
+struct GradientOptimizer;
+
+template <class V = Vec>
+struct LineSearchOptimizer;
 
 } // namespace poly
 
-} // namespace params
 //@}
 
 

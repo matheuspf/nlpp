@@ -10,10 +10,8 @@ namespace nlpp
 namespace out
 {
 
-namespace impl
-{
-
-struct Optimizer
+template <typename Float>
+struct Optimizer<0, Float> : public impl::Optimizer
 {
     Optimizer (const handy::Print& printer = handy::Print()) : printer(printer) {}
 
@@ -21,20 +19,12 @@ struct Optimizer
     {
     }
 
-    handy::Print printer;
-};
-
-} // namespace impl
-
-
-
-template <typename Float>
-struct Optimizer<0, Float> : public impl::Optimizer
-{
     template <typename... Args>
     void operator() (Args&&...)
     {
     }
+
+    handy::Print printer;
 };
 
 template <typename Float>
@@ -42,9 +32,9 @@ struct GradientOptimizer<0, Float> : public Optimizer<0, Float> {};
 
 
 template <typename Float>
-struct Optimizer<1, Float> : public impl::Optimizer
+struct Optimizer<1, Float> : public Optimizer<0, Float>
 {
-    Optimizer (const handy::Print& printer = handy::Print("", "\n\n")) : impl::Optimizer(printer) {}
+    Optimizer (const handy::Print& printer = handy::Print("", "\n\n")) : Optimizer<0, Float>(printer) {}
 
     template <class Stop, class Output, class V>
     void operator() (const params::Optimizer<Stop, Output>& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx)
@@ -126,9 +116,8 @@ struct OptimizerBase : public ::nlpp::poly::CloneBase<OptimizerBase<V>>
 
     virtual void initialize () = 0;
 
-    virtual void operator() (const nlpp::params::poly::Optimizer_&, const Eigen::Ref<const V>&, ::nlpp::impl::Scalar<Float>) = 0;
+    virtual void operator() (const ::nlpp::poly::Optimizer_&, const V&, ::nlpp::impl::Scalar<Float>) = 0;
 };
-
 
 template <class V = ::nlpp::Vec>
 struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V>>
@@ -139,9 +128,30 @@ struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerB
 
     virtual void initialize () = 0;
 
-    virtual void operator() (const nlpp::params::poly::LineSearchOptimizer_&, const Eigen::Ref<const V>&, Float, const Eigen::Ref<const V>&) = 0;
+    virtual void operator() (const nlpp::params::poly::GradientOptimizer_&, const V&, Float, const V&) = 0;
 };
 
+
+template <int Level = 0, class V = ::nlpp::Vec>
+struct Optimizer : public OptimizerBase<V>,
+                   public ::nlpp::out::Optimizer<Level, ::nlpp::impl::Scalar<V>>
+{
+    using Float = ::nlpp::impl::Scalar<V>;
+    using Impl = ::nlpp::out::Optimizer<Level, ::nlpp::impl::Scalar<V>>;
+
+    virtual void initialize ()
+    {
+        Impl::initialize();
+    }
+
+    virtual void operator() (const nlpp::params::poly::Optimizer_& optimizer, const V& x, Float fx)
+    {
+        return Impl::operator()(optimizer, x, fx);
+    }
+    
+
+    virtual Optimizer* clone_impl () const { return new Optimizer(*this); }
+};
 
 template <int Level = 0, class V = ::nlpp::Vec>
 struct GradientOptimizer : public GradientOptimizerBase<V>,
@@ -150,13 +160,12 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
     using Float = ::nlpp::impl::Scalar<V>;
     using Impl = ::nlpp::out::GradientOptimizer<Level, ::nlpp::impl::Scalar<V>>;
 
-
     virtual void initialize ()
     {
         Impl::initialize();
     }
 
-    virtual void operator() (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual void operator() (const nlpp::params::poly::GradientOptimizer_& optimizer, const V& x, Float fx, const V& gx)
     {
         return Impl::operator()(optimizer, x, fx, gx);
     }
@@ -166,11 +175,9 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
 };
 
 
+// enum Outputs { QUIET, COMPLETE, STORE };
 
-
-enum Outputs { QUIET, COMPLETE, STORE };
-
-static constexpr std::array<const char*, 3> outputNames = { "quiet", "complete", "store" };
+// static constexpr std::array<const char*, 3> outputNames = { "quiet", "complete", "store" };
 
 
 template <class V>
@@ -195,25 +202,25 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
     }
 
 
-    void set(Outputs output)
-    {
-        switch(output)
-        {
-            case QUIET:    impl = std::make_unique<GradientOptimizer<0, V>>(); break;
-            case COMPLETE: impl = std::make_unique<GradientOptimizer<1, V>>(); break;
-            case STORE:    impl = std::make_unique<GradientOptimizer<2, V>>(); break;
-        }
-    }
+    // void set(Outputs output)
+    // {
+    //     switch(output)
+    //     {
+    //         case QUIET:    impl = std::make_unique<GradientOptimizer<0, V>>(); break;
+    //         case COMPLETE: impl = std::make_unique<GradientOptimizer<1, V>>(); break;
+    //         case STORE:    impl = std::make_unique<GradientOptimizer<2, V>>(); break;
+    //     }
+    // }
 
-    void set (std::string output)
-    {
-        set(Outputs(handy::find(outputNames, handy::transform(output, output, ::tolower)) - std::begin(outputNames)));
-    }
+    // void set (std::string output)
+    // {
+    //     set(Outputs(handy::find(outputNames, handy::transform(output, output, ::tolower)) - std::begin(outputNames)));
+    // }
 
-    void set (int output)
-    {
-        set(Outputs(output));
-    }
+    // void set (int output)
+    // {
+    //     set(Outputs(output));
+    // }
 };
 
 
