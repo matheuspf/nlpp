@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
 
-#include "GradientDescent/GradientDescent.h"
 #include "CG/CG.h"
-#include "Newton/Newton.h"
-#include "QuasiNewton/BFGS/BFGS.h"
-#include "QuasiNewton/LBFGS/LBFGS.h"
+// #include "GradientDescent/GradientDescent.h"
+// #include "Newton/Newton.h"
+// #include "QuasiNewton/BFGS/BFGS.h"
+// #include "QuasiNewton/LBFGS/LBFGS.h"
 
 #include "TestFunctions/Rosenbrock.h"
 
@@ -59,79 +59,79 @@ TEST_F(LineSearchOptimizerTest, CGTest)
 }
 
 
-TEST_F(LineSearchOptimizerTest, GradientDescentTest)
-{
-    SCOPED_TRACE("Gradient Descent Test");
+// TEST_F(LineSearchOptimizerTest, GradientDescentTest)
+// {
+//     SCOPED_TRACE("Gradient Descent Test");
 
-    ::nlpp::poly::GradientDescent<> opt;
+//     ::nlpp::poly::GradientDescent<> opt;
 
-    opt.lineSearch = std::make_unique<::nlpp::poly::Goldstein<>>();
+//     opt.lineSearch = std::make_unique<::nlpp::poly::Goldstein<>>();
 
-    opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<false>>(10000, 1e-3, 1e-3, 1e-3);
+//     opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<false>>(10000, 1e-3, 1e-3, 1e-3);
     
-    ::nlpp::Rosenbrock func;
+//     ::nlpp::Rosenbrock func;
 
-    for(int numVariables = 10; numVariables <= 50; numVariables += 10)
-    {
-        SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
+//     for(int numVariables = 10; numVariables <= 50; numVariables += 10)
+//     {
+//         SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
 
-        convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 2.0));
-    }
-}
+//         convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 2.0));
+//     }
+// }
 
-TEST_F(LineSearchOptimizerTest, NewtonTest)
-{
-    SCOPED_TRACE("Newton Test");
+// TEST_F(LineSearchOptimizerTest, NewtonTest)
+// {
+//     SCOPED_TRACE("Newton Test");
 
-    ::nlpp::poly::Newton<> opt;
+//     ::nlpp::poly::Newton<> opt;
 
-    opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(1000, 1e-4, 1e-4, 1e-4);
+//     opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(1000, 1e-4, 1e-4, 1e-4);
     
-    ::nlpp::Rosenbrock func;
+//     ::nlpp::Rosenbrock func;
 
-    for(int numVariables = 10; numVariables <= 100; numVariables += 10)
-    {
-        SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
+//     for(int numVariables = 10; numVariables <= 100; numVariables += 10)
+//     {
+//         SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
 
-        convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 5.0));
-    }
-}
+//         convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 5.0));
+//     }
+// }
 
-TEST_F(LineSearchOptimizerTest, BFGSTest)
-{
-    SCOPED_TRACE("BFGS Test\n");
+// TEST_F(LineSearchOptimizerTest, BFGSTest)
+// {
+//     SCOPED_TRACE("BFGS Test\n");
 
-    ::nlpp::poly::BFGS<> opt;
+//     ::nlpp::poly::BFGS<> opt;
 
-    opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(10000, 1e-4, 1e-4, 1e-4);
+//     opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(10000, 1e-4, 1e-4, 1e-4);
     
-    ::nlpp::Rosenbrock func;
+//     ::nlpp::Rosenbrock func;
 
-    for(int numVariables = 10; numVariables <= 100; numVariables += 10)
-    {
-        SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
+//     for(int numVariables = 10; numVariables <= 100; numVariables += 10)
+//     {
+//         SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
 
-        convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 2.0));
-    }
-}
+//         convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 2.0));
+//     }
+// }
 
-TEST_F(LineSearchOptimizerTest, LBFGSTest)
-{
-    SCOPED_TRACE("LBFGS Test");
+// TEST_F(LineSearchOptimizerTest, LBFGSTest)
+// {
+//     SCOPED_TRACE("LBFGS Test");
 
-    ::nlpp::poly::LBFGS<> opt;
+//     ::nlpp::poly::LBFGS<> opt;
 
-    opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(10000, 1e-4, 1e-4, 1e-4);
+//     opt.stop = std::make_unique<::nlpp::stop::poly::GradientOptimizer<>>(10000, 1e-4, 1e-4, 1e-4);
     
-    ::nlpp::Rosenbrock func;
+//     ::nlpp::Rosenbrock func;
 
-    for(int numVariables = 10; numVariables <= 100; numVariables += 10)
-    {
-        SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
+//     for(int numVariables = 10; numVariables <= 100; numVariables += 10)
+//     {
+//         SCOPED_TRACE((std::string("Rosenbrock \t N: ") + std::to_string(numVariables)).c_str());
 
-        convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 2.0));
-    }
-}
+//         convergenceTest(opt, func, ::nlpp::Vec::Constant(numVariables, 2.0));
+//     }
+// }
 
 
 } // namespace

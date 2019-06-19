@@ -14,9 +14,9 @@ if(${lib_name_upper}_COVERAGE AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 
-add_subdirectory(Helpers)
+# add_subdirectory(Helpers)
 add_subdirectory(LineSearchOptimizer)
-add_subdirectory(TrustRegion)
+# add_subdirectory(TrustRegion)
 
 
 enable_testing()

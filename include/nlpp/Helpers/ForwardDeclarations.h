@@ -78,13 +78,13 @@ struct StrongWolfe;
 } // namespace poly
 
 
-template <class = stop::Optimizer<>, class = out::Optimizer<>>
+template <class Impl, class Stop = stop::Optimizer<>, class Output = out::Optimizer<>>
 struct Optimizer;
 
-template <class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
+template <class Impl, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 struct GradientOptimizer;
 
-template <class = StrongWolfe<>, class = stop::GradientOptimizer<>, class = out::GradientOptimizer<>>
+template <class Impl, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 struct LineSearchOptimizer;
 
 namespace poly

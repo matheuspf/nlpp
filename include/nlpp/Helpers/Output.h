@@ -196,7 +196,7 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
         impl->initialize();
     }
 
-    void operator () (const nlpp::params::poly::LineSearchOptimizer_& optimizer, const Eigen::Ref<const V>& x, Float fx, const Eigen::Ref<const V>& gx)
+    virtual void operator() (const nlpp::params::poly::GradientOptimizer_& optimizer, const V& x, Float fx, const V& gx)
     {
         impl->operator()(optimizer, x, fx, gx);
     }

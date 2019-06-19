@@ -82,46 +82,11 @@ BUILD_CG_STRUCT(auto fr = FR::operator()(fa, fb);
 //@}
 
 
-
 namespace impl
 {
 
-namespace params
-{
-
-/** @brief Conjugate gradient parameters class, extending flow base GradientOptimizer parameters
-*/
-template <class Params_, class CGType = FR_PR>
+template <class CGType, class Params_>
 struct CG : public Params_
-{
-	CPPOPT_USING_PARAMS(Params, Params_);
-
-	using LineSearch = typename Params::LineSearch;
-	using Stop = typename Params::Stop;
-	using Output = typename Params::Output;
-
-	CG() {}
-
-	template <class LS = std::decay_t<LineSearch>, std::enable_if_t<std::is_same<LS, ::nlpp::StrongWolfe<>>::value, int> = 0>
-    CG(const LineSearch& lineSearch = ::nlpp::StrongWolfe<>(1e-2, 1e-4, 0.1), const Stop& stop = Stop{}, const Output& output = Output{}) :
-       Params(lineSearch, stop, output)
-    {
-    }
-
-
-	CGType cg;			///< The functor that calculates the search direction, given the current gradient and the previous directions
-
-	double v = 0.1;		///< The minimum factor of orthogonality that the current direction must have
-};
-
-
-} // namespace params
-
-
-
-
-template <class Params_, class CGType = FR_PR>
-struct CG : public params::CG<Params_, CGType>
 {
 	CPPOPT_USING_PARAMS_CG(Params, params::CG<Params_, CGType>);
 	using Params::Params;
@@ -166,15 +131,20 @@ struct CG : public params::CG<Params_, CGType>
 
 		return x;
 	}
+
+
+	CGType cg;			///< The functor that calculates the search direction, given the current gradient and the previous directions
+
+	double v = 0.1;		///< The minimum factor of orthogonality that the current direction must have
 };
 
 } // namespace impl
 
-template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<0>>
-struct CG : public impl::CG<params::LineSearchOptimizer<LineSearch, Stop, Output>, CGType>,
-			public GradientOptimizer<CG<CGType, LineSearch, Stop, Output>>
+
+template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+struct CG : public impl::CG<CGType, LineSearchOptimizer<LineSearch, Stop, Output>>
 {
-	CPPOPT_USING_PARAMS(Impl, impl::CG<params::LineSearchOptimizer<LineSearch, Stop, Output>, CGType>);
+	using Impl = impl::CG<CGType, LineSearchOptimizer<LineSearch, Stop, Output>>;
 	using Impl::Impl;
 
 	template <class Function, class V>
@@ -184,31 +154,24 @@ struct CG : public impl::CG<params::LineSearchOptimizer<LineSearch, Stop, Output
 	}
 };
 
-namespace poly
-{
 
-template <class CGType = ::nlpp::FR_PR, class V = ::nlpp::Vec>
-struct CG : public ::nlpp::impl::CG<::nlpp::poly::GradientOptimizer<V>, CGType>
-{
-	CPPOPT_USING_PARAMS(Impl, ::nlpp::impl::CG<::nlpp::poly::GradientOptimizer<V>, CGType>);
-	using Impl::Impl;
-	using Vec = V;
+// namespace poly
+// {
 
-    CG () {}
+// template <class CGType = ::nlpp::FR_PR, class V = ::nlpp::Vec>
+// struct CG : public ::nlpp::impl::CG<CGType, ::nlpp::poly::LineSearchOptimizer<V>>
+// {
+// 	using Impl = ::nlpp::impl::CG<CGType, ::nlpp::poly::LineSearchOptimizer<V>>;
+// 	using Impl::Impl;
 
-	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
-	{
-		return Impl::optimize(f, x);
-	}
+// 	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
+// 	{
+// 		return Impl::optimize(f, x);
+// 	}
 
-	virtual CG* clone_impl () const { return new CG(*this); }
-};
+// 	virtual CG* clone_impl () const { return new CG(*this); }
+// };
 
-
-} // namespace poly
-
-
-
-
+// } // namespace poly
 
 } // namespace nlpp
