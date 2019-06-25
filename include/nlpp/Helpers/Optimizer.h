@@ -61,6 +61,9 @@ namespace nlpp
 template <class Impl, class Stop, class Output>
 struct Optimizer
 {
+    Optimizer (const Optimizer&) = default;
+    Optimizer (Optimizer&&) = default;
+
     Optimizer (const Stop& stop = Stop{}, const Output& output = Output{}) : stop(stop), output(output)
     {
     }
@@ -87,6 +90,9 @@ struct Optimizer
 template <class Impl, class Stop, class Output>
 struct GradientOptimizer : public Optimizer<Impl, Stop, Output>
 {
+    using Base = Optimizer<Impl, Stop, Output>;
+    using Base::Base;
+
     /** @name
      *  @brief Ensure uniform interface, wrapping arguments before delegation
      * 
@@ -126,16 +132,17 @@ template <class Impl, class LineSearch, class Stop, class Output>
 struct LineSearchOptimizer : public GradientOptimizer<Impl, Stop, Output>
 {
     using Base = GradientOptimizer<Impl, Stop, Output>;
+    using Base::Base;
 
-    LineSearchOptimizer (const LineSearch& lineSearch, const Stop& stop = Stop{}, const Output& output = Output{}) :
-               lineSearch(lineSearch), stop(stop), output(output)
+    LineSearchOptimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) :
+                         lineSearch(lineSearch), Base(stop, output)
     {
     }
 
     void initialize ()
     {
         Base::initialize();
-        LineSearch.initialize();
+        lineSearch.initialize();
     }
 
     LineSearch lineSearch;
@@ -145,66 +152,100 @@ struct LineSearchOptimizer : public GradientOptimizer<Impl, Stop, Output>
 //@}
 
 
-// namespace poly
-// {
+namespace poly
+{
+
+template <class V>
+struct Optimizer : public CloneBase<Optimizer<V>>
+{
+    Optimizer (const out::Optimizer_<V>& output = out::Optimizer_<V>{},
+               const stop::Optimizer_<V>& = stop::Optimizer_<V>{}) : output(output), stop(stop)
+    {
+    }
+
+    virtual void init ()
+    {
+        Params::initialize();
+    }
+
+    virtual V optimize (::nlpp::wrap::poly::Function<V>, V) { return V{}; }
+
+    out::Optimizer_<V> output;
+    stop::Optimizer_<V> stop;
+};
 
 
-// template <class V = ::nlpp::Vec, class Params_ = ::nlpp::params::poly::LineSearchOptimizer_>
-// struct GradientOptimizer : public CloneBase<GradientOptimizer<V, Params_>>,
-//                            public Params_
-// {
-//     CPPOPT_USING_PARAMS(Params, Params_);
-//     using Params::Params;
-//     using Vec = V;
+template <class V>
+struct GradientOptimizer
+{
+    using Optimizer<V>::Optimizer;
 
-//     virtual void init ()
-//     {
-//         Params::initialize();
-//     }
-
-//     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) { return V{}; }
-//     virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::wrap::poly::Hessian<V>, V) { return V{}; };
+    GradientOptimizer (const out::GradientOptimizer_<V>& output = out::GradientOptimizer_<V>{},
+               const stop::GradientOptimizer_<V>& = stop::GradientOptimizer_<V>{}) : output(output), stop(stop)
+    {
+    }
 
 
-//     template <class Function, class U, typename... Args>
-//     ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<U>& x, Args&&... args)
-//     {
-//         return optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<U>>(function), x.eval(), std::forward<Args>(args)...);
-//     }
+    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) { return V{}; }
+    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::wrap::poly::Hessian<V>, V) { return V{}; };
+
+
+    template <class Function, class U, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<U>& x, Args&&... args)
+    {
+        return optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<U>>(function), x.eval(), std::forward<Args>(args)...);
+    }
    
-//     template <class Function, class Gradient, class U, typename... Args>
-//     ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const U& x, Args&&... args)
-//     {
-//         return optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<U>>(function, gradient), x.eval(), std::forward<Args>(args)...);
-//     }
+    template <class Function, class Gradient, class U, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const U& x, Args&&... args)
+    {
+        return optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<U>>(function, gradient), x.eval(), std::forward<Args>(args)...);
+    }
 
-//     template <class Function, class Gradient, class Hessian, class U, typename... Args>
-//     ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Hessian& hessian, const Eigen::MatrixBase<U>& x, Args&&... args)
-//     {
-//         return optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<U>>(function, gradient), ::nlpp::wrap::poly::Hessian<::nlpp::impl::Plain<U>>(hessian), x.eval(), std::forward<Args>(args)...);
-//     }
+    template <class Function, class Gradient, class Hessian, class U, typename... Args>
+    ::nlpp::impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Hessian& hessian, const Eigen::MatrixBase<U>& x, Args&&... args)
+    {
+        return optimize(::nlpp::wrap::poly::FunctionGradient<::nlpp::impl::Plain<U>>(function, gradient), ::nlpp::wrap::poly::Hessian<::nlpp::impl::Plain<U>>(hessian), x.eval(), std::forward<Args>(args)...);
+    }
 
     
-//     template <class Function, class T, int R, int C, typename... Args>
-//     Eigen::Matrix<T, R, C> operator () (const Function& function, const Eigen::Matrix<T, R, C>& x, Args&&... args)
-//     {
-//         return optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function), x, std::forward<Args>(args)...);
-//     }
+    template <class Function, class T, int R, int C, typename... Args>
+    Eigen::Matrix<T, R, C> operator () (const Function& function, const Eigen::Matrix<T, R, C>& x, Args&&... args)
+    {
+        return optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function), x, std::forward<Args>(args)...);
+    }
     
-//     template <class Function, class Gradient, class T, int R, int C, typename... Args>
-//     Eigen::Matrix<T, R, C> operator () (const Function& function, const Gradient& gradient, const Eigen::Matrix<T, R, C>& x, Args&&... args)
-//     {
-//         return optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function, gradient), x, std::forward<Args>(args)...);
-//     }
+    template <class Function, class Gradient, class T, int R, int C, typename... Args>
+    Eigen::Matrix<T, R, C> operator () (const Function& function, const Gradient& gradient, const Eigen::Matrix<T, R, C>& x, Args&&... args)
+    {
+        return optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function, gradient), x, std::forward<Args>(args)...);
+    }
 
-//     template <class Function, class Gradient, class Hessian, class T, int R, int C, typename... Args>
-//     Eigen::Matrix<T, R, C> operator () (const Function& function, const Gradient& gradient, const Hessian& hessian, const Eigen::Matrix<T, R, C>& x, Args&&... args)
-//     {
-//         return optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function, gradient), ::nlpp::wrap::poly::Hessian<Eigen::Matrix<T, R, C>>(hessian), x, std::forward<Args>(args)...);
-//     }
-// };
+    template <class Function, class Gradient, class Hessian, class T, int R, int C, typename... Args>
+    Eigen::Matrix<T, R, C> operator () (const Function& function, const Gradient& gradient, const Hessian& hessian, const Eigen::Matrix<T, R, C>& x, Args&&... args)
+    {
+        return optimize(::nlpp::wrap::poly::FunctionGradient<Eigen::Matrix<T, R, C>>(function, gradient), ::nlpp::wrap::poly::Hessian<Eigen::Matrix<T, R, C>>(hessian), x, std::forward<Args>(args)...);
+    }
+
+    out::GradientOptimizer_<V> output;
+    stop::GradientOptimizer_<V> stop;
+};
+
+template <class V>
+struct LineSearchOptimizer : public GradientOptimizer<V>
+{
+    LineSearchOptimizer (const LineSearch<V>& lineSearch = LineSearch<V>{},
+                         const out::GradientOptimizer_<V>& output = out::GradientOptimizer_<V>{},
+                         const stop::GradientOptimizer_<V>& = stop::GradientOptimizer_<V>{}) :
+                         lineSearch(lineSearch), GradientOptimizer<V>(output, stop) {}
+    {
+    }
+
+    const LineSearch<V> lineSearch;
+};
 
 
-// } // namespace poly
+
+} // namespace poly
 
 } // namespace nlpp

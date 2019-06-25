@@ -153,46 +153,46 @@ struct LineSearch
 
 
 
-namespace poly
-{
+// namespace poly
+// {
 
-template <typename Float>
-struct LineSearch : public ::nlpp::poly::CloneBase<LineSearch<Float>>
-{
-	virtual ~LineSearch ()	{}
+// template <typename Float>
+// struct LineSearch : public ::nlpp::poly::CloneBase<LineSearch<Float>>
+// {
+// 	virtual ~LineSearch ()	{}
 
-    using V = ::nlpp::VecX<Float>;
+//     using V = ::nlpp::VecX<Float>;
 
-	virtual void initialize () = 0;
+// 	virtual void initialize () = 0;
 
-	virtual Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V>) = 0;
-};
-
-
-template <typename Float>
-struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearch<Float>>,
-					 public ::nlpp::LineSearch<LineSearch_<Float>>
-{
-	NLPP_USING_POLY_CLASS(LineSearch_, Base, ::nlpp::poly::PolyClass<LineSearch<Float>>);
-
-    using V = typename LineSearch<Float>::V;
+// 	virtual Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V>) = 0;
+// };
 
 
-	LineSearch_ () : Base(std::make_unique<StrongWolfe<Float>>()) {}
+// template <typename Float>
+// struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearch<Float>>,
+// 					 public ::nlpp::LineSearch<LineSearch_<Float>>
+// {
+// 	NLPP_USING_POLY_CLASS(LineSearch_, Base, ::nlpp::poly::PolyClass<LineSearch<Float>>);
 
-    void initialize ()
-	{
-		return impl->initialize();
-	}
-
-	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V> f)
-	{
-		return impl->lineSearch(f);
-	}
-};
+//     using V = typename LineSearch<Float>::V;
 
 
-} // namespace poly
+// 	LineSearch_ () : Base(std::make_unique<StrongWolfe<Float>>()) {}
+
+//     void initialize ()
+// 	{
+// 		return impl->initialize();
+// 	}
+
+// 	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V> f)
+// 	{
+// 		return impl->lineSearch(f);
+// 	}
+// };
+
+
+// } // namespace poly
 
 
 

@@ -21,12 +21,6 @@
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
 
-/// Macro aliases
-#define CPPOPT_USING_PARAMS_CG(...) CPPOPT_USING_PARAMS(__VA_ARGS__);	\
-									using Params::cg;					\
-									using Params::v;
-
-
 /// Builds a functor, to avoid a lot of copy/paste
 #define BUILD_CG_STRUCT(Op, ...) \
 \
@@ -85,11 +79,11 @@ BUILD_CG_STRUCT(auto fr = FR::operator()(fa, fb);
 namespace impl
 {
 
-template <class CGType, class Params_>
-struct CG : public Params_
+template <class CGType, class Base_>
+struct CG : public Base_
 {
-	CPPOPT_USING_PARAMS_CG(Params, params::CG<Params_, CGType>);
-	using Params::Params;
+	CPPOPT_USING_PARAMS(Base, Base_);
+	using Base::Base;
 
 
 	template <class Function, class V>
@@ -142,9 +136,9 @@ struct CG : public Params_
 
 
 template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct CG : public impl::CG<CGType, LineSearchOptimizer<LineSearch, Stop, Output>>
+struct CG : public impl::CG<CGType, LineSearchOptimizer<CG<CGType, LineSearch, Stop, Output>, LineSearch, Stop, Output>>
 {
-	using Impl = impl::CG<CGType, LineSearchOptimizer<LineSearch, Stop, Output>>;
+	using Impl = impl::CG<CGType, LineSearchOptimizer<CG<CGType, LineSearch, Stop, Output>, LineSearch, Stop, Output>>;
 	using Impl::Impl;
 
 	template <class Function, class V>
