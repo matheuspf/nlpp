@@ -180,11 +180,13 @@ struct StrongWolfe : public impl::StrongWolfe<Float, InitialStep>,
 namespace poly
 {
 
-template <typename Float, class InitialStep>
-struct StrongWolfe : public impl::StrongWolfe<Float, InitialStep>,
-					 public LineSearch<Float>
+template <class V, class InitialStep>
+struct StrongWolfe : public impl::StrongWolfe<::nlpp::impl::Scalar<V>, InitialStep>,
+					 public LineSearchBase<V>
 {
-	using Interface = LineSearch<Float>;
+	using Float = ::nlpp::impl::Scalar<V>;
+
+	using Interface = LineSearchBase<V>;
 	using Impl = impl::StrongWolfe<Float, InitialStep>;
 	using Impl::Impl;
 
@@ -193,7 +195,7 @@ struct StrongWolfe : public impl::StrongWolfe<Float, InitialStep>,
 		Impl::initialize();
 	}
 
-	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec> f)
+	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V> f)
 	{
 		return Impl::lineSearch(f);
 	}

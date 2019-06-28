@@ -149,23 +149,23 @@ struct CG : public impl::CG<CGType, LineSearchOptimizer<CG<CGType, LineSearch, S
 };
 
 
-// namespace poly
-// {
+namespace poly
+{
 
-// template <class CGType = ::nlpp::FR_PR, class V = ::nlpp::Vec>
-// struct CG : public ::nlpp::impl::CG<CGType, ::nlpp::poly::LineSearchOptimizer<V>>
-// {
-// 	using Impl = ::nlpp::impl::CG<CGType, ::nlpp::poly::LineSearchOptimizer<V>>;
-// 	using Impl::Impl;
+template <class CGType = ::nlpp::FR_PR, class V = ::nlpp::Vec>
+struct CG : public ::nlpp::impl::CG<CGType, ::nlpp::poly::LineSearchOptimizer<V>>
+{
+	using Impl = ::nlpp::impl::CG<CGType, ::nlpp::poly::LineSearchOptimizer<V>>;
+	using Impl::Impl;
 
-// 	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
-// 	{
-// 		return Impl::optimize(f, x);
-// 	}
+	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
+	{
+		return Impl::optimize(f, x);
+	}
 
-// 	virtual CG* clone_impl () const { return new CG(*this); }
-// };
+	virtual CG* clone_impl () const { return new CG(*this); }
+};
 
-// } // namespace poly
+} // namespace poly
 
 } // namespace nlpp

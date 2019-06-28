@@ -66,13 +66,13 @@ struct StrongWolfe;
 namespace poly
 {
 
-template <typename Float = types::Float>
-struct LineSearch;
+template <class V = Vec>
+struct LineSearchBase;
 
-template <typename Float = types::Float>
+template <class V = Vec>
 struct LineSearch_;
 
-template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
+template <class V = Vec, class InitialStep = ConstantStep<typename V::Scalar>>
 struct StrongWolfe;
 
 } // namespace poly

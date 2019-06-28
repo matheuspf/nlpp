@@ -110,25 +110,21 @@ namespace poly
 template <class V = ::nlpp::Vec>
 struct OptimizerBase : public ::nlpp::poly::CloneBase<OptimizerBase<V>>
 {
-    using Float = ::nlpp::impl::Scalar<V>;
-
     virtual ~OptimizerBase () {}
 
     virtual void initialize () = 0;
 
-    virtual void operator() (const ::nlpp::poly::Optimizer_&, const V&, ::nlpp::impl::Scalar<Float>) = 0;
+    virtual void operator() (const ::nlpp::poly::Optimizer<V>&, const V&, ::nlpp::impl::Scalar<::nlpp::impl::Scalar<V>>) = 0;
 };
 
 template <class V = ::nlpp::Vec>
 struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V>>
 {
-    using Float = ::nlpp::impl::Scalar<V>;
-
     virtual ~GradientOptimizerBase () {}
 
     virtual void initialize () = 0;
 
-    virtual void operator() (const ::nlpp::poly::GradientOptimizer_&, const V&, Float, const V&) = 0;
+    virtual void operator() (const ::nlpp::poly::GradientOptimizer<V>&, const V&, ::nlpp::impl::Scalar<V>, const V&) = 0;
 };
 
 
@@ -136,7 +132,6 @@ template <int Level = 0, class V = ::nlpp::Vec>
 struct Optimizer : public OptimizerBase<V>,
                    public ::nlpp::out::Optimizer<Level, ::nlpp::impl::Scalar<V>>
 {
-    using Float = ::nlpp::impl::Scalar<V>;
     using Impl = ::nlpp::out::Optimizer<Level, ::nlpp::impl::Scalar<V>>;
 
     virtual void initialize ()
@@ -144,11 +139,10 @@ struct Optimizer : public OptimizerBase<V>,
         Impl::initialize();
     }
 
-    virtual void operator() (const ::nlpp::poly::Optimizer_& optimizer, const V& x, Float fx)
+    virtual void operator() (const ::nlpp::poly::Optimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx)
     {
         return Impl::operator()(optimizer, x, fx);
     }
-    
 
     virtual Optimizer* clone_impl () const { return new Optimizer(*this); }
 };
@@ -157,7 +151,6 @@ template <int Level = 0, class V = ::nlpp::Vec>
 struct GradientOptimizer : public GradientOptimizerBase<V>,
                            public ::nlpp::out::GradientOptimizer<Level, ::nlpp::impl::Scalar<V>>
 {
-    using Float = ::nlpp::impl::Scalar<V>;
     using Impl = ::nlpp::out::GradientOptimizer<Level, ::nlpp::impl::Scalar<V>>;
 
     virtual void initialize ()
@@ -165,11 +158,10 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
         Impl::initialize();
     }
 
-    virtual void operator() (const ::nlpp::poly::GradientOptimizer_& optimizer, const V& x, Float fx, const V& gx)
+    virtual void operator() (const ::nlpp::poly::GradientOptimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx, const V& gx)
     {
         return Impl::operator()(optimizer, x, fx, gx);
     }
-    
 
     virtual GradientOptimizer* clone_impl () const { return new GradientOptimizer(*this); }
 };
@@ -180,16 +172,14 @@ struct Optimizer_ : public ::nlpp::poly::PolyClass<OptimizerBase<V>>
 {
     NLPP_USING_POLY_CLASS(Optimizer_, Base, ::nlpp::poly::PolyClass<OptimizerBase<V>>);
 
-    using Float = ::nlpp::impl::Scalar<V>;
-
-    GradientOptimizer_ () : Base(std::make_unique<Optimizer<0, V>>()) {}
+    Optimizer_ () : Base(std::make_unique<Optimizer<0, V>>()) {}
 
     void initialize ()
     {
         impl->initialize();
     }
 
-    virtual void operator() (const ::nlpp::poly::Optimizer_& optimizer, const V& x, Float fx, const V& gx)
+    virtual void operator() (const ::nlpp::poly::Optimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx, const V& gx)
     {
         impl->operator()(optimizer, x, fx, gx);
     }
@@ -207,18 +197,14 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
 {
     NLPP_USING_POLY_CLASS(GradientOptimizer_, Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);
 
-    using Float = ::nlpp::impl::Scalar<V>;
-
-
     GradientOptimizer_ () : Base(std::make_unique<GradientOptimizer<0, V>>()) {}
-
 
     void initialize ()
     {
         impl->initialize();
     }
 
-    virtual void operator() (const ::nlpp::poly::GradientOptimizer_& optimizer, const V& x, Float fx, const V& gx)
+    virtual void operator() (const ::nlpp::poly::GradientOptimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx, const V& gx)
     {
         impl->operator()(optimizer, x, fx, gx);
     }
