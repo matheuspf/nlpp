@@ -3,10 +3,7 @@
 #include "Helpers.h"
 
 
-namespace nlpp
-{
-
-namespace stop
+namespace nlpp::stop
 {
 
 template <bool Exclusive, typename Float>
@@ -20,8 +17,8 @@ struct Optimizer
         initialized = false;
     }
 
-    template <class Impl, class Stop, class Output, class V>
-    bool operator () (const ::nlpp::Optimizer<Impl, Stop, Output>& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx) 
+    template <class Opt, class V>
+    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx) 
     {
         bool doStop = false;
 
@@ -75,9 +72,8 @@ struct GradientOptimizer : public Optimizer<Exclusive, Float>
     GradientOptimizer(int maxIterations_ = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) : 
                       Base(maxIterations_, xTol, fTol), gTol(gTol) {}
 
-    template <class Impl, class Stop, class Output, class V>
-    bool operator () (const ::nlpp::GradientOptimizer<Impl, Stop, Output>& optimizer,
-                      const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx) 
+    template <class Opt, class V>
+    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx) 
     {
         bool gStop = gx.norm() < gTol;
 
@@ -104,8 +100,8 @@ struct GradientNorm
     {
     }
 
-    template <class Stop, class Output, class V>
-    bool operator () (const ::nlpp::Optimizer<Stop, Output>& optimizer, const Eigen::MatrixBase<V>&, double, const Eigen::MatrixBase<V>& gx) 
+    template <class Opt, class V>
+    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>&, Float, const Eigen::MatrixBase<V>& gx) 
     {
         return (gx.norm() / gx.size()) < norm;
     }
@@ -119,14 +115,14 @@ struct GradientNorm
     Float norm;
 };
 
+} // namespace nlpp::stop
 
 
-
-namespace poly
+namespace nlpp::poly::stop
 {
 
 template <typename V = ::nlpp::Vec>
-struct OptimizerBase : public ::nlpp::poly::CloneBase<OptimizerBase<::nlpp::impl::Scalar<V>>>
+struct OptimizerBase : public ::nlpp::poly::CloneBase<OptimizerBase<V>>
 {
     virtual ~OptimizerBase () {}
 
@@ -138,7 +134,7 @@ struct OptimizerBase : public ::nlpp::poly::CloneBase<OptimizerBase<::nlpp::impl
 };
 
 template <typename V = ::nlpp::Vec>
-struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<::nlpp::impl::Scalar<V>>>
+struct GradientOptimizerBase : public ::nlpp::poly::CloneBase<GradientOptimizerBase<V>>
 {
     virtual ~GradientOptimizerBase () {}
 
@@ -286,8 +282,4 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
 };
 
 
-} // namespace poly
-
-} // namespace stop
-
-} // namespace nlpp
+} // namespace nlpp::poly::stop

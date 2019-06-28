@@ -159,7 +159,7 @@ template <class V>
 struct Optimizer : public CloneBase<Optimizer<V>>
 {
     Optimizer (const out::Optimizer_<V>& output = out::Optimizer_<V>{},
-               const stop::Optimizer_<V>& = stop::Optimizer_<V>{}) : output(output), stop(stop)
+               const stop::Optimizer_<V>& stop = stop::Optimizer_<V>{}) : output(output), stop(stop)
     {
     }
 
@@ -193,10 +193,8 @@ struct Optimizer : public CloneBase<Optimizer<V>>
 template <class V>
 struct GradientOptimizer
 {
-    using Optimizer<V>::Optimizer;
-
     GradientOptimizer (const out::GradientOptimizer_<V>& output = out::GradientOptimizer_<V>{},
-               const stop::GradientOptimizer_<V>& = stop::GradientOptimizer_<V>{}) : output(output), stop(stop)
+               const stop::GradientOptimizer_<V>& stop = stop::GradientOptimizer_<V>{}) : output(output), stop(stop)
     {
     }
 
@@ -267,12 +265,12 @@ struct LineSearchOptimizer : public GradientOptimizer<V>
     
     LineSearchOptimizer (const LineSearch_<V>& lineSearch = LineSearch_<V>{},
                          const out::GradientOptimizer_<V>& output = out::GradientOptimizer_<V>{},
-                         const stop::GradientOptimizer_<V>& = stop::GradientOptimizer_<V>{}) :
-                         lineSearch(lineSearch), Base(output, stop) {}
+                         const stop::GradientOptimizer_<V>& stop = stop::GradientOptimizer_<V>{}) :
+                         lineSearch(lineSearch), Base(output, stop)
     {
     }
 
-    const LineSearch_<V> lineSearch;
+    LineSearch_<V> lineSearch;
 };
 
 } // namespace poly

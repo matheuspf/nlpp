@@ -65,21 +65,21 @@ struct PolyClass
 		return *this;
 	}
 
-    PolyClass (const PolyClass& PolyClass) : impl(PolyClass.impl ? PolyClass.impl->clone() : nullptr)
+    PolyClass (const PolyClass& polyClass) : impl(polyClass.impl ? polyClass.impl->clone() : nullptr)
 	{
 	}
 
-    PolyClass (PolyClass&& PolyClass) = default;
+    PolyClass (PolyClass&& polyClass) = default;
 
-    PolyClass& operator= (const PolyClass& PolyClass)
+    PolyClass& operator= (const PolyClass& polyClass)
 	{
-		if(PolyClass.impl)
-			impl = PolyClass.impl->clone();
+		if(polyClass.impl)
+			impl = polyClass.impl->clone();
 			
 		return *this;
 	}
 
-    PolyClass& operator= (PolyClass&& PolyClass) = default;
+    PolyClass& operator= (PolyClass&& polyClass) = default;
 
 
 	Base* get () const

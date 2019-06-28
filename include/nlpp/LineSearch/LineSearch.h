@@ -143,7 +143,7 @@ namespace poly
 {
 
 template <class V>
-struct LineSearchBase : public ::nlpp::poly::CloneBase<LineSearch<V>>
+struct LineSearchBase : public ::nlpp::poly::CloneBase<LineSearchBase<V>>
 {
 	virtual ~LineSearchBase ()	{}
 
@@ -157,9 +157,9 @@ template <class V>
 struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearchBase<V>>,
 					 public ::nlpp::LineSearch<LineSearch_<V>>
 {
-	NLPP_USING_POLY_CLASS(LineSearch_, Base, ::nlpp::poly::PolyClass<LineSearch<V>>);
+	NLPP_USING_POLY_CLASS(LineSearch_, Base, ::nlpp::poly::PolyClass<LineSearchBase<V>>);
 
-	LineSearch_ () : Base(std::make_unique<StrongWolfe<::nlpp::impl::Scalar<V>>>()) {}
+	LineSearch_ () : Base(std::make_unique<StrongWolfe<V>>()) {}
 
     void initialize ()
 	{

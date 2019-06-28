@@ -4,10 +4,7 @@
 
 
 
-namespace nlpp
-{
-
-namespace out
+namespace nlpp::out
 {
 
 template <typename Float>
@@ -36,8 +33,8 @@ struct Optimizer<1, Float> : public Optimizer<0, Float>
 {
     Optimizer (const handy::Print& printer = handy::Print("", "\n\n")) : Optimizer<0, Float>(printer) {}
 
-    template <class Stop, class Output, class V>
-    void operator() (const ::nlpp::Optimizer<Stop, Output>& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx)
+    template <class Opt, class V>
+    void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx)
     {
         printer("x:", x.transpose(), "\nfx:", fx);
     }
@@ -50,9 +47,8 @@ struct GradientOptimizer<1, Float> : public Optimizer<1, Float>
 
     GradientOptimizer (const handy::Print& printer = handy::Print("", "")) : Base(printer) {}
 
-    template <class LineSearch, class Stop, class Output, class V>
-    void operator() (const ::nlpp::LineSearchOptimizer<LineSearch, Stop, Output>& optimizer,
-                     const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx)
+    template <class Opt, class V>
+    void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx)
     {
         Base::operator()(optimizer, x, fx);
         printer( "\ngx:", gx.transpose(), "\n\n");
@@ -68,8 +64,8 @@ struct Optimizer<2, Float>
         vX.clear();
     }
 
-    template <class Stop, class Output, class V>
-    void operator() (const ::nlpp::Optimizer<Stop, Output>& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx)
+    template <class Opt, class V>
+    void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx)
     {
         vFx.push_back(fx);
         vX.push_back(::nlpp::impl::cast<Float>(x));
@@ -91,9 +87,8 @@ struct GradientOptimizer<2, Float> : public Optimizer<2, Float>
         vGx.clear();
     }
 
-    template <class LineSearch, class Stop, class Output, class V>
-    void operator() (const ::nlpp::LineSearchOptimizer<LineSearch, Stop, Output>& optimizer,
-                     const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx)
+    template <class Opt, class V>
+    void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx)
     {
         Base::operator()(optimizer, x, fx);
         vGx.push_back(::nlpp::impl::cast<Float>(gx));
@@ -102,9 +97,10 @@ struct GradientOptimizer<2, Float> : public Optimizer<2, Float>
     std::vector<VecX<Float>> vGx;
 };
 
+} // namespace nlpp::out
 
 
-namespace poly
+namespace nlpp::poly::out
 {
 
 template <class V = ::nlpp::Vec>
@@ -231,9 +227,4 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
     // }
 };
 
-
-} // namespace poly 
-
-} // namespace out
-
-} // namespace nlpp
+} // namespace nlpp::poly ::out
