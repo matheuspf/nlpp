@@ -1,8 +1,8 @@
 [submodule "include/nlpp/external/Eigen"]
-	path = include/nlpp/external/Eigen
+	path = nlpp/external/Eigen
 	url = https://github.com/eigenteam/eigen-git-mirror
 [submodule "include/nlpp/external/handy"]
-	path = include/nlpp/external/handy
+	path = nlpp/external/handy
 	url = https://github.com/matheuspf/handy
 [submodule "tests/external/googletest"]
 	path = tests/external/googletest
@@ -11,5 +11,5 @@
 	path = benchmark/external/googlebench
 	url = https://github.com/google/benchmark
 [submodule "include/nlpp/external/spectra"]
-	path = include/nlpp/external/spectra
+	path = nlpp/external/spectra
 	url = https://github.com/yixuan/spectra
