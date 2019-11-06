@@ -136,17 +136,7 @@ struct CG : public Base_
 
 
 template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct CG : public impl::CG<CGType, LineSearchOptimizer<CG<CGType, LineSearch, Stop, Output>, LineSearch, Stop, Output>>
-{
-	using Impl = impl::CG<CGType, LineSearchOptimizer<CG<CGType, LineSearch, Stop, Output>, LineSearch, Stop, Output>>;
-	using Impl::Impl;
-
-	template <class Function, class V>
-	V optimize (Function f, V x)
-	{
-		return Impl::optimize(f, x);
-	}
-};
+using CG = impl::CG<CGType, LineSearchOptimizer<impl::CG<CGType, LineSearch, Stop, Output>, LineSearch, Stop, Output>>;
 
 
 namespace poly

@@ -27,13 +27,16 @@
 
 
 
-
 /// Base parameter definitions
-#define CPPOPT_USING_PARAMS(TYPE, ...) using TYPE = __VA_ARGS__;    \
-                                       using TYPE::lineSearch;      \
-                                       using TYPE::stop;            \
-                                       using TYPE::output;
+#define NLPP_USING_OPTIMIZER(TYPE, ...) using TYPE = __VA_ARGS__;    \
+                                        using TYPE::stop;            \
+                                        using TYPE::output;          \
+                                        using TYPE::TYPE;
 
+#define NLPP_USING_GRADIENT_OPTIMIZER(TYPE, ...) NLPP_USING_OPTIMIZER(TYPE, __VA_ARGS__)
+
+#define NLPP_USING_LINESEARCH_OPTIMIZER(TYPE, ...) NLPP_USING_GRADIENT_OPTIMIZER(TYPE, __VA_ARGS__) \
+                                                   using TYPE::lineSearch;
 
 
 namespace nlpp
@@ -61,8 +64,8 @@ namespace nlpp
 template <class Impl, class Stop, class Output>
 struct Optimizer
 {
-    Optimizer (const Optimizer&) = default;
-    Optimizer (Optimizer&&) = default;
+    // Optimizer (const Optimizer&) = default;
+    // Optimizer (Optimizer&&) = default;
 
     Optimizer (const Stop& stop = Stop{}, const Output& output = Output{}) : stop(stop), output(output)
     {
