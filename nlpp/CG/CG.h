@@ -12,91 +12,54 @@
 */
 
 #pragma once
-#include "../Helpers/Helpers.h"
-#include "../Helpers/Optimizer.h"
-#include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
+#include "CG_dec.h"
+
+namespace nlpp
+{
 
 namespace impl
 {
 
-template <class CGType, class Base_>
-struct CG : public Base_
+template <class Base_>
+template <class Function, class V>
+V CG<Base_>::optimize (Function f, V x)
 {
-	CPPOPT_USING_PARAMS(Base, Base_);
-	using Base::Base;
+    V fa, dir, fb(x.rows(), x.cols());
 
+    impl::Scalar<V> fxOld, fx;
 
-	template <class Function, class V>
-	V optimize (Function f, V x)
-	{
-		V fa, dir, fb(x.rows(), x.cols());
+    std::tie(fxOld, fa) = f(x);
 
-		impl::Scalar<V> fxOld, fx;
+    dir = -fa;
 
-		std::tie(fxOld, fa) = f(x);
+    for(int iter = 0; iter < stop.maxIterations(); ++iter)
+    {
+        double alpha = lineSearch(f, x, dir);
+    
+        x = x + alpha * dir;
 
-		dir = -fa;
+        fx = f(x, fb);
+    
+        if(stop(*this, x, fx, fb))
+            break;
+    
+        if((fa.dot(fb) / fb.dot(fb)) >= v)
+            dir = -fb;
+    
+        else
+            dir = -fb + cg(fa, fb, dir) * dir;
+    
+        fxOld = fx;
+    
+        fa = fb;
+    
+        output(*this, x, fx, fb);
+    }
 
-		for(int iter = 0; iter < stop.maxIterations(); ++iter)
-		{
-			double alpha = lineSearch(f, x, dir);
-			
-			x = x + alpha * dir;
-
-			fx = f(x, fb);
-			
-
-			if(stop(*this, x, fx, fb))
-				break;
-
-			if((fa.dot(fb) / fb.dot(fb)) >= v)
-				dir = -fb;
-
-			else
-				dir = -fb + cg(fa, fb, dir) * dir;
-
-
-			fxOld = fx;
-
-			fa = fb;
-
-			output(*this, x, fx, fb);
-		}
-
-		return x;
-	}
-
-
-	CGType cg;			///< The functor that calculates the search direction, given the current gradient and the previous directions
-
-	double v = 0.1;		///< The minimum factor of orthogonality that the current direction must have
-};
+    return x;
+}
 
 } // namespace impl
-
-
-template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-using CG = impl::CG<CGType, LineSearchOptimizer<impl::CG<CGType, LineSearch, Stop, Output>, LineSearch, Stop, Output>>;
-
-
-namespace poly
-{
-
-template <class CGType = ::nlpp::FR_PR, class V = ::nlpp::Vec>
-struct CG : public ::nlpp::impl::CG<CGType, ::nlpp::poly::LineSearchOptimizer<V>>
-{
-	using Impl = ::nlpp::impl::CG<CGType, ::nlpp::poly::LineSearchOptimizer<V>>;
-	using Impl::Impl;
-
-	virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V> f, V x)
-	{
-		return Impl::optimize(f, x);
-	}
-
-	virtual CG* clone_impl () const { return new CG(*this); }
-};
-
-} // namespace poly
 
 } // namespace nlpp

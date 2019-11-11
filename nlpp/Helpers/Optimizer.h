@@ -159,7 +159,7 @@ namespace poly
 {
 
 template <class V>
-struct Optimizer : public CloneBase<Optimizer<V>>
+struct Optimizer // : public CloneBase<Optimizer<V>>
 {
     Optimizer (const out::Optimizer_<V>& output = out::Optimizer_<V>{},
                const stop::Optimizer_<V>& stop = stop::Optimizer_<V>{}) : output(output), stop(stop)

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../Helpers/Helpers.h"
+#include "../Helpers/Optimizer.h"
+#include "../LineSearch/StrongWolfe/StrongWolfe.h"
 #include "projections_dec.hpp"
 
 
@@ -14,7 +16,8 @@ template <class Base_>
 struct CG : public Base_
 {
     NLPP_USING_LINESEARCH_OPTIMIZER(Base, Base_);
-    using CG::cg;
+    using Base::cg;
+    using Base::v;
 
     template <class Function, class V>
     V optimize (Function f, V x);
@@ -25,16 +28,21 @@ struct CG : public Base_
 template <class Impl, class CGType, class LineSearch, class Stop, class Output>
 struct CGBase : public LineSearchOptimizer<Impl, LineSearch, Stop, Output>
 {
-    NLPP_USING_LINESEARCH_OPTIMIZER(Base, Base_);
+    NLPP_USING_LINESEARCH_OPTIMIZER(Base, LineSearchOptimizer<Impl, LineSearch, Stop, Output>);
+
     CGType cg;
+    double v = 0.1;     ///< The minimum factor of orthogonality that the current direction must have
 };
 
-
-
 template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+struct CG : public impl::CG<CGBase<CG<CGType, LineSearch, Stop, Output>, CGType, LineSearch, Stop, Output>>
+{
+    NLPP_USING_LINESEARCH_OPTIMIZER(Base, impl::CG<CGBase<CG<CGType, LineSearch, Stop, Output>, CGType, LineSearch, Stop, Output>>);
+    using Base::optimize;
+};
 
-
-using CG = impl::CG<CGType, LineSearchOptimizer<impl::CG<CGType, LineSearch, Stop, Output>, LineSearch, Stop, Output>>;
+// template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+// using CG = impl::CG<CGBase<CG<CGType, LineSearch, Stop, Output>, CGType, LineSearch, Stop, Output>>;
 
 
 } // namespace nlpp
