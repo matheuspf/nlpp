@@ -7,7 +7,7 @@ namespace nlpp_p
 template <class V>
 V CG<V>::optimize (nlpp::wrap::poly::FunctionGradient<V> f, V x)
 {
-	return Impl::optimize(f, x);
+	return Base::optimize(f, x);
 }
 
 template <class V>

@@ -1,9 +1,9 @@
 #include "nlpp/CG/projections.hpp"
-#include "lib/cpp/include/CG/projections.hpp"
+#include "lib/cpp/include/cg/projections.hpp"
 
 #define NLPP_CG_PROJECTION_POLY(NAME) \
 template <class V> \
-nlpp::impl::Scalar<V> NAME<V>::operator () (const V& fa, const V& fb, const V& dir = V{}) const \
+nlpp::impl::Scalar<V> NAME<V>::operator () (const V& fa, const V& fb, const V& dir) const \
 {   \
     return Base::operator()(fa, fb, dir);   \
 }   \
@@ -18,7 +18,7 @@ Projection<V>::Projection() : Base(std::make_unique<FR_PR<V>>())
 }
 
 template <class V>
-nlpp::impl::Scalar<V> Projection<V>::operator () (const V& fa, const V& fb, const V& dir = V{}) const
+nlpp::impl::Scalar<V> Projection<V>::operator () (const V& fa, const V& fb, const V& dir) const
 {
     return impl->operator()(fa, fb, dir);
 }

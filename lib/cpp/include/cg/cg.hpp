@@ -7,9 +7,9 @@ namespace nlpp_p
 {
 
 template <class V = nlpp::Vec>
-struct CGBase : public LineSearchOptimizer<nlpp::impl::Scalar<Float>>
+struct CGBase : public nlpp::poly::LineSearchOptimizer<V>
 {
-    NLPP_USING_LINESEARCH_OPTIMIZER(Base, LineSearchOptimizer<nlpp::impl::Scalar<Float>>);
+    NLPP_USING_LINESEARCH_OPTIMIZER(Base,  nlpp::poly::LineSearchOptimizer<V>);
 
     Projection<V> cg;
 	double v = 0.1;

@@ -4,29 +4,32 @@
 
 #define NLPP_CG_PROJECTION_DEC_POLY(NAME) \
 template <class V = nlpp::Vec> \
-struct NAME : nlpp::NAME  \
+struct NAME : public nlpp::NAME, public ProjectionBase<V>  \
 {   \
-    using Base = nlpp::NAME;   \
-    using Base::Base;          \
+    using Base = ProjectionBase<V>; \
+    using Impl = nlpp::NAME;   \
+    using Impl::Impl;          \
     virtual nlpp::impl::Scalar<V> operator () (const V& fa, const V& fb, const V& dir = V{}) const; \
+    virtual NAME* clone_impl () const { return new NAME(*this); }   \
 };
 
 namespace nlpp_p
 {
 
 template <class V = nlpp::Vec>
-struct ProjectionBase
+struct ProjectionBase : public nlpp::poly::CloneBase<ProjectionBase<V>>
 {
-    virtual nlpp::impl::Scalar<V> operator () (const V&, const V&, const V& = V{});
+    virtual ~ProjectionBase () = 0;
+    virtual nlpp::impl::Scalar<V> operator () (const V&, const V&, const V& = V{}) const = 0;
 };
 
 template <class V = nlpp::Vec>
 struct Projection : public ::nlpp::poly::PolyClass<ProjectionBase<V>>
 {
-    NLPP_USING_POLY_CLASS(Projection, Base, ::nlpp::poly::PolyClass<ProjectionBase<V>);
+    NLPP_USING_POLY_CLASS(Projection, Base, ::nlpp::poly::PolyClass<ProjectionBase<V>>);
 
     Projection();
-    virtual nlpp::impl::Scalar<V> operator () (const V& fa, const V& fb, const V& dir = V{}) const;
+    nlpp::impl::Scalar<V> operator () (const V& fa, const V& fb, const V& dir = V{}) const;
 };
 
 NLPP_CG_PROJECTION_DEC_POLY(FR)
