@@ -14,6 +14,7 @@
 #pragma once
 
 #include "CG_dec.h"
+#include "projections.hpp"
 
 namespace nlpp
 {

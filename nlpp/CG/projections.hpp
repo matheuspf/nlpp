@@ -7,43 +7,43 @@ namespace nlpp
 {
 
 template <class V>
-impl::Scalar<V> FR::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir = V()) const
+impl::Scalar<V> FR::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir) const
 {
     return fb.dot(fb) / fa.dot(fa);
 }
 
 template <class V>
-impl::Scalar<V> PR::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir = V()) const
+impl::Scalar<V> PR::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir) const
 {
     return fb.dot(fb - fa) / fa.dot(fa);
 }
 
 template <class V>
-impl::Scalar<V> PR_Abs::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir = V()) const
+impl::Scalar<V> PR_Abs::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir) const
 {
      return std::abs(PR::operator()(fa, fb));
 }
 
 template <class V>
-impl::Scalar<V> PR_Plus::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir = V()) const
+impl::Scalar<V> PR_Plus::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir) const
 {
     return std::max(0.0, PR::operator()(fa, fb));
 }
 
 template <class V>
-impl::Scalar<V> HS::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir = V()) const
+impl::Scalar<V> HS::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir) const
 {
      return fb.dot(fb - fa) / dir.dot(fb - fa);
 }
 
 template <class V>
-impl::Scalar<V> DY::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir = V()) const
+impl::Scalar<V> DY::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir) const
 {
     return fb.dot(fb) / dir.dot(fb - fa);
 }
 
 template <class V>
-impl::Scalar<V> HZ::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir = V()) const
+impl::Scalar<V> HZ::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir) const
 {
     Vec y = fb - fa;
 
@@ -54,7 +54,7 @@ impl::Scalar<V> HZ::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::Ma
 }
 
 template <class V>
-impl::Scalar<V> FR_PR::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir = V()) const
+impl::Scalar<V> FR_PR::operator () (const Eigen::MatrixBase<V>& fa, const Eigen::MatrixBase<V>& fb, const Eigen::MatrixBase<V>& dir) const
 {
     auto fr = FR::operator()(fa, fb);
     auto pr = PR::operator()(fa, fb);

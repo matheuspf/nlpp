@@ -20,7 +20,7 @@ struct CG : public Base_
     using Base::v;
 
     template <class Function, class V>
-    V optimize (Function f, V x);
+    V optimize (Function, V);
 };
 
 } // namespace impl
