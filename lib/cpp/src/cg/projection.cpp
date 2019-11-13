@@ -5,7 +5,7 @@
 template <class V> \
 nlpp::impl::Scalar<V> NAME<V>::operator () (const V& fa, const V& fb, const V& dir) const \
 {   \
-    return Base::operator()(fa, fb, dir);   \
+    return Impl::operator()(fa, fb, dir);   \
 }   \
 template class NAME<>;
 

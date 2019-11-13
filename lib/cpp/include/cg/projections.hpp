@@ -19,7 +19,7 @@ namespace nlpp_p
 template <class V = nlpp::Vec>
 struct ProjectionBase : public nlpp::poly::CloneBase<ProjectionBase<V>>
 {
-    virtual ~ProjectionBase () = 0;
+    virtual ~ProjectionBase () = default;
     virtual nlpp::impl::Scalar<V> operator () (const V&, const V&, const V& = V{}) const = 0;
 };
 

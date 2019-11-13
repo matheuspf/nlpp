@@ -39,7 +39,7 @@ struct CloneBase
 template <class Base>
 struct PolyClass
 {
-	virtual ~PolyClass () {}
+	virtual ~PolyClass () = default;
 
     PolyClass (std::unique_ptr<Base> ptr) : impl(std::move(ptr))
 	{

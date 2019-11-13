@@ -172,6 +172,7 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
                            public ::nlpp::stop::GradientOptimizer<Exclusive, ::nlpp::impl::Scalar<V>>
 {
     using Impl = ::nlpp::stop::GradientOptimizer<Exclusive, ::nlpp::impl::Scalar<V>>;
+    using Impl::Impl;
 
     virtual void initialize ()
     {
