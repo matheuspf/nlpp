@@ -1,6 +1,10 @@
 #pragma once
 
-#include "Config.h"
+#include "config.hpp"
+
+#include <type_traits>
+#include <memory>
+#include <deque>
 
 
 #if EIGEN_INCLUDE_LOCAL
