@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Include.h"
+#include "include.hpp"
 
 #ifndef NLPP_FLOAT
 	#define NLPP_FLOAT double
@@ -38,6 +38,30 @@ using Mat = MatX<types::Float>;
 
 using Veci = VecX<types::Int>;
 using Mati = MatX<types::Int>;
+//@}
+
+
+/** @name
+ *  @brief Some aliases to avoid some typenames's/template's with Eigen types
+*/
+//@{
+template <class V>
+using Plain = typename V::PlainObject;
+
+template <class V>
+using PlainMatrix = typename V::PlainMatrix;
+
+template <class V>
+using PlainArray = typename V::PlainArray;
+
+template <class V>
+using Scalar = typename V::Scalar;
+
+template <class V>
+using Plain2D = Eigen::Matrix<Scalar<V>, V::SizeAtCompileTime, V::SizeAtCompileTime>;
+
+template <class V>
+using Ref = Eigen::Ref<Plain<V>>;
 //@}
 
 

@@ -3,13 +3,8 @@
 */
 #pragma once
 
-#include <type_traits>
-#include <memory>
-#include <deque>
-
-#include "Include.h"
-#include "Types.h"
-#include "ForwardDeclarations.h"
+#include "include.hpp"
+#include "types.hpp"
 
 #define NLPP_USING_POLY_CLASS(ClassName, BaseName, ...) \
 	using BaseName = __VA_ARGS__;	\
@@ -30,75 +25,40 @@ namespace poly
 template <class Impl>
 struct CloneBase
 {
-    auto clone () const { return std::unique_ptr<Impl>(clone_impl()); }
-
-    virtual Impl* clone_impl () const = 0;
+    std::unique_ptr<Impl> clone () const;
+    virtual Impl* cloneImpl () const = 0;
 };
 
 
 template <class Base>
 struct PolyClass
 {
-	virtual ~PolyClass () = default;
+    virtual ~PolyClass () = default;
 
-    PolyClass (std::unique_ptr<Base> ptr) : impl(std::move(ptr))
-	{
-	}
-
-	template <class Derived_, class Derived = std::decay_t<Derived_>,
-		 	  std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
-	PolyClass (Derived_&& derived) : impl(std::make_unique<Derived>(std::forward<Derived>(derived)))
-	{
-	}
-
-    PolyClass& operator= (std::unique_ptr<Base> ptr)
-	{
-		impl = std::move(ptr);
-		return *this;
-	}
-
-	template <class Derived_, class Derived = std::decay_t<Derived_>,
-		 	  std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
-	PolyClass& operator= (Derived_&& derived)
-	{
-		impl = std::make_unique<Derived>(std::forward<Derived>(derived));
-		return *this;
-	}
-
-    PolyClass (const PolyClass& polyClass) : impl(polyClass.impl ? polyClass.impl->clone() : nullptr)
-	{
-	}
-
+    PolyClass (std::unique_ptr<Base> ptr);
+    PolyClass (const PolyClass& polyClass);
     PolyClass (PolyClass&& polyClass) = default;
 
-    PolyClass& operator= (const PolyClass& polyClass)
-	{
-		if(polyClass.impl)
-			impl = polyClass.impl->clone();
-			
-		return *this;
-	}
+    template <class Derived_, class Derived = std::decay_t<Derived_>,
+               std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
+    PolyClass (Derived_&& derived);
+
 
     PolyClass& operator= (PolyClass&& polyClass) = default;
 
+    PolyClass& operator= (std::unique_ptr<Base> ptr);
 
-	Base* get () const
-	{
-		return impl.get();
-	}
+    template <class Derived_, class Derived = std::decay_t<Derived_>>
+    PolyClass& operator= (Derived_&& derived);
 
-	Base* operator-> () const
-	{
-		return get();
-	}
+    PolyClass& operator= (const PolyClass& polyClass)
 
+    Base* get () const;
+
+    Base* operator-> () const;
 
 	template <class T>
-	void set (T&& t)
-	{
-		operator=(std::forward<T>(t));
-	}
-
+	void set (T&& t);
 
     std::unique_ptr<Base> impl;
 };
@@ -169,47 +129,11 @@ constexpr bool isScalar = IsScalar<T>::value;
 //@}
 
 
-
-/** @name
- *  @brief Some aliases to avoid some typenames's/template's with Eigen types
-*/
-//@{
-template <class V>
-using Plain = typename V::PlainObject;
-
-template <class V>
-using PlainMatrix = typename V::PlainMatrix;
-
-template <class V>
-using PlainArray = typename V::PlainArray;
-
-template <class V>
-using Scalar = typename V::Scalar;
-
-template <class V>
-using Plain2D = Eigen::Matrix<Scalar<V>, V::SizeAtCompileTime, V::SizeAtCompileTime>;
-
-template <class V>
-using Ref = Eigen::Ref<Plain<V>>;
-
 template <typename T, class V>
-constexpr decltype(auto) cast (V&& v)
-{
-	return v.template cast<T>();
-}
+constexpr decltype(auto) cast (V&& v);
 
 template <class V>
-std::string toString (const V& x)
-{
-	std::stringstream ss;
-
-	ss << x;
-
-	return ss.str();
-}
-
-//@}
-
+std::string toString (const V& x);
 
 /** @name
  *  @brief Define function overloading calling precedence
@@ -260,29 +184,15 @@ constexpr double phi = phi_<types::Float>;
 */
 //@{
 template <typename T>
-inline constexpr decltype(auto) shift (T&& x)
-{
-	return std::forward<T>(x);
-}
+inline constexpr decltype(auto) shift (T&& x);
 
 template <typename T, typename U, typename... Args>
-inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args)
-{
-	x = std::forward<U>(y);
-
-	return shift(std::forward<U>(y), std::forward<Args>(args)...);
-}
+inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args);
 //@}
 
 
 /// Implement Matlab's sign function
 template <typename T>
-inline constexpr int sign (T t)
-{
-    return int(T{0} < t) - int(t < T{0});
-}
-
-
-
+inline constexpr int sign (T t);
 
 } // namespace nlpp
