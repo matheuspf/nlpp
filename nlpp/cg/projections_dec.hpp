@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Helpers/Helpers.h"
+#include "../helpers/helpers.hpp"
 
 /// Builds a functor, to avoid a lot of copy/paste
 #define NLPP_CG_PROJECTION_DEC(...) \

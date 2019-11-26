@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../../Helpers/Helpers.h"
+#include "../../helpers/helpers.hpp"
 
 
 namespace nlpp

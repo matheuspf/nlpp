@@ -3,7 +3,7 @@
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
-#include <nlpp/Helpers/Helpers.h>
+#include <nlpp/helpers/helpers.hpp>
 
 
 namespace nlpp_js

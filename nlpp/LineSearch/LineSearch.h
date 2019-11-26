@@ -4,12 +4,9 @@
 
 #pragma once
 
-#include "../Helpers/Helpers.h"
-
-#include "../Helpers/Wrappers.h"
-
-#include "../Helpers/FiniteDifference.h"
-
+#include "helpers/helpers.hpp"
+#include "utils/wrappers.hpp"
+#include "utils/finiteDifference.hpp"
 #include "InitialStep/Constant.h"
 
 

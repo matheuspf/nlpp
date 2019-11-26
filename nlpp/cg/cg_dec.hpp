@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Helpers/Helpers.h"
-#include "../Helpers/Optimizer.h"
+#include "../helpers/helpers.hpp"
+#include "../utils/optimizer.hpp"
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 #include "projections_dec.hpp"
 

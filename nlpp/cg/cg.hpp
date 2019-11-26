@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "CG_dec.h"
+#include "cg_dec.hpp"
 #include "projections.hpp"
 
 namespace nlpp

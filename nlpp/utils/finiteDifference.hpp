@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "helpers.hpp"
-#include "wrappers.hpp"
+#include "helpers/helpers.hpp"
+#include "utils/wrappers.hpp"
 
 /** @defgroup FiniteDifferenceGroup Finite Difference
     @copydoc FiniteDifference.h

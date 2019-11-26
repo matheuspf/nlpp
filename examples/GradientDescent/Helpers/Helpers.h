@@ -3,7 +3,7 @@
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
-#include "../../../../include/nlpp/Helpers/Helpers.h"
+#include "../../../../include/nlpp/helpers/helpers.hpp"
 
 namespace js_nlp
 {

@@ -11,20 +11,13 @@
 
 //#include "../LineSearch/Goldstein/Goldstein.h"
 
-#include "Helpers.h"
-
-#include "FiniteDifference.h"
-
-#include "Wrappers.h"
-
-#include "Output.h"
-
-#include "Stop.h"
-
-#include "Parameters.h"
+#include "helpers/helpers.hpp"
+#include "utils/finiteDifference.hpp"
+#include "utils/wrappers.hpp"
+#include "utils/output.hpp"
+#include "utils/stop.hpp"
 
 #include "../LineSearch/LineSearch.h"
-
 
 
 /// Base parameter definitions

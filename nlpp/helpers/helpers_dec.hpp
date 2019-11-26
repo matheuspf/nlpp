@@ -39,19 +39,17 @@ struct PolyClass
     PolyClass (const PolyClass& polyClass);
     PolyClass (PolyClass&& polyClass) = default;
 
-    template <class Derived_, class Derived = std::decay_t<Derived_>,
-               std::enable_if_t<std::is_base_of<Base, Derived>::value, int> = 0>
-    PolyClass (Derived_&& derived);
+    template <class Derived, std::enable_if_t<std::is_base_of_v<Base, Derived>, int> = 0>
+    PolyClass (Derived&& derived);
 
 
     PolyClass& operator= (PolyClass&& polyClass) = default;
 
     PolyClass& operator= (std::unique_ptr<Base> ptr);
 
-    template <class Derived_, class Derived = std::decay_t<Derived_>>
-    PolyClass& operator= (Derived_&& derived);
-
-    PolyClass& operator= (const PolyClass& polyClass)
+    template <class Derived>
+    PolyClass& operator= (Derived&& derived);
+    PolyClass& operator= (const PolyClass& polyClass);
 
     Base* get () const;
 
@@ -177,8 +175,6 @@ constexpr double phi = phi_<types::Float>;
 
 } // namespace constants
 
-
-
 /** @name
  *  @brief Useful for some line search operations
 */
@@ -189,7 +185,6 @@ inline constexpr decltype(auto) shift (T&& x);
 template <typename T, typename U, typename... Args>
 inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args);
 //@}
-
 
 /// Implement Matlab's sign function
 template <typename T>

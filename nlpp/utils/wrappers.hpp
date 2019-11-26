@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "Helpers.h"
-
-#include "FiniteDifference.h"
+#include "helpers/helpers.hpp"
+#include "utils/finiteDifference.hpp"
 
 
 namespace nlpp

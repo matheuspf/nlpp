@@ -80,7 +80,7 @@ set(detail_header_files
     ${CMAKE_CURRENT_SOURCE_DIR}/nlpp/Helpers/Config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/nlpp/Helpers/FiniteDifference.h
     ${CMAKE_CURRENT_SOURCE_DIR}/nlpp/Helpers/ForwardDeclarations.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/nlpp/Helpers/Helpers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/nlpp/helpers/helpers.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/nlpp/Helpers/Include.h
     ${CMAKE_CURRENT_SOURCE_DIR}/nlpp/Helpers/Optimizer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/nlpp/Helpers/Output.h
