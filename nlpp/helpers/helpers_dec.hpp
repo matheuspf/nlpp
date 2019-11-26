@@ -26,7 +26,7 @@ template <class Impl>
 struct CloneBase
 {
     std::unique_ptr<Impl> clone () const;
-    virtual Impl* cloneImpl () const = 0;
+    virtual Impl* clone_impl () const = 0;
 };
 
 
@@ -47,8 +47,9 @@ struct PolyClass
 
     PolyClass& operator= (std::unique_ptr<Base> ptr);
 
-    template <class Derived>
+    template <class Derived, std::enable_if_t<std::is_base_of_v<Base, Derived>, int>>
     PolyClass& operator= (Derived&& derived);
+
     PolyClass& operator= (const PolyClass& polyClass);
 
     Base* get () const;
@@ -189,5 +190,7 @@ inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args);
 /// Implement Matlab's sign function
 template <typename T>
 inline constexpr int sign (T t);
+
+template <class...> constexpr std::false_type always_false{};
 
 } // namespace nlpp

@@ -42,15 +42,10 @@ PolyClass<Base>& PolyClass<Base>::operator= (std::unique_ptr<Base> ptr)
 }
 
 template <class Base>
-template <class Derived>
+template <class Derived, std::enable_if_t<std::is_base_of_v<Base, Derived>, int>>
 PolyClass<Base>& PolyClass<Base>::operator= (Derived&& derived)
 {
-    if constexpr(std::is_base_of_v<Base, std::decay_t<Derived>>)
-       impl = std::make_unique<std::decay_t<Derived>>(std::forward<Derived>(derived));
-
-    else
-        static_assert(false, "Wrong template parameter");
-
+    impl = std::make_unique<std::decay_t<Derived>>(std::forward<Derived>(derived));
     return *this;
 }
 

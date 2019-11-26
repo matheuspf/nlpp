@@ -18,9 +18,10 @@ namespace nlpp
 /// Default types
 namespace types
 {
-	using Float = NLPP_FLOAT;
-	using Int = NLPP_INT;
-}
+    using Float = NLPP_FLOAT;
+    using Int = NLPP_INT;
+
+} // namespace types
 
 
 /** @name
@@ -40,6 +41,8 @@ using Veci = VecX<types::Int>;
 using Mati = MatX<types::Int>;
 //@}
 
+namespace impl
+{
 
 /** @name
  *  @brief Some aliases to avoid some typenames's/template's with Eigen types
@@ -64,5 +67,6 @@ template <class V>
 using Ref = Eigen::Ref<Plain<V>>;
 //@}
 
+} // namespace impl
 
 } // namespace std

@@ -1,135 +1,114 @@
+/** @file
+ * 
+ *  @brief This file defines some wrapers over functions that calculate gradients or function/gradient values.
+ * 
+ *  @details The idea is to provide an uniform interface to be used in algorithms that need both function and gradient
+ *           to be calculated.
+ * 
+ *           If an user has, for example, a routine for calculating the values of a function @c f for a given vector @c x,
+ *           and also a separate routine for calculating the gradients of @c f, the FunctionGradient class provides a way to
+ *           join both routines in a single function/gradient routine.
+ * 
+ *           Also, if a user has a single routine that calculates both function and gradients value for a function @c f,
+ *           FunctionGradient can also provide an interface for calculating function and gradients separatelly:
+ *          
+ *           @snippet Helpers/Gradient.cpp FunctionGradient snippet
+*/
+
 #pragma once
 
-#include "helpers/helpers.hpp"
-#include "utils/finiteDifference.hpp"
+#include "helpers/helpers_dec.hpp"
+#include "utils/finiteDifference_dec.hpp"
 
 
 namespace nlpp
 {
 
+/// Wrap namespace
 namespace wrap
 {
 
+
+/** @defgroup GradientBaseGroup Gradient Base
+    @copydoc Helpers/Gradient.h
+*/
+//@{
+
+/** @name
+ *  @brief Check if the class @c T is a function, gradient or function/gradient functor, taking parameters of type @c Vec
+ * 
+ *  @tparam T The class to check
+ *  @tparam Vec The type of vector that @c T takes as argument
+*/
+//@{
+ 
+/// Check if class T is a function functor
 template <class T, class V>
-constexpr int functionType ()
-{
-    /// If T has an function member `Float function(V)`
-    if constexpr(std::is_floating_point_v<decltype(std::declval<T>().function(std::declval<V>()))>)
-        return 0;
-    
-    /// If T has an function member `Float operator()(V)`
-    if constexpr(std::is_floating_point_v<decltype(std::declval<U>().operator()(std::declval<V>()))>)
-        return 1;
-    
-    return -1;
-}
+constexpr int functionType ();
 
+/// Check if class T is a gradient functor
 template <class T, class V>
-constexpr int gradientType ()
-{
-    /// We need a lvalue reference to the type V
-    constexpr ::nlpp::impl::Plain<V> ref{};
+constexpr int gradientType ();
 
-    /// If T has an function member `void gradient(V, V&)`
-    if constexpr (std::is_same_v<decltype(std::declval<U>().gradient(std::declval<V>(), ref)), void>)
-        return 0;
+/// Check if class T is a function/gradient functor
+template <class T, class V>
+constexpr int functionGradientType ();
 
-    /// If T has an function member `void operator()(V, V&)`
-    if constexpr (std::is_same_v<decltype(std::declval<U>().operator()(std::declval<V>(), ref)), void>)
-        return 1;
+/// Check if class T is a hessian functor
+template <class T, class V>
+constexpr int hessianType ();
 
-    /// If T has an function member `Eigen::EigenBase<W> gradient(V)`
-    if constexpr (::nlpp::impl::isMat<decltype(std::declval<U>().gradient(std::declval<V>()))>)
-        return 2;
-
-    /// If T has an function member `Eigen::EigenBase<W> operator()(V)`
-    if constexpr (:nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>()))>)
-        return 3;
-
-    return -1;
-}
 
 template <class T, class V>
-constexpr int functionGradientType ()
-{
-    /// We need a lvalue reference to the type V
-    constexpr ::nlpp::impl::Plain<V> ref{};
+constexpr int functionType_v = functionType<T, V>();
 
-    /// If T has an function member `Float functionGradient(V, V&)`
-    if constexpr (std::is_floating_point_v<decltype(std::declval<U>().functionGradient(std::declval<V>(), ref))>)
-        return 0;
+template <class T, class V>
+constexpr int gradientType_v = gradientType<T, V>();
 
-    /// If T has an function member `Float operator()(V, V&)`
-    if constexpr (std::is_floating_point_v<std::decay_t<decltype(std::get<0>(std::declval<U>().functionGradient(std::declval<V>())))>> &&
-                                           ::nlpp::impl::isMat<decltype(std::get<1>(std::declval<U>().functionGradient(std::declval<V>())))>, int>)
-        return 1;
-    
-    /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> functionGradient(V)`
-    if constexpr (std::is_floating_point_v<std::decay_t<decltype(std::get<0>(std::declval<U>().functionGradient(std::declval<V>())))>>&&
-                                           ::nlpp::impl::isMat<decltype(std::get<1>(std::declval<U>().functionGradient(std::declval<V>())))>, int>)
-        return 2;
+template <class T, class V>
+constexpr int functionGradientType_v = functionGradientType<T, V>();
 
-    /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> operator()(V)`
-    if constexpr (std::is_floating_point_v<std::decay_t<decltype(std::get<0>(std::declval<U>().operator()(std::declval<V>())))>> &&
-                                           ::nlpp::impl::IsMat<decltype(std::get<1>(std::declval<U>().operator()(std::declval<V>())))>::value, int>)
-        return 3;
+template <class T, class V>
+constexpr int hessianType_v = hessianType<T, V>();
 
-    return -1;
-}
 
-template <class T, class V, class V2>
-constexpr int hessianType ()
-{
-    if constexpr(::nlpp::impl::isMat<decltype(std::declval<U>().hessian(std::declval<V>(), std::declval<V2>()))>, int>)
-        return 0;
+template <class T, class V>
+constexpr bool isFunction_v = functionType<T, V>();
 
-    if constexpr(::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>(), std::declval<V2>()))>, int>)
-        return 1;
+template <class T, class V>
+constexpr bool isGradient = gradientType<T, V>();
 
-    if constexpr(::nlpp::impl::isMat<decltype(std::declval<U>().hessian(std::declval<V>()))>, int>)
-        return 2;
+template <class T, class V>
+constexpr bool isFunctionGradient = functionGradientType<T, V>();
 
-    if constexpr(::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>()))>, int>)
-        return 3;
+template <class T, class V, class V2 = V>
+constexpr bool isHessian = hessianType<T, V, V2>();
 
-    return -1;
-}
 
 
 namespace impl
 {
 
-template <class Impl>
-template <class V>
-auto Function<Impl>::function (const Eigen::MatrixBase<V>& x)
+/** @brief Function wrapping for user uniform defined function calculation
+ * 
+*/
+template <class Impl_>
+struct Function : public Impl_
 {
-    static_assert(isFunction_v<Impl, V>, "The functor has no interface for the given parameter")
+    using Impl = Impl_;
+    
+    Function (const Impl& impl);
 
-    if constexpr(functionType_v<Impl, V> == 0)
-        return Impl::function(x);
+    template <class V>
+    auto function (const Eigen::MatrixBase<V>& x);
 
-    // if constexpr(functionType_v<I, V> == 1)
-    return Impl::operator()(x);
-}
+    template <class V>
+    auto operator () (const Eigen::MatrixBase<V>& x);
 
-
-template <class Impl>
-Function<Impl>::Function (const Impl& impl) : Impl(impl) {}
-
-
-template <class Impl>
-template <class V>
-auto Function<Impl>::operator () (const Eigen::MatrixBase<V>& x)
-{
-    return function(x);
-}
-
-template <class Impl>
-template <typename T, int R, int C>
-auto Function<Impl>::operator () (const Eigen::Matrix<T, R, C>& x)
-{
-    return function(x);
-}
+    /// Necessary to hide a lambda operator matching the exact arguments
+    template <typename T, int R, int C>
+    auto operator () (const Eigen::Matrix<T, R, C>& x);
+};
 
 } // namespace impl
 
@@ -185,7 +164,18 @@ struct Gradient : public Impl_
     template <class V, class I = Impl, std::enable_if_t<GradientType<I, V>::value >= 2, int> = 0>
     ::nlpp::impl::Plain<V> gradient (const Eigen::MatrixBase<V>& x)
     {
-        return delegate(x);
+        // return delegate(x);
+
+        static_assert(isGradient_v<Impl, V>, "The functor has no interface for the given parameter")
+
+        constexpr auto gradType = gradientType_v<Impl, V>;
+
+        if constexpr (gradType < 2)
+        {
+            ::nlpp::impl::Plain<V> g(x.rows(), x.cols());
+
+        }
+
     }
 
 
