@@ -125,18 +125,15 @@ struct Gradient : public Impl_
     //static_assert(GradientType<Impl>::value >= 0, "The given functor does not have a gradient interface");
 
 
-    template <class V, typename... Args, class I = Impl, std::enable_if_t<GradientType<I, V>::value % 2 == 0, int> = 0>
+    template <class V, typename... Args>
     auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return Impl::gradient(x, std::forward<Args>(args)...);
+        if constexpr(gradType == 0)
+            return Impl::gradient(x, std::forward<decltype(args)>(args)...);
+            
+        else
+            return Impl::operator()(x, std::forward<Args>(args)...);
     }
-
-    template <class V, typename... Args, class I = Impl, std::enable_if_t<GradientType<I, V>::value % 2 == 1, int> = 0>
-    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
-    {
-        return Impl::operator()(x, std::forward<Args>(args)...);
-    }
-
 
     template <class V, class I = Impl, std::enable_if_t<GradientType<I, V>::value < 2, int> = 0>
     void gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
@@ -164,17 +161,18 @@ struct Gradient : public Impl_
     template <class V, class I = Impl, std::enable_if_t<GradientType<I, V>::value >= 2, int> = 0>
     ::nlpp::impl::Plain<V> gradient (const Eigen::MatrixBase<V>& x)
     {
-        // return delegate(x);
+        constexpr auto gradType = gradientType_v<Impl, V>;
 
         static_assert(isGradient_v<Impl, V>, "The functor has no interface for the given parameter")
-
-        constexpr auto gradType = gradientType_v<Impl, V>;
 
         if constexpr (gradType < 2)
         {
             ::nlpp::impl::Plain<V> g(x.rows(), x.cols());
-
+            return delegate(x, g);
         }
+
+        else
+            return delegate(x);
 
     }
 
