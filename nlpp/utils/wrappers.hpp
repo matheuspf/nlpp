@@ -4,21 +4,29 @@
 #include "utils/finiteDifference.hpp"
 
 
-namespace nlpp
+namespace nlpp::wrap
 {
 
-namespace wrap
-{
+NLPP_FUNCTION_TRAITS(Operator, operator())
+NLPP_FUNCTION_TRAITS(Function, function)
+NLPP_FUNCTION_TRAITS(Gradient, gradient)
+NLPP_FUNCTION_TRAITS(FunctionGradient, functionGradient)
+NLPP_FUNCTION_TRAITS(Hessian, hessian)
+
+enum FunctionType {
+
+}.;
+
 
 template <class T, class V>
 constexpr int functionType ()
 {
     /// If T has an function member `Float function(V)`
-    if constexpr(std::is_floating_point_v<decltype(std::declval<T>().function(std::declval<V>()))>)
+    if constexpr(std::is_floating_point_v<FunctionReturnType<T, V>>)
         return 0;
     
     /// If T has an function member `Float operator()(V)`
-    if constexpr(std::is_floating_point_v<decltype(std::declval<U>().operator()(std::declval<V>()))>)
+    if constexpr(std::is_floating_point_v<OperatorReturnType<T, V>>)
         return 1;
     
     return -1;
@@ -27,23 +35,20 @@ constexpr int functionType ()
 template <class T, class V>
 constexpr int gradientType ()
 {
-    /// We need a lvalue reference to the type V
-    constexpr ::nlpp::impl::Plain<V> ref{};
-
     /// If T has an function member `void gradient(V, V&)`
-    if constexpr (std::is_same_v<decltype(std::declval<U>().gradient(std::declval<V>(), ref)), void>)
+    if constexpr(std::is_same_v<GradientReturnType<T, V, V&>, void>)
         return 0;
 
     /// If T has an function member `void operator()(V, V&)`
-    if constexpr (std::is_same_v<decltype(std::declval<U>().operator()(std::declval<V>(), ref)), void>)
+    if constexpr(std::is_same_v<OperatorReturnType<T, V, V&>, void>)
         return 1;
 
     /// If T has an function member `Eigen::EigenBase<W> gradient(V)`
-    if constexpr (::nlpp::impl::isMat<decltype(std::declval<U>().gradient(std::declval<V>()))>)
+    if constexpr(::nlpp::impl::isMat<GradientReturnType<T, V>>)
         return 2;
 
     /// If T has an function member `Eigen::EigenBase<W> operator()(V)`
-    if constexpr (:nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>()))>)
+    if constexpr(::nlpp::impl::isMat<OperatorReturnType<T, V>>)
         return 3;
 
     return -1;
@@ -52,11 +57,8 @@ constexpr int gradientType ()
 template <class T, class V>
 constexpr int functionGradientType ()
 {
-    /// We need a lvalue reference to the type V
-    constexpr ::nlpp::impl::Plain<V> ref{};
-
     /// If T has an function member `Float functionGradient(V, V&)`
-    if constexpr (std::is_floating_point_v<decltype(std::declval<U>().functionGradient(std::declval<V>(), ref))>)
+    if constexpr(std::is_floating_point_v<FunctionGradientReturnType<T, V, V&>>)
         return 0;
 
     /// If T has an function member `Float operator()(V, V&)`
@@ -927,8 +929,4 @@ struct Hessian
 
 } // namespace poly
 
-
-} // namespace wrap
-
-
-} // namespace nlpp
+} // namespace nlpp::wrap

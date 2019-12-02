@@ -6,6 +6,31 @@
 #include "include.hpp"
 #include "types.hpp"
 
+/// Expands variadic arguments
+#define NLPP_EXPAND(...) __VA_ARGS__
+
+/// Concatenate two tokens
+#define NLPP_CONCAT(x, y) NLPP_CONCAT_(x, y)
+
+/// @copybrief CONCAT
+#define NLPP_CONCAT_(x, y) NLPP_EXPAND(x ## y)
+//@}
+
+//@{
+/** @brief Count number of variadic arguments
+*/
+#define NLPP_NUM_ARGS_(_1, _2 ,_3, _4, _5, _6, _7, _8, _9, _10, N, ...) N
+
+/// @copybrief NUM_ARGS_
+#define NLPP_NUM_ARGS(...) NLPP_NUM_ARGS_(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+//@}
+
+/// This guy will call MACRON, where @c N is the number of variadic arguments
+#define NLPP_APPLY_N(MACRO, ...) NLPP_EXPAND(NLPP_CONCAT(MACRO, NLPP_NUM_ARGS(__VA_ARGS__)))(__VA_ARGS__)
+//@}
+
+
+
 #define NLPP_USING_POLY_CLASS(ClassName, BaseName, ...) \
 	using BaseName = __VA_ARGS__;	\
 	using BaseName::BaseName;		\
@@ -14,6 +39,33 @@
 									\
 	template <typename... Args>		\
 	ClassName(Args&&...args) : BaseName(std::forward<Args>(args)...) {}
+
+
+#define NLPP_FUNCTION_TRAITS(NAME, FUNCTION) \
+template <class Cls, class... Args> \
+struct NLPP_CONCAT(NAME, Traits) \
+{ \
+    using ReturnType = std::conditional_t<impl(nullptr), decltype(std::declval<Cls>().FUNCTION(std::declval<Args>()...)), std::nullptr_t>; \
+ \
+    enum { Has = impl(nullptr) } \
+ \
+    static constexpr bool impl (decltype(std::declval<Cls>().FUNCTION(std::declval<Args>()...), void())*) \
+    { \
+        return true; \
+    } \
+ \
+    static constexpr bool impl (...) \
+    { \
+        return false; \
+    } \
+}; \
+\
+template <class Cls, class... Args> \
+using NLPP_CONCAT(NAME, ReturnType) = typedef NLPP_CONCAT(NAME, Traits)::ReturnType; \
+\
+template <class Cls, class... Args> \
+constexpr bool NLPP_CONCAT(Has, NAME) = NLPP_CONCAT(NAME, Traits)::Has;
+
 
 
 namespace nlpp
