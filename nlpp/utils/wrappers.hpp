@@ -7,26 +7,26 @@
 namespace nlpp::wrap
 {
 
-NLPP_FUNCTION_TRAITS(Operator, operator())
-NLPP_FUNCTION_TRAITS(Function, function)
-NLPP_FUNCTION_TRAITS(Gradient, gradient)
-NLPP_FUNCTION_TRAITS(FunctionGradient, functionGradient)
-NLPP_FUNCTION_TRAITS(Hessian, hessian)
+NLPP_HAS_MEMBER(HasFunction, function)
+NLPP_HAS_MEMBER(HasGradient, gradient)
+NLPP_HAS_MEMBER(HasGradient, functionGradient)
+NLPP_HAS_MEMBER(HasHessian, hessian)
+NLPP_HAS_MEMBER(HasOperator, operator())
 
-enum FunctionType {
+using ::nlpp::impl::detected_t;
+using ::nlpp::impl::is_detected_v;
 
-}.;
 
 
 template <class T, class V>
 constexpr int functionType ()
 {
     /// If T has an function member `Float function(V)`
-    if constexpr(std::is_floating_point_v<FunctionReturnType<T, V>>)
+    if constexpr(std::is_floating_point_v<detected_t<HasFunction, T, V>>)
         return 0;
     
     /// If T has an function member `Float operator()(V)`
-    if constexpr(std::is_floating_point_v<OperatorReturnType<T, V>>)
+    if constexpr(std::is_floating_point_v<detected_t<HasOperator, T, V>>)
         return 1;
     
     return -1;
@@ -36,19 +36,19 @@ template <class T, class V>
 constexpr int gradientType ()
 {
     /// If T has an function member `void gradient(V, V&)`
-    if constexpr(std::is_same_v<GradientReturnType<T, V, V&>, void>)
+    if constexpr(std::is_same_v<detected_t<HasGradient, T, V, V&>, void>)
         return 0;
 
     /// If T has an function member `void operator()(V, V&)`
-    if constexpr(std::is_same_v<OperatorReturnType<T, V, V&>, void>)
+    if constexpr(std::is_same_v<detected_t<HasOperator, T, V, V&>, void>)
         return 1;
 
     /// If T has an function member `Eigen::EigenBase<W> gradient(V)`
-    if constexpr(::nlpp::impl::isMat<GradientReturnType<T, V>>)
+    if constexpr(::nlpp::impl::isMat<detected_t<HasGradient, T, V>>)
         return 2;
 
     /// If T has an function member `Eigen::EigenBase<W> operator()(V)`
-    if constexpr(::nlpp::impl::isMat<OperatorReturnType<T, V>>)
+    if constexpr(::nlpp::impl::isMat<detected_t<HasOperator, T, V>>)
         return 3;
 
     return -1;
@@ -58,22 +58,21 @@ template <class T, class V>
 constexpr int functionGradientType ()
 {
     /// If T has an function member `Float functionGradient(V, V&)`
-    if constexpr(std::is_floating_point_v<FunctionGradientReturnType<T, V, V&>>)
+    if constexpr(std::is_floating_point_v<detected_t<HasFunctionGradient, T, V, V&>>)
         return 0;
 
     /// If T has an function member `Float operator()(V, V&)`
-    if constexpr (std::is_floating_point_v<std::decay_t<decltype(std::get<0>(std::declval<U>().functionGradient(std::declval<V>())))>> &&
-                                           ::nlpp::impl::isMat<decltype(std::get<1>(std::declval<U>().functionGradient(std::declval<V>())))>, int>)
+    if constexpr(std::is_floating_point_v<detected_t<HasOperator, T, V, V&>>)
         return 1;
     
     /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> functionGradient(V)`
-    if constexpr (std::is_floating_point_v<std::decay_t<decltype(std::get<0>(std::declval<U>().functionGradient(std::declval<V>())))>>&&
-                                           ::nlpp::impl::isMat<decltype(std::get<1>(std::declval<U>().functionGradient(std::declval<V>())))>, int>)
+    if constexpr(std::is_floating_point_v<std::tuple_element_t<0, OperatorReturnType<T, V, V&>>> && 
+                 ::nlpp::impl::isMat<std::tuple_element_t<1, OperatorReturnType<T, V, V&>>>)
         return 2;
 
     /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> operator()(V)`
-    if constexpr (std::is_floating_point_v<std::decay_t<decltype(std::get<0>(std::declval<U>().operator()(std::declval<V>())))>> &&
-                                           ::nlpp::impl::IsMat<decltype(std::get<1>(std::declval<U>().operator()(std::declval<V>())))>::value, int>)
+    if constexpr(std::is_floating_point_v<std::tuple_element_t<0, FunctionGradientReturnType<T, V, V&>>> && 
+                 ::nlpp::impl::isMat<std::tuple_element_t<1, FunctionGradientReturnType<T, V, V&>>>)
         return 3;
 
     return -1;
@@ -82,16 +81,16 @@ constexpr int functionGradientType ()
 template <class T, class V, class V2>
 constexpr int hessianType ()
 {
-    if constexpr(::nlpp::impl::isMat<decltype(std::declval<U>().hessian(std::declval<V>(), std::declval<V2>()))>, int>)
+    if constexpr(::nlpp::impl::isMat<HessianReturnType<T, V, V2>>)
         return 0;
 
-    if constexpr(::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>(), std::declval<V2>()))>, int>)
+    if constexpr(::nlpp::impl::isMat<OperatorReturnType<T, V, V2>>)
         return 1;
 
-    if constexpr(::nlpp::impl::isMat<decltype(std::declval<U>().hessian(std::declval<V>()))>, int>)
+    if constexpr(::nlpp::impl::isMat<HessianReturnType<T, V>>)
         return 2;
 
-    if constexpr(::nlpp::impl::isMat<decltype(std::declval<U>().operator()(std::declval<V>()))>, int>)
+    if constexpr(::nlpp::impl::isMat<OperatorReturnType<T, V>>)
         return 3;
 
     return -1;

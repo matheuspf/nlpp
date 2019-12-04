@@ -21,11 +21,8 @@
 #include "utils/finiteDifference_dec.hpp"
 
 
-namespace nlpp
-{
-
 /// Wrap namespace
-namespace wrap
+namespace nlpp::wrap
 {
 
 
@@ -89,6 +86,9 @@ constexpr bool isHessian = hessianType<T, V, V2>();
 namespace impl
 {
 
+using ::nlpp::impl::Scalar;
+using ::nlpp::impl::Plain;
+
 /** @brief Function wrapping for user uniform defined function calculation
  * 
 */
@@ -96,18 +96,18 @@ template <class Impl_>
 struct Function : public Impl_
 {
     using Impl = Impl_;
-    
+
     Function (const Impl& impl);
 
     template <class V>
-    auto function (const Eigen::MatrixBase<V>& x);
+    Scalar<V> function (const Eigen::MatrixBase<V>& x);
 
     template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x);
+    Scalar<V> operator () (const Eigen::MatrixBase<V>& x);
 
     /// Necessary to hide a lambda operator matching the exact arguments
     template <typename T, int R, int C>
-    auto operator () (const Eigen::Matrix<T, R, C>& x);
+    Scalar<V> operator () (const Eigen::Matrix<T, R, C>& x);
 };
 
 } // namespace impl

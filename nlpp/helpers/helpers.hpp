@@ -6,10 +6,7 @@
 #include "helpers_dec.hpp"
 
 
-namespace nlpp
-{
-
-namespace poly
+namespace nlpp::poly
 {
 
 template <class Impl>
@@ -78,46 +75,4 @@ void PolyClass<Base>::set (T&& t)
     operator=(std::forward<T>(t));
 }
 
-
-} // namespace poly
-
-namespace impl
-{
-
-template <typename T, class V>
-constexpr decltype(auto) cast (V&& v)
-{
-    return v.template cast<T>();
-}
-
-template <class V>
-std::string toString (const V& x)
-{
-    std::stringstream ss;
-    ss << x;
-    return ss.str();
-}
-
-} // namespace impl
-
-template <typename T>
-inline constexpr decltype(auto) shift (T&& x)
-{
-    return std::forward<T>(x);
-}
-
-template <typename T, typename U, typename... Args>
-inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args)
-{
-    x = std::forward<U>(y);
-
-    return shift(std::forward<U>(y), std::forward<Args>(args)...);
-}
-
-template <typename T>
-inline constexpr int sign (T t)
-{
-    return int(T{0} < t) - int(t < T{0});
-}
-
-} // namespace nlpp
+} // namespace nlpp::poly

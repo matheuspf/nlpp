@@ -41,31 +41,9 @@
 	ClassName(Args&&...args) : BaseName(std::forward<Args>(args)...) {}
 
 
-#define NLPP_FUNCTION_TRAITS(NAME, FUNCTION) \
-template <class Cls, class... Args> \
-struct NLPP_CONCAT(NAME, Traits) \
-{ \
-    using ReturnType = std::conditional_t<impl(nullptr), decltype(std::declval<Cls>().FUNCTION(std::declval<Args>()...)), std::nullptr_t>; \
- \
-    enum { Has = impl(nullptr) } \
- \
-    static constexpr bool impl (decltype(std::declval<Cls>().FUNCTION(std::declval<Args>()...), void())*) \
-    { \
-        return true; \
-    } \
- \
-    static constexpr bool impl (...) \
-    { \
-        return false; \
-    } \
-}; \
-\
-template <class Cls, class... Args> \
-using NLPP_CONCAT(NAME, ReturnType) = typedef NLPP_CONCAT(NAME, Traits)::ReturnType; \
-\
-template <class Cls, class... Args> \
-constexpr bool NLPP_CONCAT(Has, NAME) = NLPP_CONCAT(NAME, Traits)::Has;
-
+#define NLPP_HAS_MEMBER(NAME, OP) \
+template <class T, class... Args> \
+using NAME = decltype(std::declval<T>().OP(std::declval<Args>()...));
 
 
 namespace nlpp
@@ -117,35 +95,8 @@ struct PolyClass
 } // namespace poly
 
 
-namespace wrap
-{
-
-/** @name
- *  @brief Decides whether a given function has or has not a overloaded member functions taking the given parameters
-*/
-//@{
-HAS_OVERLOADED_FUNC(operator(), HasOperator);
-
-HAS_OVERLOADED_FUNC(function, HasFunction);
-
-HAS_OVERLOADED_FUNC(gradient, HasGradient);
-//@}
-
-} // namespace wrap
-
-
 namespace impl
 {
-
-/// A functor that does nothing
-struct NullFunctor
-{
-	void operator () (...) {}
-};
-
-
-template <typename>
-struct PrintType;
 
 /** @name
  *  @brief Tells if @c T is an Eigen::EigenBase (a vector/matrix) or an scalar (a float or int)
@@ -154,13 +105,12 @@ struct PrintType;
 template <typename T>
 struct IsMat
 {
-	template <class U>
-	static constexpr bool impl (Eigen::EigenBase<U>*) { return true; }
+    template <class U>
+    static constexpr bool impl (Eigen::EigenBase<U>*) { return true; }
 
-	static constexpr bool impl (...) { return false; }
+    static constexpr bool impl (...) { return false; }
 
-
-	enum { value = impl((std::decay_t<T>*)0) };
+    enum { value = impl((std::decay_t<T>*)0) };
 };
 
 template <typename T>
@@ -180,12 +130,6 @@ constexpr bool isScalar = IsScalar<T>::value;
 //@}
 
 
-template <typename T, class V>
-constexpr decltype(auto) cast (V&& v);
-
-template <class V>
-std::string toString (const V& x);
-
 /** @name
  *  @brief Define function overloading calling precedence
 */
@@ -197,6 +141,46 @@ template <int I>
 struct Precedence <I, I> {};
 //@}
 
+
+/** @name
+ *  @brief Implementation of the is_detected helper available in std::experimental
+ *         and described in https://en.cppreference.com/w/cpp/experimental/is_detected
+*/
+//@{
+struct nonesuch
+{
+    ~nonesuch() = delete;
+    nonesuch(nonesuch const&) = delete;
+    void operator=(nonesuch const&) = delete;
+};
+
+template <class Default, class AlwaysVoid, template<class...> class Op, class... Args>
+struct detector
+{
+    using value_t = std::false_type;
+    using type = Default;
+};
+ 
+template <class Default, template<class...> class Op, class... Args>
+struct detector<Default, std::void_t<Op<Args...>>, Op, Args...>
+{
+    using value_t = std::true_type;
+    using type = Op<Args...>;
+};
+ 
+template <template<class...> class Op, class... Args>
+using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
+
+template <template<class...> class Op, class... Args>
+constexpr bool is_detected_v = is_detected<Op, Args...>::value;
+ 
+template <template<class...> class Op, class... Args>
+using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
+ 
+template <class Default, template<class...> class Op, class... Args>
+using detected_or = detail::detector<Default, void, Op, Args...>;
+
+//@}
 
 } // namespace impl
 
@@ -233,16 +217,26 @@ constexpr double phi = phi_<types::Float>;
 */
 //@{
 template <typename T>
-inline constexpr decltype(auto) shift (T&& x);
+inline constexpr decltype(auto) shift (T&& x)
+{
+    return std::forward<T>(x);
+}
 
 template <typename T, typename U, typename... Args>
-inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args);
+inline constexpr decltype(auto) shift (T&& x, U&& y, Args&&... args)
+{
+    x = std::forward<U>(y);
+
+    return shift(std::forward<U>(y), std::forward<Args>(args)...);
+}
 //@}
 
 /// Implement Matlab's sign function
 template <typename T>
-inline constexpr int sign (T t);
+inline constexpr int sign (T t)
+{
+    return int(T{0} < t) - int(t < T{0});
+}
 
-template <class...> constexpr std::false_type always_false{};
 
 } // namespace nlpp
