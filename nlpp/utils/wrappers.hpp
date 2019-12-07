@@ -1,595 +1,339 @@
 #pragma once
 
 #include "helpers/helpers.hpp"
-#include "utils/finiteDifference.hpp"
+#include "utils/finiteDifference_dec.hpp"
 
 
 namespace nlpp::wrap
 {
 
-NLPP_HAS_MEMBER(HasFunction, function)
-NLPP_HAS_MEMBER(HasGradient, gradient)
-NLPP_HAS_MEMBER(HasGradient, functionGradient)
-NLPP_HAS_MEMBER(HasHessian, hessian)
-NLPP_HAS_MEMBER(HasOperator, operator())
-
-using ::nlpp::impl::detected_t;
-using ::nlpp::impl::is_detected_v;
-
-
-
-template <class T, class V>
-constexpr int functionType ()
-{
-    /// If T has an function member `Float function(V)`
-    if constexpr(std::is_floating_point_v<detected_t<HasFunction, T, V>>)
-        return 0;
-    
-    /// If T has an function member `Float operator()(V)`
-    if constexpr(std::is_floating_point_v<detected_t<HasOperator, T, V>>)
-        return 1;
-    
-    return -1;
-}
-
-template <class T, class V>
-constexpr int gradientType ()
-{
-    /// If T has an function member `void gradient(V, V&)`
-    if constexpr(std::is_same_v<detected_t<HasGradient, T, V, V&>, void>)
-        return 0;
-
-    /// If T has an function member `void operator()(V, V&)`
-    if constexpr(std::is_same_v<detected_t<HasOperator, T, V, V&>, void>)
-        return 1;
-
-    /// If T has an function member `Eigen::EigenBase<W> gradient(V)`
-    if constexpr(::nlpp::impl::isMat<detected_t<HasGradient, T, V>>)
-        return 2;
-
-    /// If T has an function member `Eigen::EigenBase<W> operator()(V)`
-    if constexpr(::nlpp::impl::isMat<detected_t<HasOperator, T, V>>)
-        return 3;
-
-    return -1;
-}
-
-template <class T, class V>
-constexpr int functionGradientType ()
-{
-    /// If T has an function member `Float functionGradient(V, V&)`
-    if constexpr(std::is_floating_point_v<detected_t<HasFunctionGradient, T, V, V&>>)
-        return 0;
-
-    /// If T has an function member `Float operator()(V, V&)`
-    if constexpr(std::is_floating_point_v<detected_t<HasOperator, T, V, V&>>)
-        return 1;
-    
-    /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> functionGradient(V)`
-    if constexpr(std::is_floating_point_v<std::tuple_element_t<0, OperatorReturnType<T, V, V&>>> && 
-                 ::nlpp::impl::isMat<std::tuple_element_t<1, OperatorReturnType<T, V, V&>>>)
-        return 2;
-
-    /// If T has an function member `std::pair<Float, Eigen::EigenBase<W>> operator()(V)`
-    if constexpr(std::is_floating_point_v<std::tuple_element_t<0, FunctionGradientReturnType<T, V, V&>>> && 
-                 ::nlpp::impl::isMat<std::tuple_element_t<1, FunctionGradientReturnType<T, V, V&>>>)
-        return 3;
-
-    return -1;
-}
-
-template <class T, class V, class V2>
-constexpr int hessianType ()
-{
-    if constexpr(::nlpp::impl::isMat<HessianReturnType<T, V, V2>>)
-        return 0;
-
-    if constexpr(::nlpp::impl::isMat<OperatorReturnType<T, V, V2>>)
-        return 1;
-
-    if constexpr(::nlpp::impl::isMat<HessianReturnType<T, V>>)
-        return 2;
-
-    if constexpr(::nlpp::impl::isMat<OperatorReturnType<T, V>>)
-        return 3;
-
-    return -1;
-}
-
-
 namespace impl
 {
 
-template <class Impl>
-template <class V>
-auto Function<Impl>::function (const Eigen::MatrixBase<V>& x)
-{
-    static_assert(isFunction_v<Impl, V>, "The functor has no interface for the given parameter")
+template <class Impl, class V>
+static constexpr bool isFunction = std::is_floating_point_v<OperatorType<Function<Impl>, V>>;
 
-    if constexpr(functionType_v<Impl, V> == 0)
-        return Impl::function(x);
+template <class Impl, class V>
+static constexpr bool isGradient_1 = std::is_same_v<OperatorType<Impl, V, V&>, void>;
 
-    // if constexpr(functionType_v<I, V> == 1)
-    return Impl::operator()(x);
-}
+template <class Impl, class V>
+static constexpr bool isGradient_2 = isMat<OperatorType<Impl, V>;
+
+template <class Impl, class V>
+static constexpr bool isFuncGrad_0 = std::is_floating_point_v<OperatorType<Impl, V, V&, bool>>;
+
+template <class Impl, class V>
+static constexpr bool isFuncGrad_1 = std::is_floating_point_v<OperatorType<Impl, V, V&>>;
+
+template <class Impl, class V>
+static constexpr bool isFuncGrad_2 = std::is_floating_point_v<std::tuple_element_t<0, OperatorType<Impl, V>>> &&
+                                     isMat<std::tuple_element_t<1, OperatorType<Impl, V>>>;
+
+template <class Impl, class V, class U>
+static constexpr bool isHessian_1 = isMat<OperatorType<Impl, V, U>>;
+
+template <class Impl, class V>
+static constexpr bool isHessian_2 = isMat<OperatorType<Impl, V>> && OperatorType<Impl, V>::ColsAtCompileTime != 1;
 
 
 template <class Impl>
 Function<Impl>::Function (const Impl& impl) : Impl(impl) {}
 
+template <class Impl>
+template <class V>
+Scalar<V> Function<Impl>::function (const Eigen::MatrixBase<V>& x)
+{
+    static_assert(isFunction<Impl, V>, "The functor has no interface for the given parameter")
+
+    return Impl::operator()(x);
+}
 
 template <class Impl>
 template <class V>
-auto Function<Impl>::operator () (const Eigen::MatrixBase<V>& x)
+Scalar<V> Function<Impl>::operator () (const Eigen::MatrixBase<V>& x)
 {
     return function(x);
 }
+
 
 template <class Impl>
-template <typename T, int R, int C>
-auto Function<Impl>::operator () (const Eigen::Matrix<T, R, C>& x)
+Gradient<Impl>::Gradient (const Impl& impl) : Impl(impl) {}
+
+template <class Impl>
+template <class V>
+void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
 {
-    return function(x);
+    if constexpr(isGradient_1<Impl, V>)
+        Impl::operator()(x, g);
+
+    else if constexpr(isGradient_2<Impl, V>)
+        g = Impl::operator()(x);
+
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter")
 }
-
-} // namespace impl
-
-namespace impl
+template <class Impl>
+template <class V>
+Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x)
 {
-
-template <class Impl_>
-struct Gradient : public Impl_
-{
-    using Impl = Impl_;
-    
-    Gradient (const Impl& impl) : Impl(impl) {}
-
-    //static_assert(GradientType<Impl>::value >= 0, "The given functor does not have a gradient interface");
-
-
-    template <class V, typename... Args, class I = Impl, std::enable_if_t<GradientType<I, V>::value % 2 == 0, int> = 0>
-    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
+    if constexpr(isGradient_1<Impl, V>)
     {
-        return Impl::gradient(x, std::forward<Args>(args)...);
-    }
-
-    template <class V, typename... Args, class I = Impl, std::enable_if_t<GradientType<I, V>::value % 2 == 1, int> = 0>
-    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
-    {
-        return Impl::operator()(x, std::forward<Args>(args)...);
-    }
-
-
-    template <class V, class I = Impl, std::enable_if_t<GradientType<I, V>::value < 2, int> = 0>
-    void gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        delegate(x, g);
-    }
-
-    template <class V, class I = Impl, std::enable_if_t<GradientType<I, V>::value < 2, int> = 0>
-    ::nlpp::impl::Plain<V> gradient (const Eigen::MatrixBase<V>& x)
-    {
-        ::nlpp::impl::Plain<V> g(x.rows(), x.cols());
-
-        delegate(x, g);
-
+        Plain<V> g(x.rows());
+        Impl::operator(x, g);
         return g;
     }
 
+    else if constexpr(isGradient_2<Impl, V>)
+        return Impl::operator()(x);
 
-    template <class V, class I = Impl, std::enable_if_t<GradientType<I, V>::value >= 2, int> = 0>
-    void gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        g = delegate(x);
-    }
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter")
+}
 
-    template <class V, class I = Impl, std::enable_if_t<GradientType<I, V>::value >= 2, int> = 0>
-    ::nlpp::impl::Plain<V> gradient (const Eigen::MatrixBase<V>& x)
-    {
-        return delegate(x);
-    }
-
-
-    template <class V>
-    void operator() (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        gradient(x, g);
-    }
-
-    template <class V>
-    ::nlpp::impl::Plain<V> operator() (const Eigen::MatrixBase<V>& x)
-    {
-        return gradient(x);
-    }
-};
-
-} // namespace impl
-
-
-
-
-namespace impl
+template <class Impl>
+template <class V>
+void Gradient<V>::operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g)
 {
+    gradient(x, g);
+}
 
-/** @name 
- *  @brief The uniform interface wrapper for function/gradient functors
- *  
- *  @details This class provides the uniform interface where, given an user defined function/gradient functor or
- *           both function and gradient functors separated, you can call for function/gradient, function only pr
- *           gradient only, always avoiding to execute additional function calls when possible.
-*/
-//@{
-
-/// Forward declaration
-template <class...>
-struct FunctionGradient;
+template <class Impl>
+template <class V>
+Plain<V> Gradient<V>::operator() (const Eigen::MatrixBase<V>& x)
+{
+    return gradient(x);
+}
 
 
-/** @brief Specialization for when both function and gradients are given separatelly
- * 
- *  @tparam Func A functor having <tt>Scalar Func::operator()(const Vec&)</tt> defined
- *  @tparam Func A functor having either <tt>Vec Func::operator()(const Vec&)</tt> or 
- *          <tt>void Func::operator()(const Vec&, Vec&)</tt> defined.
- * 
- *  @note This class inherits both the @c Func and @c Grad templates, wrapping the @c Grad 
- *        into @c Gradient<Grad> first
-*/
 template <class Func, class Grad>
-struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Grad>
+template <class F = Func, class G = Grad, std::enable_if_t<handy::HasConstructor<G>::value, int> = 0>
+FunctionGradient<Func, Grad>::FunctionGradient (const F& f, const G& g) : Function<Func>(f), Gradient<Grad>(g) {}
+
+template <class Func, class Grad>
+template <class F = Func, class G = Grad, std::enable_if_t<!handy::HasConstructor<G>::value, int> = 0>
+FunctionGradient<Func, Grad>::FunctionGradient (const F& f, const G& g) : Function<Func>(f), Gradient<Grad>(g) {}
+
+template <class Func, class Grad>
+template <class V>
+std::pair<Scalar<V>, Plain<V>> FunctionGradient<Func, Grad>::functionGradient (const Eigen::MatrixBase<V>& x)
 {
-    using Function<Func>::function;
-    using Gradient<Grad>::gradient;
+    return {function(x), gradient(x)};
+}
 
-    /// Single constructor, delegated to Func and Grad
-    template <class F = Func, class G = Grad, std::enable_if_t<handy::HasConstructor<G>::value, int> = 0>
-    FunctionGradient (const F& f = Func{}, const G& g = Grad{}) : Function<Func>(f), Gradient<Grad>(g) {}
-    
-    template <class F = Func, class G = Grad, std::enable_if_t<!handy::HasConstructor<G>::value, int> = 0>
-    FunctionGradient (const F& f = Func{}, const G& g = Grad{Func{}}) : Function<Func>(f), Gradient<Grad>(g) {}
-
-
-    /** @name
-     *  @brief Operators for function/gradient calls.
-     * 
-     *  @details Returns both function and gradient if only a @Vec is given. If the reference @c g
-     *           is also given, returns only the Func::operator()(x) return and calls 
-     *           @c Gradient<Grad>::operator()(x, g) to write on @c g.
-     * 
-     *  @param x The vector for which we will be evaluating both function and gradient
-     *  @param g The reference where we are going to store the gradient
-    */
-    //@{
-    template <class V>
-    auto functionGradient (const Eigen::MatrixBase<V>& x)
-    {
-        return std::make_pair(function(x), gradient(x));
-    }
-
-    template <class V>
-    auto functionGradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
+template <class Func, class Grad>
+template <class V>
+Scalar<V> FunctionGradient<Func, Grad>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+{
+    if(calcGrad)
         gradient(x, g);
 
-        return function(x);
-    }
-    //@}
+    return function(x);
+}
 
+template <class Func, class Grad>
+template <class V>
+std::pair<Scalar<V>, Plain<V>> FunctionGradient<Func, Grad>::operator() (const Eigen::MatrixBase<V>& x)
+{
+    return functionGradient(x);
+}
 
-
-    template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x)
-    {
-        return functionGradient(x);
-    }
-
-    /// Necessary to hide a lambda operator matching the exact arguments
-    template <typename T, int R, int C>
-    auto operator () (const Eigen::Matrix<T, R, C>& x)
-    {
-        return functionGradient(x);
-    }
-
-    template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        return functionGradient(x, g);
-    }
-};
+template <class Func, class Grad>
+template <class V>
+Scalar<V> FunctionGradient<Func, Grad>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+{
+    return functionGradient(x, g, calcGrad);
+}
 
 
 template <class Func, template <class, class> class Difference, class Step>
-struct FunctionGradient<Func, fd::Gradient<Func, Difference, Step>> : Function<Func>, public fd::Gradient<Func, Difference, Step>
+FunctionGradient<Func, fd::Gradient<Func, Difference, Step>>::FunctionGradient (const Function& f) : Function(f), Gradient(f) {} 
+
+template <class Func, template <class, class> class Difference, class Step>
+FunctionGradient<Func, fd::Gradient<Func, Difference, Step>>::FunctionGradient (const Function& f, const Gradient& g) : Function(f), Gradient(Function(f)) {}
+
+template <class Func, template <class, class> class Difference, class Step>
+template <class V>
+std::pair<Scalar<V>, Plain<V>> FunctionGradient<Func, fd::Gradient<Func, Difference, Step>>::functionGradient (const Eigen::MatrixBase<V>& x)
 {
-    using Function = wrap::Function<Func>;
-    using Gradient = fd::Gradient<Func, Difference, Step>;
+    auto f = function(x);
+    return {f, gradient(x, f)};
+}
 
+template <class Func, template <class, class> class Difference, class Step>
+template <class V>
+Scalar<V> FunctionGradient<Func, fd::Gradient<Func, Difference, Step>>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+{
+    auto f = function(x);
 
-    using Function::function;
-    using Gradient::gradient;
-    using Gradient::directional;
-
-
-    FunctionGradient (const Function& f = Function{}) : Function(f), Gradient(f) {} 
-
-    FunctionGradient (const Function& f, const Gradient& g) : Function(f), Gradient(Function(f)) {}
-    
-
-    /** @name
-     *  @brief Operators for function/gradient calls.
-     * 
-     *  @details Returns both function and gradient if only a @Vec is given. If the reference @c g
-     *           is also given, returns only the Func::operator()(x) return and calls 
-     *           @c Gradient<Grad>::operator()(x, g) to write on @c g.
-     * 
-     *  @param x The vector for which we will be evaluating both function and gradient
-     *  @param g The reference where we are going to store the gradient
-    */
-    //@{
-    template <class V>
-    auto functionGradient (const Eigen::MatrixBase<V>& x)
-    {
-        auto f = function(x);
-
-        return std::make_pair(f, gradient(x, f));
-    }
-
-    template <class V>
-    auto functionGradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        auto f = function(x);
-
+    if(calcGrad)
         gradient(x, g, f);
 
-        return f;
-    }
-    //@}
+    return f;
+}
 
-    template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x)
-    {
-        return functionGradient(x);
-    }
-
-    /// Necessary to hide a lambda operator matching the exact arguments
-    template <typename T, int R, int C>
-    auto operator () (const Eigen::Matrix<T, R, C>& x)
-    {
-        return functionGradient(x);
-    }
-
-    template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        return functionGradient(x, g);
-    }
-};
-
-
-template <class Impl_>
-struct FunctionGradient<Impl_> : public Impl_
+template <class Func, template <class, class> class Difference, class Step>
+template <class V>
+std::pair<Scalar<V>, Plain<V>> FunctionGradient<Func, fd::Gradient<Func, Difference, Step>>::operator() (const Eigen::MatrixBase<V>& x)
 {
-    using Impl = Impl_;
-    
-    FunctionGradient (const Impl& impl) : Impl(impl) {}
+    return functionGradient(x);
+}
 
-    //static_assert(FunctionGradientType<Impl>::value >= 0, "The given functor does not have a function/gradient interface");
+template <class Func, template <class, class> class Difference, class Step>
+template <class V>
+Scalar<V> FunctionGradient<Func, fd::Gradient<Func, Difference, Step>>::operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+{
+    return functionGradient(x, g, calcGrad);
+}
 
 
-    template <class V, typename... Args, class I = Impl, std::enable_if_t<FunctionGradientType<I, V>::value % 2 == 0, int> = 0>
-    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
+template <class Impl>
+FunctionGradient<Impl>::FunctionGradient (const Impl& impl) : Impl(impl) {}
+
+template <class Impl>
+template <class V>
+Scalar<V> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+{
+    if constexpr(isFunctionGradient_1<Impl, V>)
+        return Impl::operator()(x, g, calcGrad);
+
+    else if constexpr(isFunctionGradient_2<Impl, V>)
+        return Impl::operator()(x, g);
+
+    else if constexpr(isFunctionGradient_3<Impl, V>)
     {
-        return Impl::functionGradient(x, std::forward<Args>(args)...);
-    }
-
-    template <class V, typename... Args, class I = Impl, std::enable_if_t<FunctionGradientType<I, V>::value % 2 != 0, int> = 0>
-    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
-    {
-        return Impl::operator()(x, std::forward<Args>(args)...);
-    }
-
-
-    template <class V, class I = Impl, std::enable_if_t<FunctionGradientType<I, V>::value < 2, int> = 0>
-    auto functionGradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        return delegate(x, g);
-    }
-
-    template <class V, class I = Impl, std::enable_if_t<FunctionGradientType<I, V>::value < 2, int> = 0>
-    auto functionGradient (const Eigen::MatrixBase<V>& x)
-    {
-        ::nlpp::impl::Plain<V> g(x.rows(), x.cols());
-
-        auto f = delegate(x, g);
-
-        return std::make_pair(f, g);
-    }
-
-
-    template <class V, class I = Impl, std::enable_if_t<FunctionGradientType<I, V>::value >= 2, int> = 0>
-    auto functionGradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        std::decay_t<decltype(std::get<0>(delegate(x)))> f;
-
-        std::tie(f, g) = delegate(x);
-        
+        Scalar<V> f;
+        std::tie(f, g) = Impl::operator(x);
         return f;
     }
 
-    template <class V, class I = Impl, std::enable_if_t<FunctionGradientType<I, V>::value >= 2, int> = 0>
-    auto functionGradient (const Eigen::MatrixBase<V>& x)
+    else if constexpr(isFunction<Impl, V> && (isGradient_1<Impl, V> || isGradient_2<Impl, V>))
     {
-        return delegate(x);
-    }
+        if(calcGrad)
+            Gradient<Impl>(*this)(x, g);
 
-
-    template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        return functionGradient(x, g);
-    }
-
-    template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x)
-    {
-        return functionGradient(x);
-    }
-
-    /// Necessary to hide a lambda operator matching the exact arguments
-    template <typename T, int R, int C>
-    auto operator () (const Eigen::Matrix<T, R, C>& x)
-    {
-        return functionGradient(x);
-    }
-
-
-    template <class V, class I = Impl, std::enable_if_t<FunctionType<I, V>::value >= 0, int> = 0>
-    auto function (const Eigen::MatrixBase<V>& x)
-    {
         return Function<Impl>(*this)(x);
     }
 
-    template <class V, class I = Impl, std::enable_if_t<FunctionType<I, V>::value < 0, int> = 0>
-    auto function (const Eigen::MatrixBase<V>& x)
-    {
-        static typename V::PlainObject dummieG;
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
 
-        return functionGradient(x, dummieG);
+template <class Impl>
+template <class V>
+std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& x)
+{
+    if constexpr(isFunctionGradient_1<Impl, V> || isFunctionGradient_2<Impl, V>)
+    {
+        Plain<V> g(x.rows());
+        Scalar<V> f = Impl::operator()(x, g);
+
+        return {f, g};
     }
 
-    template <class V, class... Args, class I = Impl, std::enable_if_t<GradientType<I, V>::value >= 0, int> = 0>
-    auto gradient (const Eigen::MatrixBase<V>& x, Args&&... args)
+    else if constexpr(isFunctionGradient_3<Impl, V>)
+        return Impl::operator()(x);
+
+    else if constexpr(isFunction<Impl, V> && (isGradient_1<Impl, V> || isGradient_2<Impl, V>))
+        return {Function<Impl>(*this)(x), Gradient<Impl>(*this)(x, g)};
+
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
+
+template <class Impl>
+template <class V>
+Scalar<V> FunctionGradient<Impl>::function (const Eigen::MatrixBase<V>& x)
+{
+    if constexpr(isFunction<Impl, V>)
+        return Function<Impl>(*this)(x);
+
+    else
+        return functionGrad(x);
+}
+
+template <class Impl>
+template <class V>
+void FunctionGradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
+{
+    if constexpr(isGradient_1<Impl, V> || isGradient_2<Impl, V>)
+        Gradient<Impl>(*this)(x, g);
+
+    else
+        functionGrad(x);
+}
+
+template <class Impl>
+template <class V>
+Plain<V> FunctionGradient<Impl>::gradient (const Eigen::MatrixBase<V>& x)
+{
+    if constexpr(isGradient_1<Impl, V> || isGradient_2<Impl, V>)
+        return Gradient<Impl>(*this)(x);
+
+    else
+        return functionGrad(x);
+}
+
+
+template <class Impl>
+Hessian::Hessian (const Impl& impl) : Impl(impl) {}
+
+template <class Impl>
+template <class V, class U>
+Plain<V> Hessian::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
+{
+    if constexpr(isHessian_1<Impl, V, U>)
+        return Impl::operator()(x, e);
+
+    else if constexpr(isHessian_2<Impl, V>)
+        return Impl::operator()(x) * e;
+
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
+
+template <class Impl>
+template <class V>
+Plain2D<V> Hessian::hessian (const Eigen::MatrixBase<V>& x)
+{
+    if constexpr(isHessian_1<Impl, V, U>)
     {
-        return Gradient<Impl>(*this)(x, std::forward<Args>(args)...);
+        Plain<V> e = Plain<V>::Constant(x.rows(), Scalar<V>{0.0});
+        Plain2D<V> m(x.rows(), x.rows());
+
+        for(int i = 0; i < e.rows(); ++i)
+        {
+            e(i) = Scalar<V>{1.0};
+            m.row(i) = Impl::operator()(x, e);
+            e(i) = Scalar<V>{0.0};
+        }
+
+        return m;
     }
 
-    template <class V, class... Args, class I = Impl, std::enable_if_t<GradientType<I, V>::value < 0, int> = 0>
-    void gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
-    {
-        functionGradient(x, g);
-    }
+    else if constexpr(isHessian_2<Impl, V>)
+        return Impl::operator()(x);
 
-    template <class V, class... Args, class I = Impl, std::enable_if_t<GradientType<I, V>::value < 0, int> = 0>
-    auto gradient (const Eigen::MatrixBase<V>& x)
-    {
-        return std::get<1>(functionGradient(x));
-    }
-};
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
+
+template <class Impl>
+template <class V, class U>
+Plain<V> Hessian::operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
+{
+    return hessian(x, e);
+}
+
+template <class Impl>
+template <class V>
+Plain2D<V> Hessian::operator() (const Eigen::MatrixBase<V>& x)
+{
+    return hessian(x);
+}
 
 } // namespace impl
 
 
-template <class Impl_>
-struct Hessian : public Impl_
-{
-    using Impl = Impl_;
-    
-    Hessian (const Impl& impl) : Impl(impl) {}
-
-
-    template <class V, typename... Args, class I = Impl, std::enable_if_t<HessianType<I, V>::value % 2 == 0, int> = 0>
-    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
-    {
-        return Impl::hessian(x, std::forward<Args>(args)...);
-    }
-
-    template <class V, typename... Args, class I = Impl, std::enable_if_t<HessianType<I, V>::value % 2 == 1, int> = 0>
-    auto delegate (const Eigen::MatrixBase<V>& x, Args&&... args)
-    {
-        return Impl::operator()(x, std::forward<Args>(args)...);
-    }
-
-
-    template <class V, class U, class I = Impl, std::enable_if_t<HessianType<I, V>::value < 2, int> = 0>
-    ::nlpp::impl::Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
-    {
-        return delegate(x, e);
-    }
-
-    // template <class V, class I = Impl, std::enable_if_t<HessianType<I, V>::value < 2, int> = 0>
-    // auto gradient (const Eigen::MatrixBase<V>& x)
-    // {
-    // }
-
-
-    template <class V, class U, class I = Impl, std::enable_if_t<GradientType<I, V>::value >= 2, int> = 0>
-    ::nlpp::impl::Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
-    {
-        return delegate(x) * e;
-    }
-
-    template <class V, class I = Impl, std::enable_if_t<GradientType<I, V>::value >= 2, int> = 0>
-    ::nlpp::impl::Plain2D<V> hessian (const Eigen::MatrixBase<V>& x)
-    {
-        return delegate(x);
-    }
-
-
-    template <class V, class U>
-    auto operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
-    {
-        return hessian(x, e);
-    }
-
-    template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x)
-    {
-        return hessian(x);
-    }
-};
-
-
-/** @name 
- *  @brief Functions used only to delegate the call with automatic type deduction
-*/
-//@{
-
-/// Delegate the call to Function<Impl, Float>(impl)
-template <class Impl>
-auto function (const Impl& impl)
-{
-    return Function<Impl>(impl);
-}
-
-
-/// Delegate the call to Gradient<Impl, Float>(impl)
-template <class Impl>
-auto gradient (const Impl& impl)
-{
-    return Gradient<Impl>(impl);
-}
-
-/** @brief Delegate the call to FunctionGradient where we have both the function and gradients separated
- * 
- *  @param func A functor having <tt>Float Func::operator()(const Vec&)</tt>
- *  @param grad A functor having either <tt>Vec Grad::operator()(const Vec&)</tt> or 
- *              <tt>void Grad::operator()(const Vec&, Vec&)</tt>
-*/
-template <class Func, class Grad>
-auto functionGradient (const Func& func, const Grad& grad)
-{
-    return FunctionGradient<Func, Grad>(func, grad);
-}
-
-/** @brief Delegate the call to FunctionGradient where we have both the function and gradients in a single functor
- * 
- *  @param impl a functor having either <tt>Float operator()(const Vec&, Vec&)</tt> or
- *         <tt>std::pair<Float, Vec> operator()(const Vec&)</tt>
-*/
-template <class Impl>
-auto functionGradient (const Impl& impl)
-{
-    return FunctionGradient<Impl>(impl);
-}
-
-
-template <class Impl>
-auto hessian (const Impl& impl)
-{
-    return Hessian<Impl>(impl);
-}
-//@}
-
-//@}
 
 
 namespace poly

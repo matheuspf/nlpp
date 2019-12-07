@@ -169,16 +169,16 @@ struct detector<Default, std::void_t<Op<Args...>>, Op, Args...>
 };
  
 template <template<class...> class Op, class... Args>
-using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
+using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
 
 template <template<class...> class Op, class... Args>
 constexpr bool is_detected_v = is_detected<Op, Args...>::value;
  
 template <template<class...> class Op, class... Args>
-using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
+using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
  
 template <class Default, template<class...> class Op, class... Args>
-using detected_or = detail::detector<Default, void, Op, Args...>;
+using detected_or = detector<Default, void, Op, Args...>;
 
 //@}
 
@@ -238,5 +238,7 @@ inline constexpr int sign (T t)
     return int(T{0} < t) - int(t < T{0});
 }
 
+template <class...>
+constexpr std::false_type always_false{};
 
 } // namespace nlpp
