@@ -27,7 +27,7 @@
 #pragma once
 
 #include "helpers/helpers.hpp"
-#include "utils/wrappers.hpp"
+#include "utils/wrappers_dec.hpp"
 
 /** @defgroup FiniteDifferenceGroup Finite Difference
     @copydoc FiniteDifference.h
@@ -50,6 +50,14 @@
                                          using NAME::h;
 
 
+// namespace nlpp::wrap
+// {
+
+// template <class V>
+// struct Function;
+
+// }; // namespace nlpp::wrap
+
 
 namespace nlpp
 {
@@ -65,7 +73,7 @@ namespace fd
 //@{
 struct AutoStep;
 
-template <typename>
+template <typename Float = types::Float>
 struct SimpleStep;
 
 template <typename = types::Float>
@@ -77,13 +85,13 @@ struct NormalizedStep;
     @brief Forward declaration of the main finite difference classes
 */
 //@{
-template <class, class>
+template <class, class Step = AutoStep>
 struct Forward;
 
-template <class, class>
+template <class, class Step = AutoStep>
 struct Backward;
 
-template <class, class>
+template <class, class Step = AutoStep>
 struct Central;
 //@}
 
@@ -518,7 +526,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
  *  @tparam Step Step size template functor
  *  @tparam Float Base floating point type
 */
-template <class Function, class Step = AutoStep>
+template <class Function, class Step>
 struct Backward : public FiniteDifference<Backward<Function, Step>>
 {
     CPPOPT_USING_FINITE_DIFFERENCE(Base, FiniteDifference<Backward<Function, Step>>);
@@ -722,7 +730,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
  *  @tparam Step Step size template functor
  *  @tparam Float Base floating point type
 */
-template <class Function, class Step = AutoStep>
+template <class Function, class Step>
 struct Central : public FiniteDifference<Central<Function, Step>>
 {
     CPPOPT_USING_FINITE_DIFFERENCE(Base, FiniteDifference<Central<Function, Step>>);
@@ -936,7 +944,7 @@ struct Central : public FiniteDifference<Central<Function, Step>>
 //@{
 
 /// Gradient interface for finite difference estimation
-template <class Function, template <class, class> class Difference, class Step>
+template <class Function, template <class, class> class Difference = Forward, class Step = AutoStep>
 struct Gradient : public Difference<wrap::Function<Function>, Step>
 {
     CPPOPT_USING_FINITE_DIFFERENCE(Base, Difference<wrap::Function<Function>, Step>);

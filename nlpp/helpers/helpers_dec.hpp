@@ -5,6 +5,7 @@
 
 #include "include.hpp"
 #include "types.hpp"
+// #include "forwardDeclarations.hpp"
 
 /// Expands variadic arguments
 #define NLPP_EXPAND(...) __VA_ARGS__
@@ -182,6 +183,9 @@ using detected_or = detector<Default, void, Op, Args...>;
 
 //@}
 
+template <class...>
+constexpr std::false_type always_false{};
+
 } // namespace impl
 
 
@@ -237,8 +241,5 @@ inline constexpr int sign (T t)
 {
     return int(T{0} < t) - int(t < T{0});
 }
-
-template <class...>
-constexpr std::false_type always_false{};
 
 } // namespace nlpp

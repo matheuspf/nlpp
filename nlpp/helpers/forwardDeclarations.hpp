@@ -139,19 +139,6 @@ struct FunctionGradient;
 } // namespace impl
 
 
-template <class T, class V = Vec>
-struct FunctionType;
-
-template <class T, class V = Vec>
-struct GradientType;
-
-template <class T, class V = Vec>
-struct FunctionGradientType;
-
-template <class T, class V = Vec, class U = Vec>
-struct HessianType;
-
-
 template <class Impl>
 using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value, Impl, impl::Function<Impl>>;
 
@@ -179,6 +166,9 @@ using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
     >,
     impl::FunctionGradient<Func, Grad>
 >;
+
+template <class Impl>
+using Hessian = std::conditional_t<handy::IsSpecialization<Impl, impl::Hessian>::value, Impl, impl::Hessian<Impl>>;
 
 
 } // namespace wrap

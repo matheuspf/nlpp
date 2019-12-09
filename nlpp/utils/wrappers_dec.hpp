@@ -18,7 +18,15 @@
 #pragma once
 
 #include "helpers/helpers_dec.hpp"
-#include "utils/finiteDifference.hpp"
+// #include "utils/finiteDifference.hpp"
+
+// namespace nlpp::fd
+// {
+
+// template <class Function, template <class, class> class Difference, class Step>
+// struct Gradient;
+
+// } // namespace nlpp::fd
 
 
 /// Wrap namespace
@@ -75,10 +83,6 @@ struct Function : public Impl_
     // Scalar<V> operator () (const Eigen::Matrix<T, R, C>& x);
 };
 
-} // namespace impl
-
-namespace impl
-{
 
 template <class Impl_>
 struct Gradient : public Impl_
@@ -94,17 +98,15 @@ struct Gradient : public Impl_
     Plain<V> gradient (const Eigen::MatrixBase<V>& x);
 
     template <class V>
+    Scalar<V> directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e);
+
+    template <class V>
     void operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g);
 
     template <class V>
     Plain<V> operator() (const Eigen::MatrixBase<V>& x);
 };
 
-} // namespace impl
-
-
-namespace impl
-{
 
 /** @name 
  *  @brief The uniform interface wrapper for function/gradient functors
@@ -140,7 +142,7 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
     FunctionGradient (const F& f = Func{}, const G& g = Grad{});
 
     template <class F = Func, class G = Grad, std::enable_if_t<!handy::HasConstructor<G>::value, int> = 0>
-    FunctionGradient (const F& f = Func{}, const G& g = Grad{Func{}}) : Function<Func>(f), Gradient<Grad>(g);
+    FunctionGradient (const F& f = Func{}, const G& g = Grad{Func{}});
 
 
     /** @name
@@ -174,19 +176,19 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
 
 
 template <class Func, template <class, class> class Difference, class Step>
-struct FunctionGradient<Func, fd::Gradient<Func, Difference, Step>> : Function<Func>, public fd::Gradient<Func, Difference, Step>
+struct FunctionGradient<Func, ::nlpp::fd::Gradient<Func, Difference, Step>> : Function<Func>, public ::nlpp::fd::Gradient<Func, Difference, Step>
 {
     using Function = wrap::Function<Func>;
-    using Gradient = fd::Gradient<Func, Difference, Step>;
+    using Gradient =::nlpp::fd::Gradient<Func, Difference, Step>;
 
     using Function::function;
     using Gradient::gradient;
     using Gradient::directional;
 
 
-    FunctionGradient (const Function& f = Function{}) : Function(f), Gradient(f);
+    FunctionGradient (const Function& f = Function{});
 
-    FunctionGradient (const Function& f, const Gradient& g) : Function(f), Gradient(Function(f));
+    FunctionGradient (const Function& f, const Gradient& g);
     
     /** @name
      *  @brief Operators for function/gradient calls.
@@ -223,7 +225,7 @@ struct FunctionGradient<Impl_> : public Impl_
 {
     using Impl = Impl_;
     
-    FunctionGradient (const Impl& impl) : Impl(impl);
+    FunctionGradient (const Impl& impl);
 
     template <class V>
     Scalar<V> functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true);
@@ -240,9 +242,6 @@ struct FunctionGradient<Impl_> : public Impl_
     template <class V>
     Plain<V> gradient (const Eigen::MatrixBase<V>& x);
 };
-
-
-} // namespace impl
 
 
 template <class Impl_>
@@ -266,6 +265,39 @@ struct Hessian : public Impl_
 };
 
 } // namespace impl
+
+
+template <class Impl>
+using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value, Impl, impl::Function<Impl>>;
+
+template <class Impl>
+using Gradient = std::conditional_t<handy::IsSpecialization<Impl, impl::Gradient>::value, Impl, impl::Gradient<Impl>>;
+
+/** @brief Alias for impl::FunctionGradient
+ *  @details There are four conditions:
+ *           - Is @c Grad given?
+ *              - If not, is @c Func already an impl::FunctionGradient?
+ *                  - (1) If so, simply set the result to itself (to avoid multiple wrapping)
+ *                  - Otherwise, is @c Func a function but not a function/gradient functor?
+ *                      - (2) If so, set the result to impl::FunctionGradient<Func, fd::Gradient<Func>> (use finite difference to aproximate the gradient)
+ *                      - (3) Otherwise it should be a function/gradient functor, so we use impl::FunctionGradient<Func>
+ *              - (4) If yes, set the result to impl::FunctionGradient<Func, Grad>
+*/
+template <class Func, class Grad = void>
+using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
+    std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value,
+        Func,
+        std::conditional_t<wrap::FunctionType<Func>::value >= 0 && wrap::FunctionGradientType<Func>::value < 0,
+            impl::FunctionGradient<Func, fd::Gradient<Func>>,
+            impl::FunctionGradient<Func>
+        >
+    >,
+    impl::FunctionGradient<Func, Grad>
+>;
+
+template <class Impl>
+using Hessian = std::conditional_t<handy::IsSpecialization<Impl, impl::Hessian>::value, Impl, impl::Hessian<Impl>>;
+
 
 /** @name 
  *  @brief Functions used only to delegate the call with automatic type deduction
@@ -314,18 +346,20 @@ Hessian<Impl> hessian (const Impl& impl)
 {
     return Hessian<Impl>(impl);
 }
+
+
 //@}
 //@}
 
-
+/*
 namespace poly
 {
 
-template <class V_ = Vec>
+template <class V_ = ::nlpp::Vec>
 struct Function
 {
     using V = V_;
-    using Float = ::nlpp::impl::Scalar<V>;
+    using Float = Scalar<V>;
 
     using FuncType = Float (const V&);
 
@@ -650,12 +684,8 @@ struct Hessian
     std::function<HessType> hessian;
 };
 
-
-
 } // namespace poly
+*/
+//@}
 
-
-} // namespace wrap
-
-
-} // namespace nlpp
+} // namespace nlpp::wrap
