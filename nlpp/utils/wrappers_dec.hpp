@@ -18,15 +18,6 @@
 #pragma once
 
 #include "helpers/helpers_dec.hpp"
-// #include "utils/finiteDifference.hpp"
-
-// namespace nlpp::fd
-// {
-
-// template <class Function, template <class, class> class Difference, class Step>
-// struct Gradient;
-
-// } // namespace nlpp::fd
 
 
 /// Wrap namespace
@@ -49,17 +40,44 @@ namespace nlpp::wrap
 namespace impl
 {
 
-using ::nlpp::impl::Scalar;
-using ::nlpp::impl::Plain;
-using ::nlpp::impl::Plain2D;
-using ::nlpp::impl::isMat;
-
-using ::nlpp::impl::detected_t;
-using ::nlpp::impl::is_detected_v;
-using ::nlpp::impl::always_false;
+using ::nlpp::impl::Scalar, ::nlpp::impl::Plain, ::nlpp::impl::Plain1D,
+      ::nlpp::impl::Plain2D, ::nlpp::impl::isMat, ::nlpp::impl::detected_t,
+      ::nlpp::impl::is_detected_v, ::nlpp::impl::always_false;
 
 template <class T, class... Args>
 using OperatorType = detected_t<std::invoke_result_t, T, Args...>;
+
+
+template <class Impl, class V>
+static constexpr bool isFunction = std::is_floating_point_v<OperatorType<Impl, V>>;
+
+template <class Impl, class V>
+static constexpr bool isGradient_0 = std::is_same_v<OperatorType<Impl, V, V&>, void>;
+
+template <class Impl, class V>
+static constexpr bool isGradient_1 = isMat<OperatorType<Impl, V>>;
+
+template <class Impl, class V>
+static constexpr bool isGradient_2 = std::is_same_v<OperatorType<Impl, V, V&, Scalar<V>>, void>;
+
+template <class Impl, class V>
+static constexpr bool isDirectional = std::is_floating_point_v<OperatorType<Impl, V, const V&>>;
+
+template <class Impl, class V>
+static constexpr bool isFuncGrad_0 = std::is_floating_point_v<OperatorType<Impl, V, V&, bool>>;
+
+template <class Impl, class V>
+static constexpr bool isFuncGrad_1 = std::is_floating_point_v<OperatorType<Impl, V, V&>>;
+
+template <class Impl, class V>
+static constexpr bool isFuncGrad_2 = std::is_floating_point_v<std::tuple_element_t<0, OperatorType<Impl, V>>> &&
+                                     isMat<std::tuple_element_t<1, OperatorType<Impl, V>>>;
+
+template <class Impl, class V, class U = Plain1D<V>>
+static constexpr bool isHessian_1 = isMat<OperatorType<Impl, V, U>>;
+
+template <class Impl, class V>
+static constexpr bool isHessian_2 = isMat<OperatorType<Impl, V>> && OperatorType<Impl, V>::ColsAtCompileTime != 1;
 
 
 /** @brief Function wrapping for user uniform defined function calculation
@@ -93,6 +111,9 @@ struct Gradient : public Impl_
 
     template <class V>
     void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g);
+
+    template <class V>
+    void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx);
 
     template <class V>
     Plain<V> gradient (const Eigen::MatrixBase<V>& x);
@@ -175,51 +196,6 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
 };
 
 
-template <class Func, template <class, class> class Difference, class Step>
-struct FunctionGradient<Func, ::nlpp::fd::Gradient<Func, Difference, Step>> : Function<Func>, public ::nlpp::fd::Gradient<Func, Difference, Step>
-{
-    using Function = wrap::Function<Func>;
-    using Gradient =::nlpp::fd::Gradient<Func, Difference, Step>;
-
-    using Function::function;
-    using Gradient::gradient;
-    using Gradient::directional;
-
-
-    FunctionGradient (const Function& f = Function{});
-
-    FunctionGradient (const Function& f, const Gradient& g);
-    
-    /** @name
-     *  @brief Operators for function/gradient calls.
-     * 
-     *  @details Returns both function and gradient if only a @Vec is given. If the reference @c g
-     *           is also given, returns only the Func::operator()(x) return and calls 
-     *           @c Gradient<Grad>::operator()(x, g) to write on @c g.
-     * 
-     *  @param x The vector for which we will be evaluating both function and gradient
-     *  @param g The reference where we are going to store the gradient
-    */
-    //@{
-    template <class V>
-    std::pair<Scalar<V>, Plain<V>> functionGradient (const Eigen::MatrixBase<V>& x);
-
-    template <class V>
-    Scalar<V> functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true);
-    //@}
-
-    template <class V>
-    std::pair<Scalar<V>, Plain<V>> operator () (const Eigen::MatrixBase<V>& x);
-
-    template <class V>
-    Scalar<V> operator () (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g, bool calcGrad = true);
-
-    // /// Necessary to hide a lambda operator matching the exact arguments
-    // template <typename T, int R, int C>
-};
-
-
-
 template <class Impl_>
 struct FunctionGradient<Impl_> : public Impl_
 {
@@ -287,10 +263,10 @@ template <class Func, class Grad = void>
 using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
     std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value,
         Func,
-        std::conditional_t<wrap::FunctionType<Func>::value >= 0 && wrap::FunctionGradientType<Func>::value < 0,
-            impl::FunctionGradient<Func, fd::Gradient<Func>>,
+        // std::conditional_t<wrap::FunctionType<Func>::value >= 0 && wrap::FunctionGradientType<Func>::value < 0,
+        //     impl::FunctionGradient<Func, fd::Gradient<Func>>,
             impl::FunctionGradient<Func>
-        >
+        // >
     >,
     impl::FunctionGradient<Func, Grad>
 >;

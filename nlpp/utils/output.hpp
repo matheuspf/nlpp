@@ -1,11 +1,16 @@
 #pragma once
 
-#include "helpers/helpers.hpp"
-
+#include "helpers/helpers_dec.hpp"
 
 
 namespace nlpp::out
 {
+
+template <int Level = 0, typename Float = types::Float>
+struct Optimizer;
+
+template <int Level = 0, typename Float = types::Float>
+struct GradientOptimizer;
 
 template <typename Float>
 struct Optimizer<0, Float>
@@ -163,7 +168,7 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
 };
 
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct Optimizer_ : public ::nlpp::poly::PolyClass<OptimizerBase<V>>
 {
     NLPP_USING_POLY_CLASS(Optimizer_, Base, ::nlpp::poly::PolyClass<OptimizerBase<V>>);
@@ -188,7 +193,7 @@ struct Optimizer_ : public ::nlpp::poly::PolyClass<OptimizerBase<V>>
 // static constexpr std::array<const char*, 3> outputNames = { "quiet", "complete", "store" };
 
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>
 {
     NLPP_USING_POLY_CLASS(GradientOptimizer_, Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);

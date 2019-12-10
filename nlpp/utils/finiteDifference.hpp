@@ -50,15 +50,6 @@
                                          using NAME::h;
 
 
-// namespace nlpp::wrap
-// {
-
-// template <class V>
-// struct Function;
-
-// }; // namespace nlpp::wrap
-
-
 namespace nlpp
 {
 

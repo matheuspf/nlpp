@@ -64,6 +64,9 @@ template <class V>
 using Plain2D = Eigen::Matrix<Scalar<V>, V::RowsAtCompileTime, V::ColsAtCompileTime>;
 
 template <class V>
+using Plain1D = Eigen::Matrix<Scalar<V>, V::RowsAtCompileTime, 1>;
+
+template <class V>
 using Ref = Eigen::Ref<Plain<V>>;
 //@}
 
