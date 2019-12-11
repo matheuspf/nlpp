@@ -157,7 +157,7 @@ struct StrongWolfe : public LineSearchBase<Float, InitialStep>
 } // namespace impl
 
 
-template <typename Float, class InitialStep>
+template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
 struct StrongWolfe : public impl::StrongWolfe<Float, InitialStep>,
 					 public LineSearch<StrongWolfe<Float, InitialStep>>
 {
@@ -180,7 +180,7 @@ struct StrongWolfe : public impl::StrongWolfe<Float, InitialStep>,
 namespace poly
 {
 
-template <class V, class InitialStep>
+template <class V = Vec, class InitialStep = ConstantStep<typename V::Scalar>>
 struct StrongWolfe : public impl::StrongWolfe<::nlpp::impl::Scalar<V>, InitialStep>,
 					 public LineSearchBase<V>
 {

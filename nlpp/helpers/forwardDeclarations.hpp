@@ -12,91 +12,89 @@ namespace nlpp
 namespace out
 {
 
-template <int Level = 0, typename Float = types::Float>
+template <int Level, typename Float>
 struct Optimizer;
 
-template <int Level = 0, typename Float = types::Float>
+template <int Level, typename Float>
 struct GradientOptimizer;
 
 namespace poly
 {
 
-template <class V = ::nlpp::Vec>
+template <class V>
 struct Optimizer_;
 
-template <class V = ::nlpp::Vec>
+template <class V>
 struct GradientOptimizer_;
 
 } // namespace poly
-
 } // namespace out
 
 
 namespace stop
 {
 
-template <bool Exclusive = false, typename Float = types::Float>
+template <bool Exclusive, typename Float>
 struct Optimizer;
 
-template <bool Exclusive = false, typename Float = types::Float>
+template <bool Exclusive, typename Float>
 struct GradientOptimizer;
 
 namespace poly
 {
 
-template <class V = ::nlpp::Vec>
+template <class V>
 struct Optimizer_;
 
-template <class V = ::nlpp::Vec>
+template <class V>
 struct GradientOptimizer_;
 
 } // namespace poly
-
 } // namespace stop
 
 
 
 /// Because these are used as the default line search procedure in many cases
-template <typename Float = types::Float>
+template <typename Float>
 struct ConstantStep;
 
-template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
+template <typename Float, class InitialStep>
 struct StrongWolfe;
 
 namespace poly
 {
 
-template <class V = Vec>
+template <class V>
 struct LineSearchBase;
 
-template <class V = Vec>
+template <class V>
 struct LineSearch_;
 
-template <class V = Vec, class InitialStep = ConstantStep<typename V::Scalar>>
+template <class V, class InitialStep>
 struct StrongWolfe;
 
 } // namespace poly
 
 
-template <class Impl, class Stop = stop::Optimizer<>, class Output = out::Optimizer<>>
+template <class Impl, class Stop, class Output>
 struct Optimizer;
 
-template <class Impl, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+template <class Impl, class Stop, class Output>
 struct GradientOptimizer;
 
-template <class Impl, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+template <class Impl, class LineSearch, class Stop, class Output>
 struct LineSearchOptimizer;
 
 namespace poly
 {
 
-template <class V = Vec>
+template <class V>
 struct Optimizer;
 
-template <class V = Vec>
+template <class V>
 struct GradientOptimizer;
 
-template <class V = Vec>
+template <class V>
 struct LineSearchOptimizer;
 
 } // namespace poly
@@ -109,22 +107,19 @@ namespace fd
 
 struct AutoStep;
 
-template <typename Float = types::Float>
+template <typename Float>
 struct SimpleStep;
 
-template <class Function, class Step = AutoStep>
+template <class Function, class Step>
 struct Forward;
 
-template <class Function, template <class, class> class Difference = Forward, class Step = AutoStep>
+template <class Function, template <class, class> class Difference, class Step>
 struct Gradient;
 
 } // namespace fd
 
 
-namespace wrap
-{
-
-namespace impl
+namespace wrap::impl
 {
 
 template <class Impl>
@@ -136,42 +131,9 @@ struct Gradient;
 template <class...>
 struct FunctionGradient;
 
-} // namespace impl
+template <class>
+struct Hessian;
 
-
-template <class Impl>
-using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value, Impl, impl::Function<Impl>>;
-
-template <class Impl>
-using Gradient = std::conditional_t<handy::IsSpecialization<Impl, impl::Gradient>::value, Impl, impl::Gradient<Impl>>;
-
-/** @brief Alias for impl::FunctionGradient
- *  @details There are four conditions:
- *           - Is @c Grad given?
- *              - If not, is @c Func already an impl::FunctionGradient?
- *                  - (1) If so, simply set the result to itself (to avoid multiple wrapping)
- *                  - Otherwise, is @c Func a function but not a function/gradient functor?
- *                      - (2) If so, set the result to impl::FunctionGradient<Func, fd::Gradient<Func>> (use finite difference to aproximate the gradient)
- *                      - (3) Otherwise it should be a function/gradient functor, so we use impl::FunctionGradient<Func>
- *              - (4) If yes, set the result to impl::FunctionGradient<Func, Grad>
-*/
-template <class Func, class Grad = void>
-using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
-    std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value,
-        Func,
-        std::conditional_t<wrap::FunctionType<Func>::value >= 0 && wrap::FunctionGradientType<Func>::value < 0,
-            impl::FunctionGradient<Func, fd::Gradient<Func>>,
-            impl::FunctionGradient<Func>
-        >
-    >,
-    impl::FunctionGradient<Func, Grad>
->;
-
-template <class Impl>
-using Hessian = std::conditional_t<handy::IsSpecialization<Impl, impl::Hessian>::value, Impl, impl::Hessian<Impl>>;
-
-
-} // namespace wrap
-
+} // namespace wrap::impl
 
 } // namespace nlpp

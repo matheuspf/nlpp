@@ -8,7 +8,7 @@
 namespace nlpp
 {
 
-template <typename Float>
+template <typename Float = types::Float>
 struct ConstantStep
 {
     ConstantStep (Float a0 = 1.0) : a0(a0) {}

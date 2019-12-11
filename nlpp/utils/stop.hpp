@@ -6,7 +6,7 @@
 namespace nlpp::stop
 {
 
-template <bool Exclusive, typename Float>
+template <bool Exclusive = false, typename Float = types::Float>
 struct Optimizer
 {
     Optimizer(int maxIterations_ = 1000, double xTol = 1e-4, double fTol = 1e-4) : 
@@ -64,7 +64,7 @@ struct Optimizer
 };
 
 
-template <bool Exclusive, typename Float>
+template <bool Exclusive = false, typename Float = types::Float>
 struct GradientOptimizer : public Optimizer<Exclusive, Float>
 {
     using Base = Optimizer<Exclusive, Float>;
@@ -215,7 +215,7 @@ struct GradientOptimizer : public GradientOptimizerBase<V>,
 
 
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct Optimizer_ : public ::nlpp::poly::PolyClass<OptimizerBase<V>>
 {
     NLPP_USING_POLY_CLASS(Optimizer_, Base, ::nlpp::poly::PolyClass<OptimizerBase<V>>);
@@ -241,7 +241,7 @@ struct Optimizer_ : public ::nlpp::poly::PolyClass<OptimizerBase<V>>
 // static constexpr std::array<const char*, 3> stopNames = { "improvement_any", "improvement_all" "gradient_norm" };
 
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>
 {
     NLPP_USING_POLY_CLASS(GradientOptimizer_, Base, ::nlpp::poly::PolyClass<GradientOptimizerBase<V>>);

@@ -139,7 +139,7 @@ struct LineSearch
 namespace poly
 {
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct LineSearchBase : public ::nlpp::poly::CloneBase<LineSearchBase<V>>
 {
 	virtual ~LineSearchBase ()	{}
@@ -150,7 +150,7 @@ struct LineSearchBase : public ::nlpp::poly::CloneBase<LineSearchBase<V>>
 };
 
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearchBase<V>>,
 					 public ::nlpp::LineSearch<LineSearch_<V>>
 {

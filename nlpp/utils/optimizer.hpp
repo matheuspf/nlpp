@@ -54,7 +54,7 @@ namespace nlpp
 
 // class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>
 
-template <class Impl, class Stop, class Output>
+template <class Impl, class Stop = stop::Optimizer<>, class Output = out::Optimizer<>>
 struct Optimizer
 {
     // Optimizer (const Optimizer&) = default;
@@ -83,7 +83,7 @@ struct Optimizer
 };
 
 
-template <class Impl, class Stop, class Output>
+template <class Impl, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 struct GradientOptimizer : public Optimizer<Impl, Stop, Output>
 {
     using Base = Optimizer<Impl, Stop, Output>;
@@ -124,7 +124,7 @@ struct GradientOptimizer : public Optimizer<Impl, Stop, Output>
     //@}
 };
 
-template <class Impl, class LineSearch, class Stop, class Output>
+template <class Impl, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 struct LineSearchOptimizer : public GradientOptimizer<Impl, Stop, Output>
 {
     using Base = GradientOptimizer<Impl, Stop, Output>;
@@ -151,7 +151,7 @@ struct LineSearchOptimizer : public GradientOptimizer<Impl, Stop, Output>
 namespace poly
 {
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct Optimizer // : public CloneBase<Optimizer<V>>
 {
     Optimizer (const out::Optimizer_<V>& output = out::Optimizer_<V>{},
@@ -186,7 +186,7 @@ struct Optimizer // : public CloneBase<Optimizer<V>>
 };
 
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct GradientOptimizer
 {
     GradientOptimizer (const out::GradientOptimizer_<V>& output = out::GradientOptimizer_<V>{},
@@ -246,7 +246,7 @@ struct GradientOptimizer
     stop::GradientOptimizer_<V> stop;
 };
 
-template <class V>
+template <class V = ::nlpp::Vec>
 struct LineSearchOptimizer : public GradientOptimizer<V>
 {
     using Base = GradientOptimizer<V>;

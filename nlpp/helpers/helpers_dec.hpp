@@ -5,7 +5,7 @@
 
 #include "include.hpp"
 #include "types.hpp"
-// #include "forwardDeclarations.hpp"
+#include "forwardDeclarations.hpp"
 
 /// Expands variadic arguments
 #define NLPP_EXPAND(...) __VA_ARGS__
@@ -185,6 +185,12 @@ using detected_or = detector<Default, void, Op, Args...>;
 
 template <class...>
 constexpr std::false_type always_false{};
+
+template <typename T, class V>
+constexpr decltype(auto) cast (V&& v)
+{
+    return v.template cast<T>();
+}
 
 } // namespace impl
 

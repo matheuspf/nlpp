@@ -75,7 +75,7 @@ struct NormalizedStep;
 /** @name
     @brief Forward declaration of the main finite difference classes
 */
-//@{
+
 template <class, class Step = AutoStep>
 struct Forward;
 
@@ -1013,7 +1013,7 @@ struct AutoStep
 };
 
 
-template <typename Float>
+template <typename Float = types::Float>
 struct SimpleStep
 {
     SimpleStep (Float h = constants::eps_<Float>) : h(h) {}
