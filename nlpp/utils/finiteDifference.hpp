@@ -1013,7 +1013,7 @@ struct AutoStep
 };
 
 
-template <typename Float = types::Float>
+template <typename Float>
 struct SimpleStep
 {
     SimpleStep (Float h = constants::eps_<Float>) : h(h) {}

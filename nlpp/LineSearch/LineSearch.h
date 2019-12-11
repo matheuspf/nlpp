@@ -78,8 +78,8 @@ struct LineSearch
 template <class Impl>
 struct LineSearch
 {
-	template <class I>
-	static constexpr bool isImplPoly = std::is_same<I, poly::LineSearchBase<>>::value || std::is_same<I, poly::LineSearch_<>>::value;
+	template <class I, class V>
+	static constexpr bool isImplPoly = std::is_same<I, poly::LineSearchBase<V>>::value || std::is_same<I, poly::LineSearch_<V>>::value;
 
     void initialize () 
 	{
@@ -93,13 +93,13 @@ struct LineSearch
 	}
 
 
-	template <class Function, class V, class I = Impl, std::enable_if_t<!isImplPoly<I>, int> = 0>
+	template <class Function, class V, class I = Impl, std::enable_if_t<!isImplPoly<I, V>, int> = 0>
 	auto operator () (const Function& f, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
 	{
 	    return impl(wrap::functionGradient(f), x, dir);
 	}
 
-	template <class Function, class Gradient, class V, class I = Impl, std::enable_if_t<!isImplPoly<I>, int> = 0>
+	template <class Function, class Gradient, class V, class I = Impl, std::enable_if_t<!isImplPoly<I, V>, int> = 0>
 	auto operator () (Function f, Gradient g, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
 	{
 		return impl(wrap::functionGradient(f, g), x, dir);
@@ -107,13 +107,13 @@ struct LineSearch
 
 
 
-	template <class Function, class V, class I = Impl, std::enable_if_t<isImplPoly<I>, int> = 0>
+	template <class Function, class V, class I = Impl, std::enable_if_t<isImplPoly<I, V>, int> = 0>
 	auto operator () (const Function& f, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
 	{
 		return impl(wrap::poly::FunctionGradient<V>(f), x, dir);
 	}
 
-	template <class Function, class Gradient, class V, class I = Impl, std::enable_if_t<isImplPoly<I>, int> = 0>
+	template <class Function, class Gradient, class V, class I = Impl, std::enable_if_t<isImplPoly<I, V>, int> = 0>
 	auto operator () (Function f, Gradient g, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
 	{
 		return impl(wrap::poly::FunctionGradient<V>(f, g), x, dir);
