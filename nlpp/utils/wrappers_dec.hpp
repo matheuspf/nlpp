@@ -187,7 +187,7 @@ struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Gra
     std::pair<Scalar<V>, Plain<V>> operator () (const Eigen::MatrixBase<V>& x);
 
     template <class V>
-    Scalar<V> operator () (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g, bool calcGrad = true);
+    Scalar<V> operator () (const Eigen::MatrixBase<V>& x, Plain<V>>& g, bool calcGrad = true);
     //@}
 
     /// Necessary to hide a lambda operator matching the exact arguments
@@ -327,7 +327,6 @@ Hessian<Impl> hessian (const Impl& impl)
 //@}
 //@}
 
-/*
 namespace poly
 {
 
@@ -366,49 +365,86 @@ struct Gradient
     using V = V_;
     using Float = ::nlpp::impl::Scalar<V>;
 
+    using GradType_0 = void (const V&, Plain<V>>&);
     using GradType_1 = V (const V&);
-    using GradType_2 = void (const V&, ::nlpp::impl::Plain<V>&);
-
+    using GradType_2 = void (const V&, Plain<V>>&, Float);
+    using GradType_2 = void (const V&, Plain<V>>&, Float);
 
     Gradient () {}
 
-    Gradient (const std::function<GradType_1>& grad_1, ::nlpp::impl::Precedence<0>) : grad_1(grad_1)
-    {
-        init();
-    }
-
-    Gradient (const std::function<GradType_2>& grad_2, ::nlpp::impl::Precedence<1>) : grad_2(grad_2)
-    {
-        init();
-    }
-
-
     template <class G>
-    Gradient (const G& grad) : Gradient(grad, ::nlpp::impl::Precedence<0>{}) {}
+    Gradient (const G& grad) : grad(grad) {}
 
 
+    void gradient (const V& x, Plain<V>& g)
+    {
+        switch(grad.index()):
+        {
+            case 0:
+                std::get<GradType_0>(grad)(x, g);
+                break;
+            case 1:
+                g = std::get<GradType_0>(grad)(x);
+                break;
+            case 2:
+                std::get<GradType_0>(grad)(x, g, std::nan("0"));
+                break;
+            default:
+                std::assert("Class was not initialized");
+        }
+    }
 
     V gradient (const V& x)
     {
-        return grad_1(x);
+        switch(grad.index()):
+        {
+            case 0:
+                Plain<V> g(x.rows());
+                std::get<GradType_0>(grad)(x, g);
+                return g;
+            case 1:
+                return std::get<GradType_1>(grad)(x);
+            case 2:
+                Plain<V> g(x.rows());
+                std::get<GradType_0>(grad)(x, g, std::nan("0"));
+                return g;
+            default:
+                std::assert("Class was not initialized");
+        }
     }
 
-    void gradient (const V& x, ::nlpp::impl::Plain<V>& g)
+    void gradient (const V& x, Plain<V>& g, Scalar<V> fx)
     {
-        grad_2(x, g);
+        switch(grad.index()):
+        {
+            case 0:
+                std::get<GradType_0>(grad)(x, g);
+                break;
+            case 1:
+                g = std::get<GradType_0>(grad)(x);
+                break;
+            case 2:
+                std::get<GradType_0>(grad)(x, g, fx);
+                break;
+            default:
+                std::assert("Class was not initialized");
+        }
     }
 
+    void operator () (const V& x, Plain<V>>& g)
+    {
+        gradient(x, g);
+    }
 
     V operator () (const V& x)
     {
         return gradient(x);
     }
 
-    void operator () (const V& x, ::nlpp::impl::Plain<V>& g)
+    void operator () (const V& x, Plain<V>>& g, Scalar<V> fx)
     {
-        gradient(x, g);
+        gradient(x, g, fx);
     }
-
 
     Float directional (const V& x, const V& e, Float fx)
     {
@@ -428,16 +464,16 @@ struct Gradient
 
         if(!grad_2)
         {
-            grad_2 = [gradImpl = nlpp::wrap::gradient(grad_1)](const V& x, ::nlpp::impl::Plain<V>& g) mutable
+            grad_2 = [gradImpl = nlpp::wrap::gradient(grad_1)](const V& x, Plain<V>>& g) mutable
             {
                 gradImpl(x, g);
             };
         }
     }
 
-
-    std::function<GradType_1> grad_1;
-    std::function<GradType_2> grad_2;
+    std::variant<std::function<GradType_0>,
+                 std::function<GradType_1>,
+                 std::function<GradType_2>> grad;
 };
 
 
@@ -461,7 +497,7 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
     using GradType_2 = typename Grad::GradType_2;
 
     using FuncGradType_1 = std::pair<Float, V> (const V&);
-    using FuncGradType_2 = Float (const V&, ::nlpp::impl::Plain<V>&);
+    using FuncGradType_2 = Float (const V&, Plain<V>>&);
     
     using DirectionalType = Float (const V&, const V&, Float);
 
@@ -505,7 +541,7 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
         return funcGrad_1(x);
     }
 
-    Float functionGradient (const V& x, ::nlpp::impl::Plain<V>& g)
+    Float functionGradient (const V& x, Plain<V>>& g)
     {
         return funcGrad_2(x, g);
     }
@@ -516,7 +552,7 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
         return functionGradient(x);
     }
 
-    Float operator () (const V& x, ::nlpp::impl::Plain<V>& g)
+    Float operator () (const V& x, Plain<V>>& g)
     {
         return functionGradient(x.eval(), g);
     }
@@ -552,7 +588,7 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
     template <class FuncGradImpl>
     void setFuncGrad_2(FuncGradImpl funcGradImpl)
     {
-        funcGrad_2 = [funcGradImpl](const V& x, ::nlpp::impl::Plain<V>& g) mutable -> Float
+        funcGrad_2 = [funcGradImpl](const V& x, Plain<V>>& g) mutable -> Float
         {
             return funcGradImpl(x, g);
         }; 
@@ -613,13 +649,13 @@ struct FunctionGradient : public Function<V_>, public Gradient<V_>
         if(!grad_2)
         {
             if(grad_1)
-                grad_2 = [gradImpl = nlpp::wrap::gradient(grad_1)](const V& x, ::nlpp::impl::Plain<V>& g) mutable
+                grad_2 = [gradImpl = nlpp::wrap::gradient(grad_1)](const V& x, Plain<V>>& g) mutable
                 {
                     gradImpl(x, g);
                 };
             
             else
-                grad_2 = [gradImpl = funcGrad_2](const V& x, ::nlpp::impl::Plain<V>& g) mutable
+                grad_2 = [gradImpl = funcGrad_2](const V& x, Plain<V>>& g) mutable
                 {
                     gradImpl(x, g);
                 };
@@ -661,7 +697,6 @@ struct Hessian
 };
 
 } // namespace poly
-*/
 //@}
 
 } // namespace nlpp::wrap
