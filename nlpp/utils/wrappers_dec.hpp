@@ -98,7 +98,7 @@ struct VisitorImpl : public Fs...
 };
 
 template <class... Fs>
-using Visitor = std::conditional_t<sizeof...(Fs) == 1, tuple_element_t<0, tuple<Fs...>>, VisitorImpl<Fs...>>;
+using Visitor = std::conditional_t<sizeof...(Fs) == 1, std::tuple_element_t<0, std::tuple<Fs...>>, VisitorImpl<Fs...>>;
  
 /** @brief Function wrapping for user uniform defined function calculation
  * 
@@ -126,8 +126,9 @@ template <class... Impl_>
 struct Gradient : public Visitor<Impl_...>
 {
     using Impl = Visitor<Impl_...>;
+    using Impl::Impl;
 
-    Gradient (const Impl& impl);
+    // Gradient (const Impl& impl);
 
     template <class V>
     void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g);
@@ -175,7 +176,7 @@ struct FunctionGradient : public Visitor<Impl_...>
     using Impl = Visitor<Impl_...>;
     using Impl::Impl;
     
-    FunctionGradient (const Impl& impl);
+    // FunctionGradient (const Impl& impl);
 
     template <class V>
     Scalar<V> functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true);
@@ -197,7 +198,7 @@ template <class Impl_>
 struct Hessian : public Impl_
 {
     using Impl = Impl_;
-    
+
     Hessian (const Impl& impl);
 
     template <class V, class U>
@@ -219,8 +220,11 @@ struct Hessian : public Impl_
 template <class Impl>
 using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value, Impl, impl::Function<Impl>>;
 
-template <class Impl>
-using Gradient = std::conditional_t<handy::IsSpecialization<Impl, impl::Gradient>::value, Impl, impl::Gradient<Impl>>;
+template <class... Impl>
+using Gradient = std::conditional_t<sizeof...(Impl) == 1 && handy::IsSpecialization<::nlpp::impl::FirstArg<Impl...>, impl::Gradient>::value, ::nlpp::impl::FirstArg<Impl...>, impl::Gradient<Impl...>>;
+
+template <class... Impl>
+using FunctionGradient = std::conditional_t<sizeof...(Impl) == 1 && handy::IsSpecialization<::nlpp::impl::FirstArg<Impl...>, impl::FunctionGradient>::value, ::nlpp::impl::FirstArg<Impl...>, impl::FunctionGradient<Impl...>>;
 
 /** @brief Alias for impl::FunctionGradient
  *  @details There are four conditions:
@@ -232,22 +236,25 @@ using Gradient = std::conditional_t<handy::IsSpecialization<Impl, impl::Gradient
  *                      - (3) Otherwise it should be a function/gradient functor, so we use impl::FunctionGradient<Func>
  *              - (4) If yes, set the result to impl::FunctionGradient<Func, Grad>
 */
-template <class Func, class Grad = void>
-using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
-    std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value,
-        Func,
-        // std::conditional_t<wrap::FunctionType<Func>::value >= 0 && wrap::FunctionGradientType<Func>::value < 0,
-        //     impl::FunctionGradient<Func, fd::Gradient<Func>>,
-            impl::FunctionGradient<Func>
-        // >
-    >,
-    impl::FunctionGradient<Func, Grad>
->;
+// template <class Func, class Grad = void>
+// using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
+//     std::conditional_t<handy::IsSpecialization<Func, impl::FunctionGradient>::value,
+//         Func,
+//         // std::conditional_t<wrap::FunctionType<Func>::value >= 0 && wrap::FunctionGradientType<Func>::value < 0,
+//         //     impl::FunctionGradient<Func, fd::Gradient<Func>>,
+//             impl::FunctionGradient<Func>
+//         // >
+//     >,
+//     impl::FunctionGradient<Func, Grad>
+// >;
 
 
-template <class... Impl>
-using FunctionGradient = std::conditional_t<isFunction<Visitor<Impl...>> && !(isGradient<Visitor<Impl...>> || isFuncGrad<Visitor<Impl...>>),
-
+// template <class Impl, class... Impls>
+// using FunctionGradient = std::conditional_t<sizeof...(Impls) == 0 && handy::IsSpecialization<Impl, impl::FunctionGradient>::value,
+//     Impl,
+//     std::conditional_t<!impl::isGradient<impl::Visitor<Impl, Impls...>> && !impl::isFuncGrad<impl::Visitor<Impl, Impls...>>,
+//         impl::FunctionGradient<Impl, Impls..., ::nlpp::fd::Gradient<impl::Visitor<Impl, Impls...>, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep>,
+//         impl::FunctionGradient<Impl, Impls...>>>;
 
 
 template <class Impl>
@@ -267,10 +274,10 @@ Function<Impl> function (const Impl& impl)
 }
 
 /// Delegate the call to Gradient<Impl, Float>(impl)
-template <class Impl>
-Gradient<Impl> gradient (const Impl& impl)
+template <class... Impl>
+Gradient<Impl...> gradient (const Impl&... impl)
 {
-    return Gradient<Impl>(impl);
+    return Gradient<Impl...>(impl...);
 }
 
 /** @brief Delegate the call to FunctionGradient where we have both the function and gradients in a single functor
@@ -278,8 +285,8 @@ Gradient<Impl> gradient (const Impl& impl)
  *  @param impl a functor having either <tt>Float operator()(const Vec&, Vec&)</tt> or
  *         <tt>std::pair<Float, Vec> operator()(const Vec&)</tt>
 */
-template <class... _Impl>
-FunctionGradient<_Impl...> functionGradient (const _Impl&... impl)
+template <class... Impl>
+FunctionGradient<Impl...> functionGradient (const Impl&... impl)
 {
     return FunctionGradient<Impl...>(impl...);
 }

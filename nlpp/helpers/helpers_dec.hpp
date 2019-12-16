@@ -192,6 +192,12 @@ constexpr decltype(auto) cast (V&& v)
     return v.template cast<T>();
 }
 
+template <std::size_t I, typename... Args>
+using NthArg = std::tuple_element_t<I, std::tuple<Args...>>;
+
+template <typename... Args>
+using FirstArg = NthArg<0, Args...>;
+
 } // namespace impl
 
 

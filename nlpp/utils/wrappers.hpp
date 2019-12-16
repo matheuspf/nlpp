@@ -28,8 +28,8 @@ Scalar<V> Function<Impl>::operator () (const Eigen::MatrixBase<V>& x)
 }
 
 
-template <class... _Impl>
-Gradient<_Impl...>::Gradient (const Impl& impl) : Impl(impl) {}
+// template <class... _Impl>
+// Gradient<_Impl...>::Gradient (const Impl& impl) : Impl(impl) {}
 
 template <class... _Impl>
 template <class V>
@@ -114,8 +114,8 @@ Plain<V> Gradient<_Impl...>::operator() (const Eigen::MatrixBase<V>& x)
     return gradient(x);
 }
 
-template <class... _Impl>
-FunctionGradient<_Impl...>::FunctionGradient (const Impl& impl) : Impl(impl) {}
+// template <class... _Impl>
+// FunctionGradient<_Impl...>::FunctionGradient (const Impl& impl) : Impl(impl) {}
 
 template <class... _Impl>
 template <class V>
