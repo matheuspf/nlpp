@@ -28,12 +28,12 @@ Scalar<V> Function<Impl>::operator () (const Eigen::MatrixBase<V>& x)
 }
 
 
-template <class Impl>
-Gradient<Impl>::Gradient (const Impl& impl) : Impl(impl) {}
+template <class... _Impl>
+Gradient<_Impl...>::Gradient (const Impl& impl) : Impl(impl) {}
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx)
+void Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx)
 {
     if constexpr(isGradient_2<Impl, V>)
         Impl::operator()(x, g, fx);
@@ -48,9 +48,9 @@ void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scala
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
+void Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
 {
     if constexpr(isGradient_0<Impl, V>)
         Impl::operator()(x, g);
@@ -65,9 +65,9 @@ void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x)
+Plain<V> Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x)
 {
     if constexpr(isGradient_0<Impl, V> || isGradient_2<Impl, V>)
     {
@@ -89,9 +89,9 @@ Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x)
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-Scalar<V> Gradient<Impl>::directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+Scalar<V> Gradient<_Impl...>::directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
 {
     if constexpr(isDirectional<Impl, V>)
         return Impl::operator()(x, e);
@@ -100,70 +100,26 @@ Scalar<V> Gradient<Impl>::directional (const Eigen::MatrixBase<V>& x, const Eige
         return gradient(x) * e;
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-void Gradient<Impl>::operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g)
+void Gradient<_Impl...>::operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g)
 {
     gradient(x, g);
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-Plain<V> Gradient<Impl>::operator() (const Eigen::MatrixBase<V>& x)
+Plain<V> Gradient<_Impl...>::operator() (const Eigen::MatrixBase<V>& x)
 {
     return gradient(x);
 }
 
+template <class... _Impl>
+FunctionGradient<_Impl...>::FunctionGradient (const Impl& impl) : Impl(impl) {}
 
-template <class Func, class Grad>
-template <class F, class G, std::enable_if_t<handy::HasConstructor<G>::value, int>>
-FunctionGradient<Func, Grad>::FunctionGradient (const F& f, const G& g) : Function<Func>(f), Gradient<Grad>(g) {}
-
-template <class Func, class Grad>
-template <class F, class G, std::enable_if_t<!handy::HasConstructor<G>::value, int>>
-FunctionGradient<Func, Grad>::FunctionGradient (const F& f, const G& g) : Function<Func>(f), Gradient<Grad>(g) {}
-
-template <class Func, class Grad>
+template <class... _Impl>
 template <class V>
-std::pair<Scalar<V>, Plain<V>> FunctionGradient<Func, Grad>::functionGradient (const Eigen::MatrixBase<V>& x)
-{
-    auto f = function(x);
-    return {f, gradient(x, f)};
-}
-
-template <class Func, class Grad>
-template <class V>
-Scalar<V> FunctionGradient<Func, Grad>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
-{
-    auto f = function(x);
-
-    if(calcGrad)
-        gradient(x, g, f);
-
-    return f;
-}
-
-template <class Func, class Grad>
-template <class V>
-std::pair<Scalar<V>, Plain<V>> FunctionGradient<Func, Grad>::operator() (const Eigen::MatrixBase<V>& x)
-{
-    return functionGradient(x);
-}
-
-template <class Func, class Grad>
-template <class V>
-Scalar<V> FunctionGradient<Func, Grad>::operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
-{
-    return functionGradient(x, g, calcGrad);
-}
-
-
-template <class Impl>
-FunctionGradient<Impl>::FunctionGradient (const Impl& impl) : Impl(impl) {}
-
-template <class Impl>
-template <class V>
-Scalar<V> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+Scalar<V> FunctionGradient<_Impl...>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
 {
     if constexpr(isFuncGrad_0<Impl, V>)
         return Impl::operator()(x, g, calcGrad);
@@ -192,9 +148,9 @@ Scalar<V> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& 
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& x)
+std::pair<Scalar<V>, Plain<V>> FunctionGradient<_Impl...>::functionGradient (const Eigen::MatrixBase<V>& x)
 {
     if constexpr(isFuncGrad_0<Impl, V> || isFuncGrad_1<Impl, V>)
     {
@@ -214,9 +170,9 @@ std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::functionGradient (const E
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-Scalar<V> FunctionGradient<Impl>::function (const Eigen::MatrixBase<V>& x)
+Scalar<V> FunctionGradient<_Impl...>::function (const Eigen::MatrixBase<V>& x)
 {
     if constexpr(isFunction<Impl, V>)
         return Function<Impl>(*this)(x);
@@ -225,9 +181,9 @@ Scalar<V> FunctionGradient<Impl>::function (const Eigen::MatrixBase<V>& x)
         return functionGrad(x);
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-void FunctionGradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
+void FunctionGradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
 {
     if constexpr(isGradient_0<Impl, V> || isGradient_1<Impl, V>)
         Gradient<Impl>(*this)(x, g);
@@ -236,9 +192,9 @@ void FunctionGradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& 
         functionGrad(x);
 }
 
-template <class Impl>
+template <class... _Impl>
 template <class V>
-Plain<V> FunctionGradient<Impl>::gradient (const Eigen::MatrixBase<V>& x)
+Plain<V> FunctionGradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x)
 {
     if constexpr(isGradient_0<Impl, V> || isGradient_1<Impl, V>)
         return Gradient<Impl>(*this)(x);

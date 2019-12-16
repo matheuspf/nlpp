@@ -125,10 +125,10 @@ namespace wrap::impl
 template <class Impl>
 struct Function;
 
-template <class Impl>
+template <class... Impl>
 struct Gradient;
 
-template <class...>
+template <class... Impl>
 struct FunctionGradient;
 
 template <class>

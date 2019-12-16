@@ -61,6 +61,9 @@ template <class Impl, class V>
 static constexpr bool isGradient_2 = std::is_same_v<OperatorType<Impl, V, V&, Scalar<V>>, void>;
 
 template <class Impl, class V>
+static constexpr bool isGradient = isGradient_0<Impl, V> || isGradient_1<Impl, V> || isGradient_2<Impl, V>;
+
+template <class Impl, class V>
 static constexpr bool isDirectional = std::is_floating_point_v<OperatorType<Impl, V, const V&>>;
 
 template <class Impl, class V>
@@ -73,6 +76,9 @@ template <class Impl, class V>
 static constexpr bool isFuncGrad_2 = std::is_floating_point_v<std::tuple_element_t<0, OperatorType<Impl, V>>> &&
                                      isMat<std::tuple_element_t<1, OperatorType<Impl, V>>>;
 
+template <class Impl, class V>
+static constexpr bool isFuncGrad = isFuncGrad_0<Impl, V> || isFuncGrad_1<Impl, V> || isFuncGrad_2<Impl, V>;
+
 template <class Impl, class V, class U = Plain1D<V>>
 static constexpr bool isHessian_1 = isMat<OperatorType<Impl, V, U>>;
 
@@ -80,6 +86,20 @@ template <class Impl, class V>
 static constexpr bool isHessian_2 = isMat<OperatorType<Impl, V>> && OperatorType<Impl, V>::ColsAtCompileTime != 1;
 
 
+template <class... Fs>
+struct VisitorImpl : public Fs...
+{
+    VisitorImpl() {}
+    VisitorImpl(const Fs... fs) : Fs(fs)...
+    {
+    }
+
+    using Fs::operator()...;
+};
+
+template <class... Fs>
+using Visitor = std::conditional_t<sizeof...(Fs) == 1, tuple_element_t<0, tuple<Fs...>>, VisitorImpl<Fs...>>;
+ 
 /** @brief Function wrapping for user uniform defined function calculation
  * 
 */
@@ -102,10 +122,10 @@ struct Function : public Impl_
 };
 
 
-template <class Impl_>
-struct Gradient : public Impl_
+template <class... Impl_>
+struct Gradient : public Visitor<Impl_...>
 {
-    using Impl = Impl_;
+    using Impl = Visitor<Impl_...>;
 
     Gradient (const Impl& impl);
 
@@ -139,9 +159,6 @@ struct Gradient : public Impl_
 //@{
 
 /// Forward declaration
-template <class...>
-struct FunctionGradient;
-
 
 /** @brief Specialization for when both function and gradients are given separatelly
  * 
@@ -152,54 +169,11 @@ struct FunctionGradient;
  *  @note This class inherits both the @c Func and @c Grad templates, wrapping the @c Grad 
  *        into @c Gradient<Grad> first
 */
-template <class Func, class Grad>
-struct FunctionGradient<Func, Grad> : public Function<Func>, public Gradient<Grad>
+template <class... Impl_>
+struct FunctionGradient : public Visitor<Impl_...>
 {
-    using Function<Func>::function;
-    using Gradient<Grad>::gradient;
-
-    /// Single constructor, delegated to Func and Grad
-    template <class F = Func, class G = Grad, std::enable_if_t<handy::HasConstructor<G>::value, int> = 0>
-    FunctionGradient (const F& f = Func{}, const G& g = Grad{});
-
-    template <class F = Func, class G = Grad, std::enable_if_t<!handy::HasConstructor<G>::value, int> = 0>
-    FunctionGradient (const F& f = Func{}, const G& g = Grad{Func{}});
-
-
-    /** @name
-     *  @brief Operators for function/gradient calls.
-     * 
-     *  @details Returns both function and gradient if only a @Vec is given. If the reference @c g
-     *           is also given, returns only the Func::operator()(x) return and calls 
-     *           @c Gradient<Grad>::operator()(x, g) to write on @c g.
-     * 
-     *  @param x The vector for which we will be evaluating both function and gradient
-     *  @param g The reference where we are going to store the gradient
-    */
-    //@{
-    template <class V>
-    std::pair<Scalar<V>, Plain<V>> functionGradient (const Eigen::MatrixBase<V>& x);
-
-    template <class V>
-    Scalar<V> functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true);
-
-    template <class V>
-    std::pair<Scalar<V>, Plain<V>> operator () (const Eigen::MatrixBase<V>& x);
-
-    template <class V>
-    Scalar<V> operator () (const Eigen::MatrixBase<V>& x, Plain<V>>& g, bool calcGrad = true);
-    //@}
-
-    /// Necessary to hide a lambda operator matching the exact arguments
-    // template <typename T, int R, int C>
-    // auto operator () (const Eigen::Matrix<T, R, C>& x);
-};
-
-
-template <class Impl_>
-struct FunctionGradient<Impl_> : public Impl_
-{
-    using Impl = Impl_;
+    using Impl = Visitor<Impl_...>;
+    using Impl::Impl;
     
     FunctionGradient (const Impl& impl);
 
@@ -218,7 +192,6 @@ struct FunctionGradient<Impl_> : public Impl_
     template <class V>
     Plain<V> gradient (const Eigen::MatrixBase<V>& x);
 };
-
 
 template <class Impl_>
 struct Hessian : public Impl_
@@ -271,6 +244,12 @@ using FunctionGradient = std::conditional_t<std::is_same<Grad, void>::value,
     impl::FunctionGradient<Func, Grad>
 >;
 
+
+template <class... Impl>
+using FunctionGradient = std::conditional_t<isFunction<Visitor<Impl...>> && !(isGradient<Visitor<Impl...>> || isFuncGrad<Visitor<Impl...>>),
+
+
+
 template <class Impl>
 using Hessian = std::conditional_t<handy::IsSpecialization<Impl, impl::Hessian>::value, Impl, impl::Hessian<Impl>>;
 
@@ -294,27 +273,15 @@ Gradient<Impl> gradient (const Impl& impl)
     return Gradient<Impl>(impl);
 }
 
-/** @brief Delegate the call to FunctionGradient where we have both the function and gradients separated
- * 
- *  @param func A functor having <tt>Float Func::operator()(const Vec&)</tt>
- *  @param grad A functor having either <tt>Vec Grad::operator()(const Vec&)</tt> or 
- *              <tt>void Grad::operator()(const Vec&, Vec&)</tt>
-*/
-template <class Func, class Grad>
-FunctionGradient<Func, Grad> functionGradient (const Func& func, const Grad& grad)
-{
-    return FunctionGradient<Func, Grad>(func, grad);
-}
-
 /** @brief Delegate the call to FunctionGradient where we have both the function and gradients in a single functor
  * 
  *  @param impl a functor having either <tt>Float operator()(const Vec&, Vec&)</tt> or
  *         <tt>std::pair<Float, Vec> operator()(const Vec&)</tt>
 */
-template <class Impl>
-FunctionGradient<Impl> functionGradient (const Impl& impl)
+template <class... _Impl>
+FunctionGradient<_Impl...> functionGradient (const _Impl&... impl)
 {
-    return FunctionGradient<Impl>(impl);
+    return FunctionGradient<Impl...>(impl...);
 }
 
 template <class Impl>
@@ -326,7 +293,7 @@ Hessian<Impl> hessian (const Impl& impl)
 
 //@}
 //@}
-
+/*
 namespace poly
 {
 
@@ -697,6 +664,7 @@ struct Hessian
 };
 
 } // namespace poly
+*/
 //@}
 
 } // namespace nlpp::wrap
