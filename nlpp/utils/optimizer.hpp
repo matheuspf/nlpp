@@ -18,6 +18,7 @@
 #include "utils/stop.hpp"
 
 #include "../LineSearch/LineSearch.h"
+#include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
 
 /// Base parameter definitions
@@ -107,17 +108,13 @@ struct GradientOptimizer : public Optimizer<Impl, Stop, Output>
     template <class Function, class Gradient, class V, typename... Args>
     impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<Impl&>(*this).optimize(wrap::functionGradient(function, gradient), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(wrap::makeFuncGrad<V>(function, gradient), x.eval(), std::forward<Args>(args)...);
     }
 
     template <class Function, class V, typename... Args>
     impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        if constexpr(wrap::impl::isFuncGrad<Function, V> || (wrap::impl::isFunction<Function, V> && wrap::impl::isGradient<Function, V>))
-            return static_cast<Impl&>(*this).optimize(wrap::functionGradient(function), x.eval(), std::forward<Args>(args)...);
-        
-        else
-            return static_cast<Impl&>(*this).optimize(wrap::functionGradient(function, fd::gradient(function)), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(wrap::makeFuncGrad<V>(function), x.eval(), std::forward<Args>(args)...);
     }
 
     // template <class Function, class Gradient, class Hessian, class V, typename... Args>
@@ -155,13 +152,11 @@ struct LineSearchOptimizer : public GradientOptimizer<Impl, Stop, Output>
 namespace poly
 {
 
-template <class _V = ::nlpp::Vec>
+using ::nlpp::impl::Scalar, ::nlpp::impl::Plain;
+
+template <class V = ::nlpp::Vec>
 struct Optimizer // : public CloneBase<Optimizer<V>>
 {
-    using V = _V;
-    using Float = ::nlpp::impl::Scalar<V>;
-    using Function = std::function<Float(const V&)>;
-
     Optimizer (const out::Optimizer_<V>& output = out::Optimizer_<V>{},
                const stop::Optimizer_<V>& stop = stop::Optimizer_<V>{}) : output(output), stop(stop)
     {
@@ -173,10 +168,10 @@ struct Optimizer // : public CloneBase<Optimizer<V>>
         stop.initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::Function<Function>, V) = 0; //{ return V{}; }
+    virtual V optimize (::nlpp::wrap::Function<::nlpp::wrap::impl::Function<V>>, V) = 0; //{ return V{}; }
 
     template <class F, class U>
-    ::nlpp::impl::Plain<V> operator () (const F& f, const Eigen::MatrixBase<U>& x)
+    Plain<V> operator () (const F& f, const Eigen::MatrixBase<U>& x)
     {
         return optimize(::nlpp::wrap::function(Function(f)), x.eval());
     }
@@ -193,13 +188,9 @@ struct Optimizer // : public CloneBase<Optimizer<V>>
 };
 
 
-template <class _V = ::nlpp::Vec>
+template <class V = ::nlpp::Vec>
 struct GradientOptimizer
 {
-    using V = _V;
-    using Float = ::nlpp::impl::Scalar<V>;
-    using FunctionGradient = std::function<Float(const V&, V&)>;
-
     GradientOptimizer (const out::GradientOptimizer_<V>& output = out::GradientOptimizer_<V>{},
                const stop::GradientOptimizer_<V>& stop = stop::GradientOptimizer_<V>{}) : output(output), stop(stop)
     {
@@ -211,35 +202,18 @@ struct GradientOptimizer
         stop.initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::FunctionGradient<FunctionGradient>, V) = 0;
+    virtual V optimize (::nlpp::wrap::FunctionGradient<::nlpp::wrap::impl::FunctionGradient<V>>, V) = 0;
 
     template <class F, class U>
-    ::nlpp::impl::Plain<V> operator () (const F& f, const Eigen::MatrixBase<U>& x)
+    Plain<V> operator () (const F& f, const Eigen::MatrixBase<U>& x)
     {
-        if constexpr(::nlpp::wrap::impl::isFuncGrad_1<F, V>)
-            return optimizer(::nlpp::wrap::functionGradient(FunctionGradient(f)));
-
-        else if constexpr(::nlpp::wrap::impl::isFuncGrad<F, V> || (::nlpp::wrap::impl::isFunction<F, V> && ::nlpp::wrap::impl::isGradient<F, V>))
-            return optimizer(::nlpp::wrap::functionGradient(FunctionGradient(
-                [funcGrad = ::nlpp::wrap::functionGradient(f)]
-                (const V& x, V& g) mutable -> Float {
-                    return funcGrad(x, g);
-                }
-            )));
-        
-        else
-            return operator()(f, ::nlpp::fd::gradient(f), x);
+        return optimize(::nlpp::wrap::poly::makeFuncGrad<V>(f), x.eval());
     }
    
     template <class F, class G, class U>
     ::nlpp::impl::Plain<V> operator () (const F& f, const G& g, const U& x)
     {
-        return optimizer(::nlpp::wrap::functionGradient(FunctionGradient(
-            [funcGrad = ::nlpp::wrap::functionGradient(f, g)]
-            (const V& x, V& g) mutable -> Float {
-                return funcGrad(x, g);
-            }
-        )));
+        return optimize(::nlpp::wrap::poly::makeFuncGrad<V>(f, g), x.eval());
     }
 
     // template <class Function, class Gradient, class Hessian, class U>
