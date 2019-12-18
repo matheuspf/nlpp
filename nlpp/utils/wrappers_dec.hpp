@@ -107,8 +107,9 @@ template <class Impl_>
 struct Function : public Impl_
 {
     using Impl = Impl_;
+    // using Impl::operator();
 
-    Function (const Impl& impl);
+    Function (const Impl& impl) : Impl(impl) {}
 
     template <class V>
     Scalar<V> function (const Eigen::MatrixBase<V>& x);
@@ -129,7 +130,11 @@ template <class... Impl_>
 struct Gradient : public Visitor<Impl_...>
 {
     using Impl = Visitor<Impl_...>;
-    using Impl::Impl;
+    // using Impl::operator();
+    // using Impl::Impl;
+
+    // Gradient () {}
+    Gradient (const Impl_&... impl) : Impl(impl...) {}
 
     // Gradient (const Impl& impl);
 
@@ -189,12 +194,17 @@ template <class... Impl_>
 struct FunctionGradient : public Visitor<Impl_...>, public Function<Visitor<Impl_...>>, public Gradient<Impl_...>
 {
     using Impl = Visitor<Impl_...>;
-    using Impl::Impl;
-
+    // using Impl::Impl;
+    using Impl::operator();
     using Func = Function<Visitor<Impl_...>>;
     using Grad = Gradient<Impl_...>;
     using Func::operator(), Func::function;
     using Grad::operator(), Grad::gradient;
+
+    // FunctionGradient () {}
+    FunctionGradient (const Impl_&... impl) : Impl(impl...), Func(Impl(impl...)), Grad(impl...)  {}
+
+
 
     // FunctionGradient (const Impl& impl);
 
@@ -367,21 +377,21 @@ template <class V, class... Fs>
 {
     using Func = ::nlpp::wrap::impl::Visitor<Fs...>;
 
-    if constexpr(::nlpp::wrap::impl::isFuncGrad_1<Func, V>)
+    if constexpr(::nlpp::wrap::impl::isFuncGrad_0<Func, V>)
         return ::nlpp::wrap::functionGradient(FunctionGradient<V>(Func(fs...)));
 
     else if constexpr(::nlpp::wrap::impl::isFuncGrad<Func, V> || (::nlpp::wrap::impl::isFunction<Func, V> && ::nlpp::wrap::impl::isGradient<Func, V>))
         return ::nlpp::wrap::functionGradient(FunctionGradient<V>(
             [funcGrad = ::nlpp::wrap::functionGradient(fs...)]
-            (const Plain<V>& x, Plain<V>& g) mutable -> Scalar<V> {
-                return funcGrad(x, g);
+            (const Plain<V>& x, Plain<V>& g, bool calcGrad) mutable -> Scalar<V> {
+                return funcGrad(x, g, calcGrad);
             }));
 
     else
         return ::nlpp::wrap::functionGradient(FunctionGradient<V>(
             [funcGrad = ::nlpp::wrap::functionGradient(fs..., ::nlpp::fd::Gradient<Func, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep>(Func(fs...)))]
-            (const Plain<V>& x, Plain<V>& g) mutable -> Scalar<V> {
-                return funcGrad(x, g);
+            (const Plain<V>& x, Plain<V>& g, bool calcGrad) mutable -> Scalar<V> {
+                return funcGrad(x, g, calcGrad);
             }));
 }
 

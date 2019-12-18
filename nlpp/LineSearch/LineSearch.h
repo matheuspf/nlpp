@@ -95,7 +95,7 @@ struct LineSearch
 			return impl(wrap::poly::makeFuncGrad<V>(f), x, dir);
 
 		else
-	    	return impl(wrap::makeFuncGrad(f), x, dir);
+	    	return impl(wrap::makeFuncGrad<V>(f), x, dir);
 	}
 
 	template <class Function, class Gradient, class V>

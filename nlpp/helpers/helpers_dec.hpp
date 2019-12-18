@@ -192,17 +192,27 @@ constexpr decltype(auto) cast (V&& v)
     return v.template cast<T>();
 }
 
-
-template <std::size_t I, typename... Args>
-struct NthArgImpl
+template <bool Ok, std::size_t I, typename... Args>
+struct NthArgImpl_2
 {
     using type = std::tuple_element_t<I, std::tuple<Args...>>;
 };
 
 template <std::size_t I, typename... Args>
-struct NthArgImpl<I, std::tuple<Args...>>
+struct NthArgImpl_2<false, I, Args...>
 {
-    using type = std::tuple_element_t<I, std::tuple<Args...>>;
+    using type = nonesuch;
+};
+
+
+template <std::size_t I, typename... Args>
+struct NthArgImpl : public NthArgImpl<I, std::tuple<Args...>>
+{
+};
+
+template <std::size_t I, typename... Args>
+struct NthArgImpl<I, std::tuple<Args...>> : public NthArgImpl_2<(I >=0 && I < sizeof...(Args)), I, Args...>
+{
 };
 
 template <std::size_t I, typename... Args>
@@ -210,7 +220,7 @@ using NthArg = typename NthArgImpl<I, Args...>::type;
 
 template <typename... Args>
 using FirstArg = NthArg<0, Args...>;
-
+ 
 } // namespace impl
 
 

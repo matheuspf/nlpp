@@ -9,9 +9,11 @@ int main ()
     nlpp::Rosenbrock func;
     nlpp::Vec x0 = nlpp::Vec::Constant(10, 2.0);
 
-    auto res = opt(func, x0);
+    auto f = nlpp::wrap::makeFuncGrad<nlpp::Vec>(func);
 
-    handy::print(res.transpose());
+    // auto res = opt(func, x0);
+
+    // handy::print(res.transpose());
 
 
     return 0;

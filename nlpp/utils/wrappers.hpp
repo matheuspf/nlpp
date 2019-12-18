@@ -8,8 +8,8 @@
 namespace nlpp::wrap::impl
 {
 
-template <class Impl>
-Function<Impl>::Function (const Impl& impl) : Impl(impl) {}
+// template <class Impl>
+// Function<Impl>::Function (const Impl& impl) : Impl(impl) {}
 
 template <class Impl>
 template <class V>
