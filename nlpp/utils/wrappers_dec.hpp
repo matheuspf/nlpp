@@ -73,8 +73,8 @@ template <class Impl, class V>
 static constexpr bool isFuncGrad_1 = std::is_floating_point_v<OperatorType<Impl, V, V&>>;
 
 template <class Impl, class V>
-static constexpr bool isFuncGrad_2 = std::is_floating_point_v<std::tuple_element_t<0, OperatorType<Impl, V>>> &&
-                                     isMat<std::tuple_element_t<1, OperatorType<Impl, V>>>;
+static constexpr bool isFuncGrad_2 = std::is_floating_point_v<::nlpp::impl::NthArg<0, OperatorType<Impl, V>>> &&
+                                     isMat<::nlpp::impl::NthArg<1, OperatorType<Impl, V>>>;
 
 template <class Impl, class V>
 static constexpr bool isFuncGrad = isFuncGrad_0<Impl, V> || isFuncGrad_1<Impl, V> || isFuncGrad_2<Impl, V>;

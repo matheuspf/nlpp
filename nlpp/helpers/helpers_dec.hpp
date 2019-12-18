@@ -192,8 +192,21 @@ constexpr decltype(auto) cast (V&& v)
     return v.template cast<T>();
 }
 
+
 template <std::size_t I, typename... Args>
-using NthArg = std::tuple_element_t<I, std::tuple<Args...>>;
+struct NthArgImpl
+{
+    using type = std::tuple_element_t<I, std::tuple<Args...>>;
+};
+
+template <std::size_t I, typename... Args>
+struct NthArgImpl<I, std::tuple<Args...>>
+{
+    using type = std::tuple_element_t<I, std::tuple<Args...>>;
+};
+
+template <std::size_t I, typename... Args>
+using NthArg = typename NthArgImpl<I, Args...>::type;
 
 template <typename... Args>
 using FirstArg = NthArg<0, Args...>;
