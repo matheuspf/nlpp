@@ -30,7 +30,8 @@ V CG<Base_>::optimize (Function f, V x)
 
     impl::Scalar<V> fxOld, fx;
 
-    std::tie(fxOld, fa) = f(x);
+    // std::tie(fxOld, fa) = f(x);
+    std::tie(fxOld, fa) = f.functionGradient(x);
 
     dir = -fa;
 
@@ -40,7 +41,8 @@ V CG<Base_>::optimize (Function f, V x)
     
         x = x + alpha * dir;
 
-        fx = f(x, fb);
+        // fx = f(x, fb);
+        fx = f.functionGradient(x, fb);
     
         if(stop(*this, x, fx, fb))
             break;

@@ -107,7 +107,7 @@ template <class Impl_>
 struct Function : public Impl_
 {
     using Impl = Impl_;
-    // using Impl::operator();
+    using Impl::operator();
 
     Function (const Impl& impl) : Impl(impl) {}
 
@@ -130,7 +130,7 @@ template <class... Impl_>
 struct Gradient : public Visitor<Impl_...>
 {
     using Impl = Visitor<Impl_...>;
-    // using Impl::operator();
+    using Impl::operator();
     // using Impl::Impl;
 
     // Gradient () {}
@@ -191,18 +191,23 @@ struct Gradient : public Visitor<Impl_...>
  *        into @c Gradient<Grad> first
 */
 template <class... Impl_>
-struct FunctionGradient : public Visitor<Impl_...>, public Function<Visitor<Impl_...>>, public Gradient<Impl_...>
+struct FunctionGradient : public Function<Gradient<Impl_...>>
+//public Visitor<Impl_...>, public Function<Visitor<Impl_...>>, public Gradient<Impl_...>
 {
-    using Impl = Visitor<Impl_...>;
-    // using Impl::Impl;
-    using Impl::operator();
-    using Func = Function<Visitor<Impl_...>>;
-    using Grad = Gradient<Impl_...>;
-    using Func::operator(), Func::function;
-    using Grad::operator(), Grad::gradient;
+    // using Impl = Visitor<Impl_...>;
+    // // using Impl::Impl;
+    // using Impl::operator();
+    // using Func = Function<Visitor<Impl_...>>;
+    // using Grad = Gradient<Impl_...>;
+    // using Func::operator(), Func::function;
+    // using Grad::operator(), Grad::gradient;
+
+    using Impl = Function<Gradient<Impl_...>>;
+    using Impl::operator(), Impl::function, Impl::gradient;
 
     // FunctionGradient () {}
-    FunctionGradient (const Impl_&... impl) : Impl(impl...), Func(Impl(impl...)), Grad(impl...)  {}
+    // FunctionGradient (const Impl_&... impl) : Impl(impl...), Func(Impl(impl...)), Grad(impl...)  {}
+    FunctionGradient (const Impl_&... impl) : Impl(Gradient<Impl_...>(impl...)) {}
 
 
 

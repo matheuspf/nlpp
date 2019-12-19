@@ -114,10 +114,12 @@ Scalar<V> FunctionGradient<_Impl...>::functionGradient (const Eigen::MatrixBase<
 
     else if constexpr(isFunction<Impl, V> && (isGradient_0<Impl, V> || isGradient_1<Impl, V>))
     {
-        auto f = Func::operator()(*this)(x);
+        // auto f = Func::operator()(*this)(x);
+        auto f = Impl::function(*this)(x);
 
         if(calcGrad)
-            Grad::operator()(x, g, f);
+            // Grad::operator()(x, g, f);
+            Impl::gradient(x, g, f);
 
         return f;
     }
@@ -141,8 +143,9 @@ std::pair<Scalar<V>, Plain<V>> FunctionGradient<_Impl...>::functionGradient (con
     else if constexpr(isFuncGrad_2<Impl, V>)
         return Impl::operator()(x);
 
-    else if constexpr(isFunction<Impl, V> && (isGradient_0<Impl, V> || isGradient_1<Impl, V>))
-        return {Func::operator()(x), Grad::operator()(x)};
+    else if constexpr(isFunction<Impl, V> && isGradient<Impl, V>)
+        // return {Func::operator()(x), Grad::operator()(x)};
+        return {Impl::function(x), Impl::gradient(x)};
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");

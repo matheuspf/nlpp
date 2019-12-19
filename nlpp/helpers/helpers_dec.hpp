@@ -220,6 +220,8 @@ using NthArg = typename NthArgImpl<I, Args...>::type;
 
 template <typename... Args>
 using FirstArg = NthArg<0, Args...>;
+
+template <typename> struct PrintType;
  
 } // namespace impl
 
