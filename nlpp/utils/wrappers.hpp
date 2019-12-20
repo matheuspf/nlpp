@@ -16,28 +16,27 @@ template <class V>
 Scalar<V> Function<Impl>::function (const Eigen::MatrixBase<V>& x)
 {
     if constexpr(isFunction<Impl, V>)
-        return Impl::operator()(x);
+        return impl(x);
     
     else if constexpr(isFuncGrad<Impl, V>)
         return getFuncGrad(*this, x);
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
-
 }
 
-template <class... _Impl>
+template <class Impl>
 template <class V>
-void Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx)
+void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx)
 {
     if constexpr(isGradient_2<Impl, V>)
-        Impl::operator()(x, g, fx);
+        impl(x, g, fx);
 
     else if constexpr(isGradient_0<Impl, V>)
-        Impl::operator()(x, g);
+        impl(x, g);
 
     else if constexpr(isGradient_1<Impl, V>)
-        g = Impl::operator()(x);
+        g = impl(x);
 
     else if constexpr(isFuncGrad<Impl, V>)
         getFuncGrad(*this, x, g, true);
@@ -46,18 +45,18 @@ void Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, S
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class... _Impl>
+template <class Impl>
 template <class V>
-void Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
+void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
 {
     if constexpr(isGradient_0<Impl, V>)
-        Impl::operator()(x, g);
+        impl(x, g);
 
     else if constexpr(isGradient_1<Impl, V>)
-        g = Impl::operator()(x);
+        g = impl(x);
 
     else if constexpr(isGradient_2<Impl, V>)
-        Impl::operator()(x, g, std::nan("0"));
+        impl(x, g, std::nan("0"));
 
     else if constexpr(isFuncGrad<Impl, V>)
         getFuncGrad(*this, x, g, true);
@@ -66,19 +65,19 @@ void Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class... _Impl>
+template <class Impl>
 template <class V>
-Plain<V> Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x)
+Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x)
 {
     if constexpr(isGradient_0<Impl, V> || isGradient_2<Impl, V> || isFuncGrad<Impl, V>)
     {
         Plain<V> g(x.rows());
 
         if constexpr(isGradient_0<Impl, V>)
-            Impl::operator()(x, g);
+            impl(x, g);
         
         else if constexpr(isGradient_2<Impl, V>)
-            Impl::operator()(x, g, std::nan("0"));
+            impl(x, g, std::nan("0"));
 
         else
             getFuncGrad(*this, x, g, true);
@@ -87,39 +86,39 @@ Plain<V> Gradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x)
     }
 
     else if constexpr(isGradient_1<Impl, V>)
-        return Impl::operator()(x);
+        return impl(x);
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class... _Impl>
+template <class Impl>
 template <class V>
-Scalar<V> Gradient<_Impl...>::directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+Scalar<V> Gradient<Impl>::directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
 {
     if constexpr(isDirectional<Impl, V>)
-        return Impl::operator()(x, e);
+        return impl(x, e);
 
     else
         return gradient(x) * e;
 }
 
 
-template <class... _Impl>
+template <class Impl>
 template <class V>
-Scalar<V> FunctionGradient<_Impl...>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+Scalar<V> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
 {
     if constexpr(isFuncGrad<Impl, V>)
         return getFuncGrad(x, g, calcGrad);
 
     else if constexpr(isFunction<Impl, V> && (isGradient_0<Impl, V> || isGradient_1<Impl, V>))
     {
-        // auto f = Func::operator()(*this)(x);
-        auto f = Impl::function(*this)(x);
+        auto f = Func::operator()(*this)(x);
+        // auto f = Impl::function(*this)(x);
 
         if(calcGrad)
-            // Grad::operator()(x, g, f);
-            Impl::gradient(x, g, f);
+            Grad::operator()(x, g, f);
+            //Impl::gradient(x, g, f);
 
         return f;
     }
@@ -135,17 +134,17 @@ std::pair<Scalar<V>, Plain<V>> FunctionGradient<_Impl...>::functionGradient (con
     if constexpr(isFuncGrad_0<Impl, V> || isFuncGrad_1<Impl, V>)
     {
         Plain<V> g(x.rows());
-        Scalar<V> fx = Impl::operator()(x, g);
+        Scalar<V> fx = impl(x, g);
 
         return {fx, g};
     }
 
     else if constexpr(isFuncGrad_2<Impl, V>)
-        return Impl::operator()(x);
+        return impl(x);
 
     else if constexpr(isFunction<Impl, V> && isGradient<Impl, V>)
-        // return {Func::operator()(x), Grad::operator()(x)};
-        return {Impl::function(x), Impl::gradient(x)};
+        return {Func::operator()(x), Grad::operator()(x)};
+        // return {Impl::function(x), Impl::gradient(x)};
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
@@ -159,7 +158,7 @@ Scalar<V> getFuncGrad (Impl& impl, const Eigen::MatrixBase<V>& x)
 }
 
 template <class Impl, class V>
-Scalar<V> getFuncGrad (Impl& impl, const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+Scalar<V> getFuncGrad (const Impl& impl, const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
 {
     if constexpr(isFuncGrad_0<Impl, V>)
         return impl(x, g, calcGrad);
@@ -219,10 +218,10 @@ template <class V, class U>
 Plain<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
 {
     if constexpr(isHessian_1<Impl, V, U>)
-        return Impl::operator()(x, e);
+        return impl(x, e);
 
     else if constexpr(isHessian_2<Impl, V>)
-        return Impl::operator()(x) * e;
+        return impl(x) * e;
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
@@ -240,7 +239,7 @@ Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x)
         for(int i = 0; i < e.rows(); ++i)
         {
             e(i) = Scalar<V>{1.0};
-            m.row(i) = Impl::operator()(x, e);
+            m.row(i) = impl(x, e);
             e(i) = Scalar<V>{0.0};
         }
 
@@ -248,7 +247,7 @@ Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x)
     }
 
     else if constexpr(isHessian_2<Impl, V>)
-        return Impl::operator()(x);
+        return impl(x);
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");

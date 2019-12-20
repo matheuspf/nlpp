@@ -49,21 +49,17 @@ template <class T, class... Args>
 using OperatorType = detected_t<std::invoke_result_t, T, Args...>;
 
 
-template <class V>
-using FunctionSignature = Scalar<V>(const V&);
-
-template <class V>
-using GradientSignature_0 = void(const V&, Plain<V>&);
-
-template <class V>
-using GradientSignature_1 = Eigen::MatrixBase<V>(const V&);
-
-
-
-
+//template <class V>
+//using FunctionSignature = Scalar<V>(const V&);
+//
+//template <class V>
+//using GradientSignature_0 = void(const V&, Plain<V>&);
+//
+//template <class V>
+//using GradientSignature_1 = Eigen::MatrixBase<V>(const V&);
+//
 //template <class F, class V>
 //static constexpr bool isFunction = HasOperator<F, FunctionSignature<V>>;
-
 
 
 template <class Impl, class V>
@@ -122,12 +118,12 @@ using Visitor = std::conditional_t<sizeof...(Fs) == 1, std::tuple_element_t<0, s
  * 
 */
 template <class Impl_>
-struct Function : public Impl_
+struct Function// : public Impl_
 {
-    using Impl = Impl_;
-    using Impl::operator();
+    // using Impl = Impl_;
+    // using Impl::operator();
 
-    Function (const Impl& impl) : Impl(impl) {}
+    Function (const Impl& impl = Impl()) : impl(impl) {}
 
     template <class V>
     Scalar<V> function (const Eigen::MatrixBase<V>& x);
@@ -141,18 +137,20 @@ struct Function : public Impl_
     /// Necessary to hide a lambda operator matching the exact arguments
     // template <typename T, int R, int C>
     // Scalar<V> operator () (const Eigen::Matrix<T, R, C>& x);
+
+    Impl impl;
 };
 
 
-template <class... Impl_>
-struct Gradient : public Visitor<Impl_...>
+template <class Impl>
+struct Gradient// : public Visitor<Impl_...>
 {
-    using Impl = Visitor<Impl_...>;
-    using Impl::operator();
+    // using Impl = Visitor<Impl_...>;
+    // using Impl::operator();
     // using Impl::Impl;
 
     // Gradient () {}
-    Gradient (const Impl_&... impl) : Impl(impl...) {}
+    Gradient (const Impl& impl = Impl()) : impl(impl) {}
 
     // Gradient (const Impl& impl);
 
@@ -185,6 +183,8 @@ struct Gradient : public Visitor<Impl_...>
     {
         return gradient(x, g, fx);
     }
+
+    Impl impl;
 };
 
 
@@ -208,24 +208,22 @@ struct Gradient : public Visitor<Impl_...>
  *  @note This class inherits both the @c Func and @c Grad templates, wrapping the @c Grad 
  *        into @c Gradient<Grad> first
 */
-template <class... Impl_>
-struct FunctionGradient : public Function<Gradient<Impl_...>>
-//public Visitor<Impl_...>, public Function<Visitor<Impl_...>>, public Gradient<Impl_...>
+template <class Impl>
+struct FunctionGradient// : public Visitor<Impl_...>, public Function<::nlpp::impl::FirstArg<Impl_...>>, public Gradient<Impl_...>
+//public Function<Gradient<Impl_...>>
 {
-    // using Impl = Visitor<Impl_...>;
-    // // using Impl::Impl;
-    // using Impl::operator();
-    // using Func = Function<Visitor<Impl_...>>;
-    // using Grad = Gradient<Impl_...>;
-    // using Func::operator(), Func::function;
-    // using Grad::operator(), Grad::gradient;
+    //using Impl = Visitor<Impl_...>;
+    //using Func = Function<::nlpp::impl::FirstArg<Impl_...>>;
+    //using Grad = Gradient<Impl_...>;
+    //using Impl::operator(), Func::operator(), Func::function, Grad::operator(), Grad::gradient;
 
-    using Impl = Function<Gradient<Impl_...>>;
-    using Impl::operator(), Impl::function, Impl::gradient;
+
+    //using Impl = Function<Gradient<Impl_...>>;
+    //using Impl::operator(), Impl::function, Impl::gradient;
 
     // FunctionGradient () {}
-    // FunctionGradient (const Impl_&... impl) : Impl(impl...), Func(Impl(impl...)), Grad(impl...)  {}
-    FunctionGradient (const Impl_&... impl) : Impl(Gradient<Impl_...>(impl...)) {}
+    FunctionGradient (const Impl& impl = Impl()) : impl(impl), func(impl), grad(impl) {}
+    // FunctionGradient (const Impl_&... impl) : Impl(Gradient<Impl_...>(impl...)) {}
 
 
 
@@ -257,6 +255,10 @@ struct FunctionGradient : public Function<Gradient<Impl_...>>
     {
         return functionGradient(x);
     }
+
+    Impl impl;
+    Function<std::reference_wrapper<Impl>> func;
+    Gradient<std::reference_wrapper<Impl>> grad;
 };
 
 template <class Impl_>
