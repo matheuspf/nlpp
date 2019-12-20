@@ -42,10 +42,28 @@ namespace impl
 
 using ::nlpp::impl::Scalar, ::nlpp::impl::Plain, ::nlpp::impl::Plain1D,
       ::nlpp::impl::Plain2D, ::nlpp::impl::isMat, ::nlpp::impl::detected_t,
-      ::nlpp::impl::is_detected_v, ::nlpp::impl::always_false;
+      ::nlpp::impl::is_detected_v, ::nlpp::impl::always_false,
+      ::nlpp::impl::HasOperator, ::nlpp::impl::callOverload;
 
 template <class T, class... Args>
 using OperatorType = detected_t<std::invoke_result_t, T, Args...>;
+
+
+template <class V>
+using FunctionSignature = Scalar<V>(const V&);
+
+template <class V>
+using GradientSignature_0 = void(const V&, Plain<V>&);
+
+template <class V>
+using GradientSignature_1 = Eigen::MatrixBase<V>(const V&);
+
+
+
+
+//template <class F, class V>
+//static constexpr bool isFunction = HasOperator<F, FunctionSignature<V>>;
+
 
 
 template <class Impl, class V>
