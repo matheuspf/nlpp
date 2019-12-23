@@ -13,7 +13,7 @@ namespace nlpp::wrap::impl
 
 template <class Impl>
 template <class V>
-Scalar<V> Function<Impl>::function (const Eigen::MatrixBase<V>& x)
+Scalar<V> Function<Impl>::function (const Eigen::MatrixBase<V>& x) const
 {
     if constexpr(isFunction<Impl, V>)
         return impl(x);
@@ -27,7 +27,7 @@ Scalar<V> Function<Impl>::function (const Eigen::MatrixBase<V>& x)
 
 template <class Impl>
 template <class V>
-void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx)
+void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
 {
     if constexpr(isGradient_2<Impl, V>)
         impl(x, g, fx);
@@ -47,7 +47,7 @@ void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scala
 
 template <class Impl>
 template <class V>
-void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
+void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const
 {
     if constexpr(isGradient_0<Impl, V>)
         impl(x, g);
@@ -67,7 +67,7 @@ void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
 
 template <class Impl>
 template <class V>
-Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x)
+Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x) const
 {
     if constexpr(isGradient_0<Impl, V> || isGradient_2<Impl, V> || isFuncGrad<Impl, V>)
     {
@@ -94,7 +94,7 @@ Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x)
 
 template <class Impl>
 template <class V>
-Scalar<V> Gradient<Impl>::directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+Scalar<V> Gradient<Impl>::directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
 {
     if constexpr(isDirectional<Impl, V>)
         return impl(x, e);
@@ -106,19 +106,17 @@ Scalar<V> Gradient<Impl>::directional (const Eigen::MatrixBase<V>& x, const Eige
 
 template <class Impl>
 template <class V>
-Scalar<V> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad)
+Scalar<V> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad) const
 {
     if constexpr(isFuncGrad<Impl, V>)
         return getFuncGrad(x, g, calcGrad);
 
     else if constexpr(isFunction<Impl, V> && (isGradient_0<Impl, V> || isGradient_1<Impl, V>))
     {
-        auto f = Func::operator()(*this)(x);
-        // auto f = Impl::function(*this)(x);
+        auto f = func(x);
 
         if(calcGrad)
-            Grad::operator()(x, g, f);
-            //Impl::gradient(x, g, f);
+            grad(x, g, f);
 
         return f;
     }
@@ -127,9 +125,9 @@ Scalar<V> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& 
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class... _Impl>
+template <class Impl>
 template <class V>
-std::pair<Scalar<V>, Plain<V>> FunctionGradient<_Impl...>::functionGradient (const Eigen::MatrixBase<V>& x)
+std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::functionGradient (const Eigen::MatrixBase<V>& x) const
 {
     if constexpr(isFuncGrad_0<Impl, V> || isFuncGrad_1<Impl, V>)
     {
@@ -143,7 +141,7 @@ std::pair<Scalar<V>, Plain<V>> FunctionGradient<_Impl...>::functionGradient (con
         return impl(x);
 
     else if constexpr(isFunction<Impl, V> && isGradient<Impl, V>)
-        return {Func::operator()(x), Grad::operator()(x)};
+        return {func(x), grad(x)};
         // return {Impl::function(x), Impl::gradient(x)};
 
     else
@@ -210,47 +208,47 @@ Scalar<V> getFuncGrad (const Impl& impl, const Eigen::MatrixBase<V>& x, Plain<V>
 // }
 
 
-template <class Impl>
-Hessian<Impl>::Hessian (const Impl& impl) : Impl(impl) {}
+// template <class Impl>
+// Hessian<Impl>::Hessian (const Impl& impl) : Impl(impl) {}
 
-template <class Impl>
-template <class V, class U>
-Plain<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
-{
-    if constexpr(isHessian_1<Impl, V, U>)
-        return impl(x, e);
+// template <class Impl>
+// template <class V, class U>
+// Plain<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
+// {
+//     if constexpr(isHessian_1<Impl, V, U>)
+//         return impl(x, e);
 
-    else if constexpr(isHessian_2<Impl, V>)
-        return impl(x) * e;
+//     else if constexpr(isHessian_2<Impl, V>)
+//         return impl(x) * e;
 
-    else
-        static_assert(always_false<V>, "The functor has no interface for the given parameter");
-}
+//     else
+//         static_assert(always_false<V>, "The functor has no interface for the given parameter");
+// }
 
-template <class Impl>
-template <class V>
-Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x)
-{
-    if constexpr(isHessian_1<Impl, V>)
-    {
-        Plain<V> e = Plain<V>::Constant(x.rows(), Scalar<V>{0.0});
-        Plain2D<V> m(x.rows(), x.rows());
+// template <class Impl>
+// template <class V>
+// Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x)
+// {
+//     if constexpr(isHessian_1<Impl, V>)
+//     {
+//         Plain<V> e = Plain<V>::Constant(x.rows(), Scalar<V>{0.0});
+//         Plain2D<V> m(x.rows(), x.rows());
 
-        for(int i = 0; i < e.rows(); ++i)
-        {
-            e(i) = Scalar<V>{1.0};
-            m.row(i) = impl(x, e);
-            e(i) = Scalar<V>{0.0};
-        }
+//         for(int i = 0; i < e.rows(); ++i)
+//         {
+//             e(i) = Scalar<V>{1.0};
+//             m.row(i) = impl(x, e);
+//             e(i) = Scalar<V>{0.0};
+//         }
 
-        return m;
-    }
+//         return m;
+//     }
 
-    else if constexpr(isHessian_2<Impl, V>)
-        return impl(x);
+//     else if constexpr(isHessian_2<Impl, V>)
+//         return impl(x);
 
-    else
-        static_assert(always_false<V>, "The functor has no interface for the given parameter");
-}
+//     else
+//         static_assert(always_false<V>, "The functor has no interface for the given parameter");
+// }
 
 } // namespace nlpp::wrap::impl

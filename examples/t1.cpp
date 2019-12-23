@@ -12,14 +12,15 @@ int main ()
     auto f = nlpp::wrap::makeFuncGrad<nlpp::Vec>(func);
 
     using V = nlpp::Vec;
-    using F = decltype(f);
+    // using F = decltype(f);
     // using F = nlpp::wrap::FunctionGradient<nlpp::Rosenbrock>;
     // using F = nlpp::wrap::Function<nlpp::wrap::Gradient<nlpp::Rosenbrock>>;
 
-    handy::print(nlpp::wrap::impl::isFunction<typename F::Func, V>, nlpp::wrap::impl::isGradient_1<typename F::Grad, V>, nlpp::wrap::impl::isFuncGrad_2<F, V>);
+    handy::print(nlpp::wrap::impl::isFunction<decltype(f.func), V>, nlpp::wrap::impl::isGradient<decltype(f.grad), V>, nlpp::wrap::impl::isFuncGrad<decltype(f.impl), V>);
+    // handy::print(nlpp::wrap::impl::isFunction<decltype(f.func), V>);
     // handy::print(f.function(x0));
 
-    //auto res = opt(func, x0);
+    // auto res = opt(func, x0);
 
     // handy::print(res.transpose());
 

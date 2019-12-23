@@ -117,7 +117,7 @@ using Visitor = std::conditional_t<sizeof...(Fs) == 1, std::tuple_element_t<0, s
 /** @brief Function wrapping for user uniform defined function calculation
  * 
 */
-template <class Impl_>
+template <class Impl>
 struct Function// : public Impl_
 {
     // using Impl = Impl_;
@@ -126,10 +126,10 @@ struct Function// : public Impl_
     Function (const Impl& impl = Impl()) : impl(impl) {}
 
     template <class V>
-    Scalar<V> function (const Eigen::MatrixBase<V>& x);
+    Scalar<V> function (const Eigen::MatrixBase<V>& x) const;
 
     template <class V>
-    Scalar<V> operator () (const Eigen::MatrixBase<V>& x)
+    Scalar<V> operator () (const Eigen::MatrixBase<V>& x) const
     {
         return function(x);
     }
@@ -155,31 +155,31 @@ struct Gradient// : public Visitor<Impl_...>
     // Gradient (const Impl& impl);
 
     template <class V>
-    void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g);
+    void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const;
 
     template <class V>
-    void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx);
+    void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const;
 
     template <class V>
-    Plain<V> gradient (const Eigen::MatrixBase<V>& x);
+    Plain<V> gradient (const Eigen::MatrixBase<V>& x) const;
 
     template <class V>
-    Scalar<V> directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e);
+    Scalar<V> directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const;
 
     template <class V>
-    void operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g)
+    void operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g) const
     {
         return gradient(x, g);
     }
 
     template <class V>
-    Plain<V> operator() (const Eigen::MatrixBase<V>& x)
+    Plain<V> operator() (const Eigen::MatrixBase<V>& x) const
     {
         return gradient(x);
     }
 
     template <class V>
-    void operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx)
+    void operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
     {
         return gradient(x, g, fx);
     }
@@ -230,10 +230,10 @@ struct FunctionGradient// : public Visitor<Impl_...>, public Function<::nlpp::im
     // FunctionGradient (const Impl& impl);
 
     template <class V>
-    Scalar<V> functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true);
+    Scalar<V> functionGradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true) const;
 
     template <class V>
-    std::pair<Scalar<V>, Plain<V>> functionGradient (const Eigen::MatrixBase<V>& x);
+    std::pair<Scalar<V>, Plain<V>> functionGradient (const Eigen::MatrixBase<V>& x) const;
 
     // template <class V>
     // Scalar<V> function (const Eigen::MatrixBase<V>& x);
@@ -245,20 +245,20 @@ struct FunctionGradient// : public Visitor<Impl_...>, public Function<::nlpp::im
     // Plain<V> gradient (const Eigen::MatrixBase<V>& x);
 
     template <class V>
-    Scalar<V> operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true)
+    Scalar<V> operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true) const
     {
         return functionGradient(x, g, calcGrad);
     }
 
     template <class V>
-    std::pair<Scalar<V>, Plain<V>> operator() (const Eigen::MatrixBase<V>& x)
+    std::pair<Scalar<V>, Plain<V>> operator() (const Eigen::MatrixBase<V>& x) const
     {
         return functionGradient(x);
     }
 
     Impl impl;
-    Function<std::reference_wrapper<Impl>> func;
-    Gradient<std::reference_wrapper<Impl>> grad;
+    Function<std::reference_wrapper<const Impl>> func;
+    Gradient<std::reference_wrapper<const Impl>> grad;
 };
 
 template <class Impl_>
@@ -293,14 +293,14 @@ Scalar<V> getFuncGrad (Impl& impl, const Eigen::MatrixBase<V>& x, Plain<V>& g, b
 template <class Impl>
 using Function = std::conditional_t<handy::IsSpecialization<Impl, impl::Function>::value, Impl, impl::Function<Impl>>;
 
-template <class... Impl>
-using Gradient = std::conditional_t<sizeof...(Impl) == 1 && handy::IsSpecialization<::nlpp::impl::FirstArg<Impl...>, impl::Gradient>::value, ::nlpp::impl::FirstArg<Impl...>, impl::Gradient<Impl...>>;
-
-template <class... Impl>
-using FunctionGradient = std::conditional_t<sizeof...(Impl) == 1 && handy::IsSpecialization<::nlpp::impl::FirstArg<Impl...>, impl::FunctionGradient>::value, ::nlpp::impl::FirstArg<Impl...>, impl::FunctionGradient<Impl...>>;
+template <class Impl>
+using Gradient = std::conditional_t<handy::IsSpecialization<Impl, impl::Gradient>::value, Impl, impl::Gradient<Impl>>;
 
 template <class Impl>
-using Hessian = std::conditional_t<handy::IsSpecialization<Impl, impl::Hessian>::value, Impl, impl::Hessian<Impl>>;
+using FunctionGradient = std::conditional_t<handy::IsSpecialization<Impl, impl::FunctionGradient>::value, Impl, impl::FunctionGradient<Impl>>;
+
+// template <class Impl>
+// using Hessian = std::conditional_t<handy::IsSpecialization<Impl, impl::Hessian>::value, Impl, impl::Hessian<Impl>>;
 
 /** @brief Alias for impl::FunctionGradient
  *  @details There are four conditions:
@@ -345,10 +345,10 @@ Function<Impl> function (const Impl& impl)
 }
 
 /// Delegate the call to Gradient<Impl, Float>(impl)
-template <class... Impl>
-Gradient<Impl...> gradient (const Impl&... impl)
+template <class Impl>
+Gradient<Impl> gradient (const Impl& impl)
 {
-    return Gradient<Impl...>(impl...);
+    return Gradient<Impl>(impl);
 }
 
 /** @brief Delegate the call to FunctionGradient where we have both the function and gradients in a single functor
@@ -356,17 +356,23 @@ Gradient<Impl...> gradient (const Impl&... impl)
  *  @param impl a functor having either <tt>Float operator()(const Vec&, Vec&)</tt> or
  *         <tt>std::pair<Float, Vec> operator()(const Vec&)</tt>
 */
-template <class... Impl>
-FunctionGradient<Impl...> functionGradient (const Impl&... impl)
+template <class Impl>
+FunctionGradient<Impl> functionGradient (const Impl& impl)
 {
-    return FunctionGradient<Impl...>(impl...);
+    return FunctionGradient<Impl>(impl);
 }
 
-template <class Impl>
-Hessian<Impl> hessian (const Impl& impl)
+template <class Func, class Grad>
+FunctionGradient<impl::Visitor<Func, Grad>> functionGradient (const Func& func, const Grad& grad)
 {
-    return Hessian<Impl>(impl);
+    return FunctionGradient<impl::Visitor<Func, Grad>>(impl::Visitor<Func, Grad>(func, grad));
 }
+
+// template <class Impl>
+// Hessian<Impl> hessian (const Impl& impl)
+// {
+//     return Hessian<Impl>(impl);
+// }
 
 
 template <class V, class... Fs>
