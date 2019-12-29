@@ -162,15 +162,15 @@ struct FiniteDifference
     */
     //@{
     template <class V>
-    auto gradient (const Eigen::MatrixBase<V>& x)
+    auto gradient (const Eigen::MatrixBase<V>& x) const
     {
-        return static_cast<Impl&>(*this).gradient(x, f(x));
+        return static_cast<const Impl&>(*this).gradient(x, f(x));
     }
 
     template <class V>
-    auto gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g)
+    auto gradient (const Eigen::MatrixBase<V>& x, ::nlpp::impl::Plain<V>& g) const
     {
-        return static_cast<Impl&>(*this).gradient(x, g, f(x));
+        return static_cast<const Impl&>(*this).gradient(x, g, f(x));
     }
 
 
@@ -200,11 +200,11 @@ struct FiniteDifference
      *        - x.rows() == e.rows()
      *        - x.cols() == e.cols()
     */
-    template <class V>
-    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
-    {
-        return static_cast<Impl&>(*this).gradient(x, e, f(x));
-    }
+    // template <class V>
+    // auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+    // {
+    //     return static_cast<const Impl&>(*this).gradient(x, e, f(x));
+    // }
 
 
 
@@ -218,7 +218,7 @@ struct FiniteDifference
     template <class V>
     auto hessian (const Eigen::MatrixBase<V>& x)
     {
-        return static_cast<Impl&>(*this).hessian(x, f(x));
+        return static_cast<const Impl&>(*this).hessian(x, f(x));
     }
 
     /** @brief Hessian vector product calculation: 
@@ -234,9 +234,9 @@ struct FiniteDifference
               - e.cols() == 1
     */
     template <class V>
-    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
     {
-        return static_cast<Impl&>(*this).hessian(x, e, gradient(x));
+        return static_cast<const Impl&>(*this).hessian(x, e, gradient(x));
     }
 
     /** @brief General directional derivative calculation @f$\nabla^2 f(x)^\intercal e$@f.
@@ -254,16 +254,22 @@ struct FiniteDifference
      *          
     */
     template <class V>
-    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e)
+    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+    {
+        return directional(x, e, f(x));
+    }
+
+    template <class V>
+    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
     {
         return directional(x, e, f(x));
     }
 
     ///@copydoc directional()
     template <class V>
-    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e, typename V::Scalar fx)
+    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e, typename V::Scalar fx) const
     {
-        return static_cast<Impl&>(*this).directional(x, e, fx, step(x));
+        return static_cast<const Impl&>(*this).directional(x, e, fx, step(x));
     }
 
 
@@ -315,7 +321,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     *   @returns @f$ \nabla f(x) @f$
     */
     template <class Derived>
-    auto gradient (const Eigen::MatrixBase<Derived>& x, typename Derived::Scalar fx)
+    auto gradient (const Eigen::MatrixBase<Derived>& x, typename Derived::Scalar fx) const
     {
         ::nlpp::impl::Plain<Derived> g(x.rows(), x.cols());
 
@@ -325,9 +331,9 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     }
 
     template <class Derived>
-    void gradient (const Eigen::MatrixBase<Derived>& x, ::nlpp::impl::Plain<Derived>& g, typename Derived::Scalar fx)
+    void gradient (const Eigen::MatrixBase<Derived>& x, ::nlpp::impl::Plain<Derived>& g, typename Derived::Scalar fx) const
     {
-        step.init(x);
+        //step.init(x);
         
         changeEval([&](const auto& x, int i, double h){ g(i) = (this->f(x) - fx) / h; }, x, step);
     }
@@ -339,8 +345,8 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     *   @param fx Scalar result of @c f(x)
     *   @returns @f$\lim_{h\to0} \frac{f(x+e) - f(x)}{h}@f$
     */
-    template <class Derived, typename Float>
-    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx)
+    template <class Derived>
+    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx) const
     {
         return directional(x, e, fx);
     }
@@ -449,7 +455,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
      *  @returns f(x)
     */
     template <class Derived>
-    auto directional (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx, typename Derived::Scalar h)
+    auto directional (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx, typename Derived::Scalar h) const
     {
         return (f(x + h * e) - fx) / h;
     }
@@ -555,7 +561,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
     template <class Derived>
     void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g, typename Derived::Scalar fx)
     {
-        step.init(x);
+        //step.init(x);
 
         changeEval([&](const auto& x, int i, double h){ static_cast<impl::Plain<Derived>>(g)(i) = (fx - this->f(x)) / h; }, x, step);
     }
@@ -619,7 +625,7 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
     template <class Derived>
     auto hessian (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& fx)
     {
-        step.init(x);
+        //step.init(x);
 
         Eigen::Matrix<typename Derived::Scalar, Derived::SizeAtCompileTime, Derived::SizeAtCompileTime> hess(x.size(), x.size());
 
@@ -782,7 +788,7 @@ struct Central : public FiniteDifference<Central<Function, Step>>
     template <class Derived>
     void gradient (const Eigen::MatrixBase<Derived>& x, impl::Plain<Derived>& g)
     {
-        step.init(x);
+        //step.init(x);
         impl::Plain<Derived> y = x;
 
         for(int i = 0; i < x.size(); ++i)
@@ -943,7 +949,7 @@ struct Gradient : public Difference<wrap::Function<Function>, Step>
     
     /// Simply delegate the call to Difference<Function, Step, Float>::gradient
     template <typename... Args>
-    auto operator () (Args&&... args)
+    auto operator () (Args&&... args) const
     {
         return gradient(std::forward<Args>(args)...);
     }
@@ -1002,11 +1008,11 @@ struct AutoStep
     AutoStep (...)
     {}
 
-    void init (...)
-    {}
+    //void init (...)
+    //{}
 
     template <class Derived>
-    impl::Scalar<Derived> operator () (const Eigen::MatrixBase<Derived>&, ...)  const
+    impl::Scalar<Derived> operator () (const Eigen::MatrixBase<Derived>&, ...) const
     {
         return constants::eps_<impl::Scalar<Derived>>;
     }
@@ -1018,8 +1024,8 @@ struct SimpleStep
 {
     SimpleStep (Float h = constants::eps_<Float>) : h(h) {}
 
-    void init (...)
-    {}
+    //void init (...)
+    //{}
 
     Float operator () (...) const
     {
@@ -1035,7 +1041,6 @@ struct NormalizedStep : public SimpleStep<Float>
 {
     CPPOPT_USING_STEPSIZE(Base, SimpleStep<Float>);
     
-
     /// Returns @f$max(u^2, |x_i|)$@f for dimension @c i
     template <typename X>
     Float operator () (const X& x, int i) const

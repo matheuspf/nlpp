@@ -32,7 +32,8 @@ struct LineSearch
 		V xn = x + a * d;
 
 		auto fx = f.function(xn);
-		auto gx = f.directional(xn, d, fx);
+		//auto gx = f.directional(xn, d, fx);
+		auto gx = f.gradient(xn, d);
 
 		return std::make_pair(fx, gx);
 	}
@@ -44,7 +45,7 @@ struct LineSearch
 
 	Float gradient (Float a)
 	{
-		return f.directional(x, d);
+		return f.gradient(x, d);
 	}
 
 	FunctionGradient f;

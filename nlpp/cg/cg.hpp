@@ -16,22 +16,19 @@
 #include "cg_dec.hpp"
 #include "projections.hpp"
 
-namespace nlpp
+namespace nlpp::impl
 {
 
-namespace impl
-{
 
 template <class Base_>
 template <class Function, class V>
-V CG<Base_>::optimize (Function f, V x)
+V CG<Base_>::optimize (const Function& f, V x)
 {
     V fa, dir, fb(x.rows(), x.cols());
 
     impl::Scalar<V> fxOld, fx;
 
-    // std::tie(fxOld, fa) = f(x);
-    std::tie(fxOld, fa) = f.functionGradient(x);
+    std::tie(fxOld, fa) = f(x);
 
     dir = -fa;
 
@@ -41,8 +38,7 @@ V CG<Base_>::optimize (Function f, V x)
     
         x = x + alpha * dir;
 
-        // fx = f(x, fb);
-        fx = f.functionGradient(x, fb);
+        fx = f(x, fb);
     
         if(stop(*this, x, fx, fb))
             break;
@@ -63,6 +59,4 @@ V CG<Base_>::optimize (Function f, V x)
     return x;
 }
 
-} // namespace impl
-
-} // namespace nlpp
+} // namespace nlpp::impl

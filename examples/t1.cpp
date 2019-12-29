@@ -2,27 +2,59 @@
 #include "TestFunctions/Rosenbrock.h"
 
 
+struct F1
+{
+    double operator() (const nlpp::Vec& x, nlpp::Vec& gx) const
+    {
+        // if(calcGrad)
+            gx = g(x);
+
+        return f(x);
+    }
+
+    std::pair<double, nlpp::Vec> funcGrad (const nlpp::Vec& x) const
+    {
+        return {f(x), g(x)};
+    }
+
+    auto function (const nlpp::Vec& x) const
+    {
+        return f(x);
+    }
+
+    void gradient (const nlpp::Vec& x, nlpp::Vec& gx) const
+    {
+        g(x, gx);
+    }
+
+    nlpp::Rosenbrock f;
+    nlpp::fd::Gradient<nlpp::Rosenbrock> g = nlpp::fd::Gradient<nlpp::Rosenbrock>(f);
+};
+
 int main ()
 {
-    nlpp::CG<> opt;
+    nlpp::CG<nlpp::FR_PR, nlpp::StrongWolfe<>, nlpp::stop::GradientOptimizer<true>> opt;
 
     nlpp::Rosenbrock func;
     nlpp::Vec x0 = nlpp::Vec::Constant(10, 2.0);
 
-    auto f = nlpp::wrap::makeFuncGrad<nlpp::Vec>(func);
+    auto f1 = [ff=nlpp::wrap::functionGradient(func, nlpp::fd::gradient(func))](const nlpp::Vec& x, nlpp::Vec& g, bool calcGrad) -> double { return ff(x, g, calcGrad); };
+    // auto f1 = [ff=nlpp::wrap::functionGradient(func, nlpp::fd::gradient(func))](const nlpp::Vec& x) { return ff(x); };
+    auto f2 = nlpp::wrap::functionGradient(f1);
 
-    using V = nlpp::Vec;
-    // using F = decltype(f);
-    // using F = nlpp::wrap::FunctionGradient<nlpp::Rosenbrock>;
-    // using F = nlpp::wrap::Function<nlpp::wrap::Gradient<nlpp::Rosenbrock>>;
+    // handy::print(decltype(f2)::HasOp<nlpp::Vec>::FuncGrad);
 
-    handy::print(nlpp::wrap::impl::isFunction<decltype(f.func), V>, nlpp::wrap::impl::isGradient<decltype(f.grad), V>, nlpp::wrap::impl::isFuncGrad<decltype(f.impl), V>);
-    // handy::print(nlpp::wrap::impl::isFunction<decltype(f.func), V>);
-    // handy::print(f.function(x0));
+    // auto r = f2(x0);
 
-    // auto res = opt(func, x0);
+    // auto res = opt(f2, x0);
 
-    // handy::print(res.transpose());
+    nlpp::Vec res;
+
+    handy::print(handy::benchmark([&]{
+        res = opt(F1{}, x0);
+    }));
+
+    handy::print(res);
 
 
     return 0;

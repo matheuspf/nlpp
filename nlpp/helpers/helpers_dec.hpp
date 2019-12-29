@@ -150,9 +150,9 @@ struct Precedence <I, I> {};
 //@{
 struct nonesuch
 {
-    ~nonesuch() = delete;
-    nonesuch(nonesuch const&) = delete;
-    void operator=(nonesuch const&) = delete;
+    //~nonesuch() = delete;
+    //nonesuch(nonesuch const&) = delete;
+    //void operator=(nonesuch const&) = delete;
 };
 
 template <class Default, class AlwaysVoid, template<class...> class Op, class... Args>
@@ -210,6 +210,11 @@ struct NthArgImpl : public NthArgImpl<I, std::tuple<Args...>>
 {
 };
 
+template <std::size_t I, typename F, typename S>
+struct NthArgImpl<I, std::pair<F, S>> : public NthArgImpl<I, std::tuple<F, S>>
+{
+};
+
 template <std::size_t I, typename... Args>
 struct NthArgImpl<I, std::tuple<Args...>> : public NthArgImpl_2<(I >=0 && I < sizeof...(Args)), I, Args...>
 {
@@ -223,43 +228,6 @@ using FirstArg = NthArg<0, Args...>;
 
 template <typename> struct PrintType;
 
-
-template <class, class>
-struct MemberSignatureImpl;
-
-template <class F, typename R, typename... Args>
-struct MemberSignatureImpl<F, R(Args...)>
-{
-    using type = R(F::*)(Args...);
-};
-
-template <class F, class Sig>
-using MemberSignature = typename MemberSignatureImpl<F, Sig>::type;
-
-
-template <class F, class Signature>
-struct HasOperatorImpl
-{
-    template <class F_, class Signature_>
-    static constexpr bool impl (decltype(static_cast<MemberSignature<F_, Signature_>>(&F_::operator()))) { return true; }
-
-    template <class F_, class Signature_>
-    static constexpr bool impl (...) { return false; }
-
-    enum { value = impl<F, Signature>(nullptr) };
-};
-
-template <class F, class Sig>
-constexpr bool HasOperator = HasOperatorImpl<F, Sig>::value;
-
-
-template <class Sig, class F, typename... Args>
-decltype(auto) callOverload (F f, Args... args)
-{
-    return (f.*(static_cast<MemberSignature<F, Sig>>(&F::operator())))(args...);
-}
-
- 
 } // namespace impl
 
 
