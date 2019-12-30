@@ -130,22 +130,14 @@ template <class Impl>
 template <class V>
 std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::funcGrad (const Eigen::MatrixBase<V>& x) const
 {
-    if constexpr(HasOp<V>::FuncGrad_0)
-    {
-        Plain<V> g(x.rows());
-        Scalar<V> fx = impl.funcGrad(x, g, true);
-
-        return {fx, g};
-    } 
- 
-    else if constexpr(HasOp<V>::FuncGrad_1)
+    if constexpr(HasOp<V>::FuncGrad_0 || HasOp<V>::FuncGrad_1)
     {
         Plain<V> g(x.rows());
         Scalar<V> fx = impl.funcGrad(x, g);
 
         return {fx, g};
-    }
-
+    } 
+ 
     else if constexpr(HasOp<V>::FuncGrad_2)
         return impl.funcGrad(x);
 

@@ -27,7 +27,7 @@ struct LineSearch
 	{
 	}
 
-	std::pair<Float, Float> operator () (Float a)
+	std::pair<Float, Float> operator () (Float a) const
 	{
 		V xn = x + a * d;
 
@@ -38,12 +38,12 @@ struct LineSearch
 		return std::make_pair(fx, gx);
 	}
 
-	Float function (Float a)
+	Float function (Float a) const
 	{
 		return f.function(x + a * d);
 	}
 
-	Float gradient (Float a)
+	Float gradient (Float a) const
 	{
 		return f.gradient(x, d);
 	}
