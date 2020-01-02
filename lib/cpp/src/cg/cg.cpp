@@ -1,4 +1,4 @@
-#include "nlpp/CG/CG.h"
+#include "nlpp/cg/cg.hpp"
 #include "lib/cpp/include/cg/cg.hpp"
 
 namespace nlpp_p

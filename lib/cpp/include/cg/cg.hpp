@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nlpp/CG/CG_dec.h"
+#include "nlpp/cg/cg_dec.hpp"
 #include "projections.hpp"
 
 namespace nlpp_p

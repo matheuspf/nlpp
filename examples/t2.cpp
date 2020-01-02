@@ -4,7 +4,7 @@
 
 int main ()
 {
-    nlpp_p::poly::CG<> cg;
+    nlpp_p::CG<> cg;
     // Opt<CGType, LS, Stop, Out> opt(LS{}, 1e4);
 
     // nlpp::Rosenbrock func;

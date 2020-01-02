@@ -1,4 +1,4 @@
-#include "nlpp/CG/projections.hpp"
+#include "nlpp/cg/projections.hpp"
 #include "lib/cpp/include/cg/projections.hpp"
 
 #define NLPP_CG_PROJECTION_POLY(NAME) \

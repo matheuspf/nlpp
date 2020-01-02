@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nlpp/CG/projections_dec.hpp"
+#include "nlpp/cg/projections_dec.hpp"
 
 #define NLPP_CG_PROJECTION_DEC_POLY(NAME) \
 template <class V = nlpp::Vec> \
