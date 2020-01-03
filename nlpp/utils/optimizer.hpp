@@ -168,12 +168,12 @@ struct Optimizer // : public CloneBase<Optimizer<V>>
         stop.initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::Function<::nlpp::wrap::impl::Function<V>>, V) = 0; //{ return V{}; }
+    virtual V optimize (::nlpp::wrap::poly::Function<V>, V) = 0; //{ return V{}; }
 
     template <class F, class U>
     Plain<V> operator () (const F& f, const Eigen::MatrixBase<U>& x)
     {
-        return optimize(::nlpp::wrap::function(Function(f)), x.eval());
+        return optimize(::nlpp::wrap::function(::nlpp::wrap::poly::FunctionBase<V>(f), x.eval()));
     }
 
     // template <class Function, class T, int R, int C>
@@ -202,7 +202,7 @@ struct GradientOptimizer
         stop.initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::FunctionGradient<::nlpp::wrap::impl::FunctionGradient<V>>, V) = 0;
+    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V) = 0;
 
     template <class F, class U>
     Plain<V> operator () (const F& f, const Eigen::MatrixBase<U>& x)

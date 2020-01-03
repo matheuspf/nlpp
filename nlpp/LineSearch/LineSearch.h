@@ -135,7 +135,7 @@ struct LineSearchBase : public ::nlpp::poly::CloneBase<LineSearchBase<V>>
 
 	virtual void initialize () = 0;
 
-	virtual ::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::FunctionGradient<::nlpp::wrap::impl::FunctionGradient<V>>, V>) = 0;
+	virtual ::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V>) = 0;
 };
 
 
@@ -152,7 +152,7 @@ struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearchBase<V>>,
 		return impl->initialize();
 	}
 
-	::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::FunctionGradient<::nlpp::wrap::impl::FunctionGradient<V>>, V> f)
+	::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V> f)
 	{
 		return impl->lineSearch(f);
 	}

@@ -529,33 +529,47 @@ namespace poly
 using ::nlpp::impl::Scalar, ::nlpp::impl::Plain;
 
 template <class V>
-using Function = std::function<Scalar<V>(const Plain<V>&)>;
+using FunctionBase = std::function<Scalar<V>(const Plain<V>&)>;
 
 template <class V>
-using Gradient = std::function<void(const Plain<V>&, Plain<V>&)>;
+using GradientBase = std::function<void(const Plain<V>&, Plain<V>&)>;
 
 template <class V>
-using FunctionGradient = std::function<Scalar<V>(const Plain<V>&, Plain<V>&, bool)>;
+using FunctionGradientBase = std::function<Scalar<V>(const Plain<V>&, Plain<V>&, bool)>;
+
+template <class V>
+using Function = ::nlpp::wrap::Function<FunctionBase<V>>;
+
+template <class V>
+using Gradient = ::nlpp::wrap::Gradient<GradientBase<V>>;
+
+template <class V>
+using FunctionGradient = ::nlpp::wrap::FunctionGradient<FunctionGradientBase<V>>;
+
 
 
 template <class V, class... Fs>
-::nlpp::wrap::FunctionGradient<FunctionGradient<V>> makeFuncGrad (const Fs&... fs)
+FunctionGradient<V> makeFuncGrad (const Fs&... fs)
 {
     using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
     using HasOp = typename Impl:: template HasOp<V>;
 
-    if constexpr(HasOp::IsFuncGrad_0)
-        return ::nlpp::wrap::functionGradient(FunctionGradient<V>(Impl(fs...)));
+    if constexpr(HasOp::FuncGrad_0)
+        return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(
+            [funcGrad = Impl(fs...)]
+            (const Plain<V>& x, Plain<V>& g, bool calcGrad) -> Scalar<V> {
+                return funcGrad.funcGrad(x, g, calcGrad);
+            }));
 
     else if constexpr(HasOp::FuncGrad || (HasOp::Function && HasOp::Gradient))
-        return ::nlpp::wrap::functionGradient(FunctionGradient<V>(
+        return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(
             [funcGrad = ::nlpp::wrap::functionGradient(fs...)]
             (const Plain<V>& x, Plain<V>& g, bool calcGrad) -> Scalar<V> {
                 return funcGrad(x, g, calcGrad);
             }));
 
     else
-        return ::nlpp::wrap::functionGradient(FunctionGradient<V>(
+        return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(
             [funcGrad = ::nlpp::wrap::functionGradient(fs..., ::nlpp::fd::Gradient<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep>(Impl(fs...)))]
             (const Plain<V>& x, Plain<V>& g, bool calcGrad) -> Scalar<V> {
                 return funcGrad(x, g, calcGrad);
