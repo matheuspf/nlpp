@@ -1,11 +1,8 @@
 #pragma once
 
 #include "../helpers/helpers.hpp"
-
-#include "../Helpers/Optimizer.h"
-
+#include "../utils/optimizer.hpp"
 #include "../LineSearch/Goldstein/Goldstein.h"
-
 #include "../LineSearch/StrongWolfe/StrongWolfe.h"
 
 
