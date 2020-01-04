@@ -1,10 +1,10 @@
-#include "LineSearch/StrongWolfe/StrongWolfe.h"
+#include "LineSearch/StrongWolfe/StrongWolfe.hpp"
 
 #include "CG/CG.h"
 
-#include "LineSearch/Backtracking/Backtracking.h"
+#include "LineSearch/Backtracking/Backtracking.hpp"
 
-#include "LineSearch/Goldstein/Goldstein.h"
+#include "LineSearch/Goldstein/Goldstein.hpp"
 
 #include "TestFunctions/Rosenbrock.h"
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../LineSearch.h"
+#include "../LineSearch.hpp"
 
-#include "../Goldstein/Goldstein.h"
+#include "../Goldstein/Goldstein.hpp"
 
-#include "../StrongWolfe/StrongWolfe.h"
+#include "../StrongWolfe/StrongWolfe.hpp"
 
 
 namespace nlpp

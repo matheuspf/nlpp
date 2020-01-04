@@ -1,4 +1,4 @@
-#include "LineSearch/Bracketing/Bracketing.h"
+#include "LineSearch/Bracketing/Bracketing.hpp"
 
 
 double func1 (double x)

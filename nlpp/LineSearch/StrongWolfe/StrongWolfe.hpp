@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../LineSearch.h"
+#include "../LineSearch.hpp"
 
-#include "LineSearch/Interpolation/Interpolation.h"
+#include "LineSearch/Interpolation/Interpolation.hpp"
 
-#include "LineSearch/InitialStep/Constant.h"
-#include "LineSearch/InitialStep/FirstOrder.h"
+#include "LineSearch/InitialStep/Constant.hpp"
+#include "LineSearch/InitialStep/FirstOrder.hpp"
 
 
 namespace nlpp

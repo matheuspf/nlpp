@@ -1,4 +1,4 @@
-#include "LineSearch/Goldstein/Goldstein.h"
+#include "LineSearch/Goldstein/Goldstein.hpp"
 
 #include "GradientDescent/GradientDescent.h"
 

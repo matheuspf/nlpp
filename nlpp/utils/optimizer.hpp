@@ -9,7 +9,7 @@
 
 
 
-//#include "../LineSearch/Goldstein/Goldstein.h"
+//#include "../LineSearch/Goldstein/Goldstein.hpp"
 
 #include "helpers/helpers.hpp"
 #include "utils/finiteDifference.hpp"
@@ -17,8 +17,8 @@
 #include "utils/output.hpp"
 #include "utils/stop.hpp"
 
-#include "../LineSearch/LineSearch.h"
-#include "../LineSearch/StrongWolfe/StrongWolfe.h"
+#include "../LineSearch/LineSearch.hpp"
+#include "../LineSearch/StrongWolfe/StrongWolfe.hpp"
 
 
 /// Base parameter definitions

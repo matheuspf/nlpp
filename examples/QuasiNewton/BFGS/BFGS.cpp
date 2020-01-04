@@ -1,7 +1,7 @@
 #include "QuasiNewton/BFGS/BFGS.h"
 #include "QuasiNewton/LBFGS/LBFGS.h"
 
-#include "LineSearch/Goldstein/Goldstein.h"
+#include "LineSearch/Goldstein/Goldstein.hpp"
 
 #include "TestFunctions/Rosenbrock.h"
 

@@ -6,7 +6,7 @@
 
 #include "../../Helpers/FiniteDifference.h"
 
-#include "../../LineSearch/StrongWolfe/StrongWolfe.h"
+#include "../../LineSearch/StrongWolfe/StrongWolfe.hpp"
 
 
 #define CPPOPT_USING_PARAMS_BFGS(...) CPPOPT_USING_PARAMS(__VA_ARGS__);  \

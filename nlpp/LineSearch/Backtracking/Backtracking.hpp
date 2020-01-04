@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../LineSearch.h"
+#include "../LineSearch.hpp"
 
 
 namespace nlpp

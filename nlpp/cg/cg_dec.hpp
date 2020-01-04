@@ -2,7 +2,7 @@
 
 #include "../helpers/helpers.hpp"
 #include "../utils/optimizer.hpp"
-#include "../LineSearch/StrongWolfe/StrongWolfe.h"
+#include "../LineSearch/StrongWolfe/StrongWolfe.hpp"
 #include "projections_dec.hpp"
 
 

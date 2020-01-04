@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../LineSearch.h"
+#include "../LineSearch.hpp"
 
-#include "../InitialStep/Constant.h"
+#include "../InitialStep/Constant.hpp"
 
 
 namespace nlpp

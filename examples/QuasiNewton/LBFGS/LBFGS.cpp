@@ -1,8 +1,8 @@
 #include "QuasiNewton/LBFGS/LBFGS.h"
 
-#include "LineSearch/StrongWolfe/StrongWolfe.h"
+#include "LineSearch/StrongWolfe/StrongWolfe.hpp"
 
-#include "LineSearch/Goldstein/Goldstein.h"
+#include "LineSearch/Goldstein/Goldstein.hpp"
 
 #include "TestFunctions/Rosenbrock.h"
 

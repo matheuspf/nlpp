@@ -2,7 +2,7 @@
 
 #include "TestFunctions/Rosenbrock.h"
 
-// #include "LineSearch/Goldstein/Goldstein.h"
+// #include "LineSearch/Goldstein/Goldstein.hpp"
 
 using namespace nlpp;
 

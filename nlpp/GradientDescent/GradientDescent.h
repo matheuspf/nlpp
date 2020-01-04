@@ -2,8 +2,8 @@
 
 #include "../helpers/helpers.hpp"
 #include "../utils/optimizer.hpp"
-#include "../LineSearch/Goldstein/Goldstein.h"
-#include "../LineSearch/StrongWolfe/StrongWolfe.h"
+#include "../LineSearch/Goldstein/Goldstein.hpp"
+#include "../LineSearch/StrongWolfe/StrongWolfe.hpp"
 
 
 namespace nlpp

@@ -4,7 +4,7 @@
 
 #include "../../Helpers/Optimizer.h"
 
-#include "../../LineSearch/StrongWolfe/StrongWolfe.h"
+#include "../../LineSearch/StrongWolfe/StrongWolfe.hpp"
 
 #include "../BFGS/BFGS.h"
 

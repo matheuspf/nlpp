@@ -7,7 +7,7 @@
 #include "helpers/helpers.hpp"
 #include "utils/wrappers.hpp"
 #include "utils/finiteDifference.hpp"
-#include "InitialStep/Constant.h"
+#include "InitialStep/Constant.hpp"
 
 
 
