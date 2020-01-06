@@ -5,6 +5,7 @@
 
 #include "include.hpp"
 #include "types.hpp"
+#include "traits.hpp"
 #include "forwardDeclarations.hpp"
 
 /// Expands variadic arguments

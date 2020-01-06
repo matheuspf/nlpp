@@ -103,10 +103,12 @@ struct Goldstein : public impl::Goldstein<Float, InitialStep>,
 namespace poly
 {
 
-template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
-struct Goldstein : public impl::Goldstein<Float, InitialStep>,
-				   public LineSearch<Float>
+
+template <class V = Vec, class InitialStep = ConstantStep<typename V::Scalar>>
+struct Goldstein : public impl::Goldstein<::nlpp::impl::Scalar<V>, InitialStep>,
+					 public LineSearchBase<V>
 {
+	using Float = ::nlpp::impl::Scalar<V>;
 	using Interface = LineSearch<Float>;
 	using Impl = impl::Goldstein<Float, InitialStep>;
 	using Impl::Impl;
@@ -116,7 +118,7 @@ struct Goldstein : public impl::Goldstein<Float, InitialStep>,
 		Impl::initialize();
 	}
 
-	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<>, ::nlpp::Vec> f)
+	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::Vec> f)
 	{
 		return Impl::lineSearch(f);
 	}

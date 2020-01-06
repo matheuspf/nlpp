@@ -1,10 +1,10 @@
-#include "GradientDescent/GradientDescent.hpp"
+#include "cg/cg.hpp"
 #include "TestFunctions/Rosenbrock.h"
 
 
 int main ()
 {
-    nlpp::GradientDescent<> opt;
+    nlpp::CG<> opt;
 
     nlpp::Rosenbrock func;
     nlpp::Vec x0 = nlpp::Vec::Constant(10, 2.0);

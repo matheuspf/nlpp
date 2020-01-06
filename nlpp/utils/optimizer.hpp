@@ -125,9 +125,13 @@ struct GradientOptimizer : public Optimizer<Impl, Stop, Output>
     //@}
 };
 
-template <class Impl, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct LineSearchOptimizer : public GradientOptimizer<Impl, Stop, Output>
+template <class Impl>
+struct LineSearchOptimizer : public GradientOptimizer<Impl, typename traits::LineSearchOptimizer<Impl>::Stop, typename traits::LineSearchOptimizer<Impl>::Output>
 {
+    using Stop = typename traits::LineSearchOptimizer<Impl>::Stop;
+    using Output = typename traits::LineSearchOptimizer<Impl>::Output;
+    using LineSearch = typename traits::LineSearchOptimizer<Impl>::LineSearch;
+
     using Base = GradientOptimizer<Impl, Stop, Output>;
     using Base::Base;
 

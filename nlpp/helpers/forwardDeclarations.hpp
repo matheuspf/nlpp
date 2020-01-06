@@ -82,7 +82,7 @@ struct Optimizer;
 template <class Impl, class Stop, class Output>
 struct GradientOptimizer;
 
-template <class Impl, class LineSearch, class Stop, class Output>
+template <class Impl>
 struct LineSearchOptimizer;
 
 namespace poly

@@ -25,24 +25,34 @@ struct CG : public Base_
 
 } // namespace impl
 
-template <class Impl, class CGType, class LineSearch, class Stop, class Output>
-struct CGBase : public LineSearchOptimizer<Impl, LineSearch, Stop, Output>
+template <class Impl>
+struct CGBase : public LineSearchOptimizer<Impl>
 {
-    NLPP_USING_LINESEARCH_OPTIMIZER(Base, LineSearchOptimizer<Impl, LineSearch, Stop, Output>);
-
-    CGType cg;
+    typename traits::LineSearchOptimizer<Impl>::CGType cg;
     double v = 0.1;     ///< The minimum factor of orthogonality that the current direction must have
 };
 
 template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
-struct CG : public impl::CG<CGBase<CG<CGType, LineSearch, Stop, Output>, CGType, LineSearch, Stop, Output>>
+struct CG : public impl::CG<CGBase<CG<CGType, LineSearch, Stop, Output>>>
 {
-    NLPP_USING_LINESEARCH_OPTIMIZER(Base, impl::CG<CGBase<CG<CGType, LineSearch, Stop, Output>, CGType, LineSearch, Stop, Output>>);
-    using Base::optimize;
 };
 
 // template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 // using CG = impl::CG<CGBase<CG<CGType, LineSearch, Stop, Output>, CGType, LineSearch, Stop, Output>>;
 
+
+namespace traits
+{
+
+template <class CGType_, class LineSearch_, class Stop_, class Output_>
+struct LineSearchOptimizer<CG<CGType_, LineSearch_, Stop_, Output_>>
+{
+    using CGType = CGType_;
+    using LineSearch = LineSearch_;
+    using Stop = Stop_;
+    using Output = Output_;
+};
+
+} // namespace traits
 
 } // namespace nlpp

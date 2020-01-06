@@ -64,7 +64,7 @@ struct Optimizer
 };
 
 
-template <bool Exclusive = false, typename Float = types::Float>
+template <bool Exclusive = true, typename Float = types::Float>
 struct GradientOptimizer : public Optimizer<Exclusive, Float>
 {
     using Base = Optimizer<Exclusive, Float>;
