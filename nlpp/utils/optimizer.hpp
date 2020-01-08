@@ -150,6 +150,24 @@ struct LineSearchOptimizer : public GradientOptimizer<Impl, typename traits::Lin
 };
 
 
+template <class Impl>
+struct BoundConstrainedOptimizer : public Optimizer<Impl, typename traits::Optimizer<Impl>::Stop, typename traits::Optimizer<Impl>::Output>
+{
+    using Stop = typename traits::Optimizer<Impl>::Stop;
+    using Output = typename traits::Optimizer<Impl>::Output;
+
+    using Base = Optimizer<Impl, Stop, Output>;
+    using Base::Base;
+
+  
+    template <class Function, class V, typename... Args>
+    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower,  const Eigen::MatrixBase<V>& upper, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(wrap::function(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
+    }
+};
+
+
 //@}
 
 

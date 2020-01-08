@@ -27,7 +27,7 @@ Vec Direct<Base_>::optimize (const Func& func, const Vec& lower, const Vec& uppe
     IntervalMap intervals;
     intervals[best.size].push(best);
 
-    for(int iter = 0; iter < stop.numIterations; ++iter)
+    for(int iter = 0; iter < stop.maxIterations(); ++iter)
     {
         auto potSet = potentialSet(intervals, best);
         auto bestIter = createSplits(scaledF, potSet, intervals);
@@ -60,8 +60,9 @@ std::vector<typename Direct<Base_>::Interval> Direct<Base_>::potentialSet (Inter
     return potSet;
 }
 
+template <class Base_>
 template <class Func>
-Interval createSplits(const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals)
+typename Direct<Base_>::Interval Direct<Base_>::createSplits (const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals)
 {
     Interval best{1e8};
 
@@ -114,9 +115,10 @@ Interval createSplits(const Func& func, const std::vector<Interval>& potSet, Int
 }
 
 
-std::vector<Interval> convexHull (IntervalMap& intervals)
+template <class Base_>
+std::vector<typename Direct<Base_>::Interval> Direct<Base_>::convexHull (IntervalMap& intervals)
 {
-    std::vector<IntervalMap::iterator> hull;
+    std::vector<typename IntervalMap::iterator> hull;
     hull.reserve(intervals.size());
 
     const auto& first = intervals.begin()->second.top();
@@ -153,12 +155,14 @@ std::vector<Interval> convexHull (IntervalMap& intervals)
     return hullValues;
 }
 
-Float crossProduct (const Interval& o, const Interval& a, const Interval& b) const
+template <class Base_>
+typename Direct<Base_>::Float Direct<Base_>::crossProduct (const Interval& o, const Interval& a, const Interval& b) const
 {
     return (a.size - o.size) * (b.fx - o.fx) - (a.fx - o.fx) * (b.size - o.size);
 }
 
-float intervalSize (const Interval& interval) const
+template <class Base_>
+float Direct<Base_>::intervalSize (const Interval& interval) const
 {
     return 0.5 * std::sqrt(std::accumulate(interval.k.begin(), interval.k.end(), 0.0f, [](float sum, int k){
         return sum + std::pow(3, -2*k);
@@ -166,3 +170,4 @@ float intervalSize (const Interval& interval) const
 }
 
 } // namespace nlpp::impl
+

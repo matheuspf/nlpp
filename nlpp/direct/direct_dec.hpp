@@ -19,10 +19,11 @@ class Direct : public Base_
 {
 public:
 
-    NLPP_USING_LINESEARCH_OPTIMIZER(Base, Base_);
-    using Base::Interval;
-    using Base::IntervalComp;
-    using Base::IntervalMap;
+    NLPP_USING_OPTIMIZER(Base, Base_);
+    using Float = typename Base::Float;
+    using Interval = typename Base::Interval;
+    using IntervalComp = typename Base::IntervalComp;
+    using IntervalMap = typename Base::IntervalMap;
     using Base::eps;
 
     template <class F, class V>
@@ -31,9 +32,10 @@ public:
 private:
 
     std::vector<Interval> potentialSet (IntervalMap& intervals, const Interval& best);
-    Interval createSplits(const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals)
+    template <class Func>
+    Interval createSplits(const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals);
     std::vector<Interval> convexHull (IntervalMap& intervals);
-    Float crossProduct (const Interval& o, const Interval& a, const Interval& b) const
+    Float crossProduct (const Interval& o, const Interval& a, const Interval& b) const;
     float intervalSize (const Interval& interval) const;
 };
 
@@ -41,10 +43,10 @@ private:
 
 
 template <class Impl>
-struct DirectBase : public Optimizer<Impl>
+struct DirectBase : public BoundConstrainedOptimizer<Impl>
 {
-    CPPOPT_USING_PARAMS(Base, Optimizer<Impl>);
-    using Float = traits::Optimizer<Impl>::Float;
+    NLPP_USING_OPTIMIZER(Base, BoundConstrainedOptimizer<Impl>);
+    using Float = typename traits::Optimizer<Impl>::Float;
 
     struct Interval
     {
@@ -54,7 +56,7 @@ struct DirectBase : public Optimizer<Impl>
         Vec x;
     };
 
-    struct IntervalComp;
+    struct IntervalComp
     {
         bool operator() (float a, float b) const
         {
@@ -88,12 +90,14 @@ namespace traits
 {
 
 template <class Stop_, class Output_, class Float_>
-struct Optimizer<Direct<Stop_, Output_, Float_>>
+struct Optimizer<::nlpp::Direct<Stop_, Output_, Float_>>
 {
     using Stop = Stop_;
     using Output = Output_;
     using Float = Float_;
 };
+
+
 
 } // namespace traits
 
