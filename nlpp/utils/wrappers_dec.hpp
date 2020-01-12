@@ -18,6 +18,8 @@
 #pragma once
 
 #include "helpers/helpers_dec.hpp"
+#include "utils/stop.hpp"
+#include "utils/output.hpp"
 
 #define NLPP_MAKE_CALLER(NAME) \
 \
@@ -64,7 +66,7 @@ namespace impl
 
 using ::nlpp::impl::Scalar, ::nlpp::impl::Plain, ::nlpp::impl::Plain1D,
       ::nlpp::impl::Plain2D, ::nlpp::impl::isMat, ::nlpp::impl::detected_t,
-      ::nlpp::impl::is_detected_v, ::nlpp::impl::always_false;
+      ::nlpp::impl::is_detected_v, ::nlpp::impl::always_false, ::nlpp::impl::NthArg;
 
 
 template <template <class, class> class Check, class V, class TFs, class Idx>
@@ -117,8 +119,8 @@ template <class Impl, class V>
 struct IsFuncGrad_1 : std::bool_constant< std::is_floating_point_v<funcGradType<Impl, Plain<V>, Plain<V>&>> > {};
 
 template <class Impl, class V>
-struct IsFuncGrad_2 : std::bool_constant< std::is_floating_point_v<::nlpp::impl::NthArg<0, funcGradType<Impl, Plain<V>>>> &&
-                                          isMat<::nlpp::impl::NthArg<1, funcGradType<Impl, Plain<V>>>> > {};
+struct IsFuncGrad_2 : std::bool_constant< std::is_floating_point_v<NthArg<0, funcGradType<Impl, Plain<V>>>> &&
+                                          isMat<NthArg<1, funcGradType<Impl, Plain<V>>>> > {};
 
 template <class Impl, class V>
 struct IsFuncGrad : std::bool_constant< IsFuncGrad_0<Impl, V>::value || IsFuncGrad_1<Impl, V>::value || IsFuncGrad_2<Impl, V>::value > {};
@@ -501,7 +503,6 @@ FunctionGradient<Fs...> functionGradient (const Fs&... fs)
 }
 
 
-
 // template <class Impl>
 // Hessian<Impl> hessian (const Impl& impl)
 // {
@@ -509,17 +510,77 @@ FunctionGradient<Fs...> functionGradient (const Fs&... fs)
 // }
 
 
+template <class V>
+struct Builder
+{
+    template <class... Fs>
+    static auto function (const Fs&... fs)
+    {
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using HasOp = typename Impl:: template HasOp<V>;
+        using OpId = typename Impl::template OpId<V>;
+
+        if constexpr(HasOp::Function)
+            return ::nlpp::wrap::function(std::get<OpId::Function>(std::forward_as_tuple(fs...)));
+        
+        else if constexpr(HasOp::FuncGrad)
+            return ::nlpp::wrap::function(std::get<OpId::FuncGrad>(std::forward_as_tuple(fs...)));
+
+        else
+            static_assert(::nlpp::impl::always_false<::nlpp::impl::NthArg<0, Fs...>>, "The functor has no interface for the given parameter");
+    }
+
+    template <class... Fs>
+    static auto gradient (const Fs&... fs)
+    {
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using HasOp = typename Impl:: template HasOp<V>;
+        using OpId = typename Impl::template OpId<V>;
+
+        if constexpr(HasOp::Gradient || HasOp::FuncGrad)
+            return ::nlpp::wrap::gradient(fs...);
+
+        else if(HasOp::Function)
+            return ::nlpp::wrap::gradient(::nlpp::fd::Gradient<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep>(Impl(fs...)));
+
+        else
+            static_assert(::nlpp::impl::always_false<::nlpp::impl::NthArg<0, Fs...>>, "The functor has no interface for the given parameter");
+    }
+
+    template <class... Fs>
+    static auto functionGradient (const Fs&... fs)
+    {
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using HasOp = typename Impl:: template HasOp<V>;
+        using OpId = typename Impl::template OpId<V>;
+
+        if constexpr(HasOp::FuncGrad || (HasOp::Function && HasOp::Gradient))
+            return ::nlpp::wrap::functionGradient(fs...);
+
+        else if constexpr(HasOp::Function)
+            return ::nlpp::wrap::functionGradient(fs..., ::nlpp::fd::Gradient<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep>(Impl(fs...)));
+
+        else
+            static_assert(::nlpp::impl::always_false<::nlpp::impl::NthArg<0, Fs...>>, "The functor has no interface for the given parameter");
+    }
+};
+
+template <class V, class... Fs>
+auto makeFunc (const Fs&... fs)
+{
+    return Builder<V>::function(fs...);
+}
+
+template <class V, class... Fs>
+auto makeGrad (const Fs&... fs)
+{
+    return Builder<V>::gradient(fs...);
+}
+
 template <class V, class... Fs>
 auto makeFuncGrad (const Fs&... fs)
 {
-    using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-    using HasOp = typename Impl:: template HasOp<V>;
-
-    if constexpr(HasOp::FuncGrad || (HasOp::Function && HasOp::Gradient))
-        return functionGradient(fs...);
-    
-    else
-        return functionGradient(fs..., ::nlpp::fd::Gradient<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep>(Impl(fs...)));
+    return Builder<V>::functionGradient(fs...);
 }
 
 
@@ -547,34 +608,63 @@ template <class V>
 using FunctionGradient = ::nlpp::wrap::FunctionGradient<FunctionGradientBase<V>>;
 
 
-
-template <class V, class... Fs>
-FunctionGradient<V> makeFuncGrad (const Fs&... fs)
+template <class V>
+struct Builder
 {
-    using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-    using HasOp = typename Impl:: template HasOp<V>;
+    template <class... Fs>
+    static Function<V> function (const Fs&... fs)
+    {
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using HasOp = typename Impl:: template HasOp<V>;
+        using OpId = typename Impl::template OpId<V>;
 
-    if constexpr(HasOp::FuncGrad_0)
-        return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(
-            [funcGrad = Impl(fs...)]
-            (const Plain<V>& x, Plain<V>& g, bool calcGrad) -> Scalar<V> {
-                return funcGrad.funcGrad(x, g, calcGrad);
-            }));
+        if constexpr(HasOp::Function)
+            return ::nlpp::wrap::function(FunctionBase<V>(std::get<OpId::Function>(std::forward_as_tuple(fs...))));
 
-    else if constexpr(HasOp::FuncGrad || (HasOp::Function && HasOp::Gradient))
-        return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(
-            [funcGrad = ::nlpp::wrap::functionGradient(fs...)]
-            (const Plain<V>& x, Plain<V>& g, bool calcGrad) -> Scalar<V> {
-                return funcGrad(x, g, calcGrad);
-            }));
+        else
+            return ::nlpp::wrap::function(FunctionBase<V>(
+                [func = ::nlpp::wrap::Builder<V>::function(fs...)]
+                (const Plain<V>& x) -> Scalar<V> {
+                    return funcGrad(x);
+                }));
+    }
 
-    else
-        return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(
-            [funcGrad = ::nlpp::wrap::functionGradient(fs..., ::nlpp::fd::Gradient<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep>(Impl(fs...)))]
-            (const Plain<V>& x, Plain<V>& g, bool calcGrad) -> Scalar<V> {
-                return funcGrad(x, g, calcGrad);
-            }));
-}
+    template <class... Fs>
+    static Gradient<V> gradient (const Fs&... fs)
+    {
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using HasOp = typename Impl:: template HasOp<V>;
+        using OpId = typename Impl::template OpId<V>;
+
+        if constexpr(HasOp::Gradient_0)
+            return ::nlpp::wrap::gradient(GradientBase<V>(std::get<OpId::Gradient_0>(std::forward_as_tuple(fs...))));
+
+        else
+            return ::nlpp::wrap::gradient(GradientBase<V>(
+                [func = ::nlpp::wrap::Builder<V>::gradient(fs...)]
+                (const Plain<V>& x, Plain<V>& g) {
+                    funcGrad(x, g);
+                }));
+    }
+
+    template <class... Fs>
+    static FunctionGradient<V> functionGradient (const Fs&... fs)
+    {
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using HasOp = typename Impl:: template HasOp<V>;
+        using OpId = typename Impl::template OpId<V>;
+
+        if constexpr(HasOp::FuncGrad_0)
+            return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(std::get<OpId::FuncGrad_0>(std::forward_as_tuple(fs...))));
+
+        else
+            return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(
+                [funcGrad = ::nlpp::wrap::Builder<V>::functionGradient(fs...)]
+                (const Plain<V>& x, Plain<V>& g, bool calcGrad) -> Scalar<V> {
+                    return funcGrad(x, g, calcGrad);
+                }));
+    }
+};
 
 } // namespace poly
 

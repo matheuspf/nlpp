@@ -13,7 +13,7 @@ struct NAME : public nlpp::NAME, public ProjectionBase<V>  \
     virtual NAME* clone_impl () const { return new NAME(*this); }   \
 };
 
-namespace nlpp_p
+namespace nlpp::poly
 {
 
 template <class V = nlpp::Vec>
@@ -41,6 +41,6 @@ NLPP_CG_PROJECTION_DEC_POLY(DY)
 NLPP_CG_PROJECTION_DEC_POLY(HZ)
 NLPP_CG_PROJECTION_DEC_POLY(FR_PR)
 
-} // namespace nlpp_p
+} // namespace nlpp::poly
 
 #undef NLPP_CG_PROJECTION_DEC_POLY

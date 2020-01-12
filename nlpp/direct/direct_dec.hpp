@@ -27,14 +27,14 @@ public:
     using Base::eps;
 
     template <class F, class V>
-    V optimize (const F&, const V&, const V&);
+    V optimize (const F&, const V&, const V&, Stop, Output) const;
 
 private:
 
-    std::vector<Interval> potentialSet (IntervalMap& intervals, const Interval& best);
+    std::vector<Interval> potentialSet (IntervalMap& intervals, const Interval& best) const;
     template <class Func>
-    Interval createSplits(const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals);
-    std::vector<Interval> convexHull (IntervalMap& intervals);
+    Interval createSplits(const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals) const;
+    std::vector<Interval> convexHull (IntervalMap& intervals) const;
     Float crossProduct (const Interval& o, const Interval& a, const Interval& b) const;
     float intervalSize (const Interval& interval) const;
 };

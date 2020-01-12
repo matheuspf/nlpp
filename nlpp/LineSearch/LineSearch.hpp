@@ -57,6 +57,9 @@ struct LineSearch
 
 
 
+namespace impl
+{
+
 /** @brief Line search base class for CRTP
  *  
  *  @details Delegate the call to the base class @c Impl after projecting the given function and gradient into
@@ -71,12 +74,9 @@ struct LineSearch
  *  @tparam Impl The actual line search implementation
  * 	@tparam Whether we must save the norm of the given vector before delegating the calls
 */
-template <class Impl>
+template <class Impl, template <class> class Builder>
 struct LineSearch
 {
-	template <class V>
-	static constexpr bool isImplPoly = std::is_same<Impl, poly::LineSearchBase<V>>::value || std::is_same<Impl, poly::LineSearch_<V>>::value;
-
     void initialize () 
 	{
 		static_cast<Impl&>(*this).initialize();
@@ -92,21 +92,13 @@ struct LineSearch
 	template <class Function, class V>
 	::nlpp::impl::Scalar<V> operator () (Function f, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
 	{
-		if constexpr(isImplPoly<V>)
-			return impl(wrap::poly::makeFuncGrad<V>(f), x, dir);
-
-		else
-	    	return impl(wrap::makeFuncGrad<V>(f), x, dir);
+		return impl(Builder<V>::functionGradient(f), x, dir);
 	}
 
 	template <class Function, class Gradient, class V>
 	::nlpp::impl::Scalar<V> operator () (Function f, Gradient g, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
 	{
-		if constexpr(isImplPoly<V>)
-			return impl(wrap::poly::makeFuncGrad<V>(f, g), x, dir);
-
-		else
-	    	return impl(wrap::makeFuncGrad(f, g), x, dir);
+		return impl(Builder<V>::functionGradient(f, g), x, dir);
 	}
 
     // template <class Function, class Gradient, typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
@@ -123,6 +115,10 @@ struct LineSearch
 	// }
 };
 
+} // namespace impl
+
+template <class Impl>
+using LineSearch = impl::LineSearch<Impl, ::nlpp::wrap::Builder>;
 
 
 namespace poly
@@ -141,7 +137,7 @@ struct LineSearchBase : public ::nlpp::poly::CloneBase<LineSearchBase<V>>
 
 template <class V = ::nlpp::Vec>
 struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearchBase<V>>,
-					 public ::nlpp::LineSearch<LineSearch_<V>>
+					 public ::nlpp::impl::LineSearch<LineSearch_<V>, ::nlpp::wrap::poly::Builder>
 {
 	NLPP_USING_POLY_CLASS(LineSearch_, Base, ::nlpp::poly::PolyClass<LineSearchBase<V>>);
 
@@ -180,7 +176,6 @@ struct LineSearchBase
 
 	InitialStep initialStep;
 };
-
 
 
 } // namespace nlpp

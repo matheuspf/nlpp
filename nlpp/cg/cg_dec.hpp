@@ -20,7 +20,7 @@ struct CG : public Base_
     using Base::v;
 
     template <class Function, class V>
-    V optimize (const Function&, V);
+    V optimize (const Function&, V, LineSearch, Stop, Output) const;
 };
 
 } // namespace impl
@@ -28,7 +28,7 @@ struct CG : public Base_
 template <class Impl>
 struct CGBase : public LineSearchOptimizer<Impl>
 {
-    typename traits::LineSearchOptimizer<Impl>::CGType cg;
+    typename traits::Optimizer<Impl>::CGType cg;
     double v = 0.1;     ///< The minimum factor of orthogonality that the current direction must have
 };
 
@@ -45,7 +45,7 @@ namespace traits
 {
 
 template <class CGType_, class LineSearch_, class Stop_, class Output_>
-struct LineSearchOptimizer<CG<CGType_, LineSearch_, Stop_, Output_>>
+struct Optimizer<CG<CGType_, LineSearch_, Stop_, Output_>>
 {
     using CGType = CGType_;
     using LineSearch = LineSearch_;

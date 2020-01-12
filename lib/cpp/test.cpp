@@ -1,40 +1,23 @@
-#include <nlpp/nlpp.hpp>
-
-
-void test1 ()
-{
-    nlpp::CG cg(1e-4, nlpp::ls::StrongWolfe(1e-4), nlpp::stop::GradientOptimizer(2), nlpp::out::GradientOptimizer(2));
-    cg.ls = nlpp::ls::Goldstein(1e-4)
-
-    auto func = [](const auto& x){ return (x - 0.5).norm(); };
-
-    nlpp::Vec x0(2);
-    x0 << 2.0, 0.0;
-
-    auto res = cg(func, x0);
-
-    handy::print(res.transpose());
-}
-
-void test2 ()
-{
-    std::unique_ptr<nlpp::GradientOptimizer> cg = std::make_unique<nlpp::CG>(1e-4, nlpp::ls::StrongWolfe(1e-4));
-    opt->stop = nlpp::stop::GradientOptimizer(2);
-    opt->out = nlpp::out::GradientOptimizer(2);
-
-    nlpp::Vec x0(2);
-    x0 << 2.0, 0.0;
-
-    auto res = (*cg)(func, x0);
-
-    handy::print(res.transpose());
-}
+#include "lib/cpp/include/cg/cg.hpp"
+#include "TestFunctions/Rosenbrock.h"
 
 
 int main ()
 {
-    test1();
-    test2();
+    nlpp_p::CG<> opt;
+    // Opt<CGType, LS, Stop, Out> opt(LS{}, 1e4);
+
+    nlpp::Rosenbrock func;
+    nlpp::Vec x0 = nlpp::Vec::Constant(10, 2.0);
+
+    nlpp::Vec res;
+    
+    handy::print(handy::benchmark([&]{
+        res = opt(func, x0);
+    }));
+
+    handy::print(res.transpose());
+
 
     return 0;
 }

@@ -9,7 +9,7 @@ nlpp::impl::Scalar<V> NAME<V>::operator () (const V& fa, const V& fb, const V& d
 }   \
 template class NAME<>;
 
-namespace nlpp_p
+namespace nlpp::poly
 {
 
 template <class V>
@@ -36,6 +36,6 @@ NLPP_CG_PROJECTION_POLY(HZ)
 NLPP_CG_PROJECTION_POLY(FR_PR)
 
 
-} // namespace nlpp_p
+} // namespace nlpp::poly
 
 #undef NLPP_CG_PROJECTION_POLY

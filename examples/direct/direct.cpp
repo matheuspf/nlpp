@@ -2,7 +2,7 @@
 
 
 template <class Impl>
-void foo (nlpp::BoundConstrainedOptimizer<Impl>& opt)
+void foo (const nlpp::BoundConstrainedOptimizer<Impl>& opt)
 {
     auto func = [](const nlpp::Vec& x) -> double { return x.dot(x); };
 

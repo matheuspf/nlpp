@@ -8,7 +8,7 @@ namespace nlpp::impl
 
 template <class Base_>
 template <class Func, class Vec>
-Vec Direct<Base_>::optimize (const Func& func, const Vec& lower, const Vec& upper)
+Vec Direct<Base_>::optimize (const Func& func, const Vec& lower, const Vec& upper, Stop stop, Output output) const
 {
     Vec scale = upper - lower;
 
@@ -40,7 +40,7 @@ Vec Direct<Base_>::optimize (const Func& func, const Vec& lower, const Vec& uppe
 
 
 template <class Base_>
-std::vector<typename Direct<Base_>::Interval> Direct<Base_>::potentialSet (IntervalMap& intervals, const Interval& best)
+std::vector<typename Direct<Base_>::Interval> Direct<Base_>::potentialSet (IntervalMap& intervals, const Interval& best) const
 {
     auto hull = convexHull(intervals);
 
@@ -62,7 +62,7 @@ std::vector<typename Direct<Base_>::Interval> Direct<Base_>::potentialSet (Inter
 
 template <class Base_>
 template <class Func>
-typename Direct<Base_>::Interval Direct<Base_>::createSplits (const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals)
+typename Direct<Base_>::Interval Direct<Base_>::createSplits (const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals) const
 {
     Interval best{1e8};
 
@@ -116,7 +116,7 @@ typename Direct<Base_>::Interval Direct<Base_>::createSplits (const Func& func, 
 
 
 template <class Base_>
-std::vector<typename Direct<Base_>::Interval> Direct<Base_>::convexHull (IntervalMap& intervals)
+std::vector<typename Direct<Base_>::Interval> Direct<Base_>::convexHull (IntervalMap& intervals) const
 {
     std::vector<typename IntervalMap::iterator> hull;
     hull.reserve(intervals.size());

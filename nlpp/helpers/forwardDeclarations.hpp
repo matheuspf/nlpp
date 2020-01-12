@@ -76,15 +76,6 @@ struct StrongWolfe;
 } // namespace poly
 
 
-template <class Impl, class Stop, class Output>
-struct Optimizer;
-
-template <class Impl, class Stop, class Output>
-struct GradientOptimizer;
-
-template <class Impl>
-struct LineSearchOptimizer;
-
 namespace poly
 {
 

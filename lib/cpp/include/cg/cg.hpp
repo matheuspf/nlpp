@@ -3,13 +3,13 @@
 #include "nlpp/cg/cg_dec.hpp"
 #include "projections.hpp"
 
-namespace nlpp_p
+namespace nlpp::poly
 {
 
 template <class V = nlpp::Vec>
 struct CGBase : public nlpp::poly::LineSearchOptimizer<V>
 {
-    NLPP_USING_LINESEARCH_OPTIMIZER(Base,  nlpp::poly::LineSearchOptimizer<V>);
+    NLPP_USING_LINESEARCH_OPTIMIZER(Base, nlpp::poly::LineSearchOptimizer<V>);
 
     Projection<V> cg;
 	double v = 0.1;
@@ -20,9 +20,9 @@ struct CG : public nlpp::impl::CG<CGBase<V>>
 {
     NLPP_USING_LINESEARCH_OPTIMIZER(Base, nlpp::impl::CG<CGBase<V>>);
 
-	virtual V optimize (nlpp::wrap::poly::FunctionGradient<V> f, V x);
+	virtual V optimize (nlpp::wrap::poly::FunctionGradient<V>, V, const LineSearch&, const Stop&, const Output&) const;
 	virtual CG<V>* clone () const;
 };
 
 
-} // namespace nlpp_p
+} // namespace nlpp::poly
