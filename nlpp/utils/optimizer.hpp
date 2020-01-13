@@ -196,7 +196,7 @@ struct Optimizer : ::nlpp::impl::Optimizer<Optimizer<V>, ::nlpp::wrap::poly::Bui
         Base::initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::poly::Function<V>, V, const Stop&, const Output&) = 0;
+    virtual V optimize (::nlpp::wrap::poly::Function<V>, V, const Stop&, const Output&) const = 0;
 };
 
 template <class V = ::nlpp::Vec>
@@ -209,7 +209,7 @@ struct GradientOptimizer : ::nlpp::impl::GradientOptimizer<GradientOptimizer<V>,
         Base::initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::poly::Function<V>, V, const Stop&, const Output&) = 0;
+    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V, const Stop&, const Output&) const = 0;
 };
 
 template <class V = ::nlpp::Vec>
@@ -222,7 +222,7 @@ struct LineSearchOptimizer : ::nlpp::impl::LineSearchOptimizer<LineSearchOptimiz
         Base::initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::poly::Function<V>, V, const LineSearch&, const Stop&, const Output&) = 0;
+    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V, const LineSearch&, const Stop&, const Output&) const = 0;
 };
 
 } // namespace poly
@@ -233,23 +233,23 @@ namespace traits
 template <class V>
 struct Optimizer<::nlpp::poly::Optimizer<V>>
 {
-    using Stop = ::nlpp::stop::poly::Optimizer_<V>;
-    using Output = ::nlpp::out::poly::Optimizer_<V>;
+    using Stop = ::nlpp::poly::stop::Optimizer_<V>;
+    using Output = ::nlpp::poly::out::Optimizer_<V>;
 };
 
 template <class V>
 struct Optimizer<::nlpp::poly::GradientOptimizer<V>>
 {
-    using Stop = ::nlpp::stop::poly::GradientOptimizer_<V>;
-    using Output = ::nlpp::out::poly::GradientOptimizer_<V>;
+    using Stop = ::nlpp::poly::stop::GradientOptimizer_<V>;
+    using Output = ::nlpp::poly::out::GradientOptimizer_<V>;
 };
 
 template <class V>
 struct Optimizer<::nlpp::poly::LineSearchOptimizer<V>>
 {
     using LineSearch = ::nlpp::poly::LineSearch_<V>;
-    using Stop = ::nlpp::stop::poly::GradientOptimizer_<V>;
-    using Output = ::nlpp::out::poly::GradientOptimizer_<V>;
+    using Stop = ::nlpp::poly::stop::GradientOptimizer_<V>;
+    using Output = ::nlpp::poly::out::GradientOptimizer_<V>;
 };
 
 } // namespace traits
