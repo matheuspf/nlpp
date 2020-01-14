@@ -22,7 +22,7 @@ namespace nlpp::impl
 
 template <class Base_>
 template <class Function, class V>
-V CG<Base_>::optimize (const Function& f, V x, LineSearch lineSearch, Stop stop, Output output) const
+V CG<Base_>::optimize (const Function& f, V x)
 {
     V fa, dir, fb(x.rows(), x.cols());
 

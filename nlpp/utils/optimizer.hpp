@@ -26,11 +26,14 @@
                                         using TYPE::TYPE;            \
                                         using Stop = typename TYPE::Stop; \
                                         using Output = typename TYPE::Output; \
+                                        using TYPE::stop;   \
+                                        using TYPE::output;
 
 #define NLPP_USING_GRADIENT_OPTIMIZER(TYPE, ...) NLPP_USING_OPTIMIZER(TYPE, __VA_ARGS__)
 
 #define NLPP_USING_LINESEARCH_OPTIMIZER(TYPE, ...) NLPP_USING_GRADIENT_OPTIMIZER(TYPE, __VA_ARGS__) \
-                                                   using LineSearch = typename TYPE::LineSearch;
+                                                   using LineSearch = typename TYPE::LineSearch;    \
+                                                   using TYPE::lineSearch;
 
 
 namespace nlpp
@@ -75,7 +78,7 @@ struct Optimizer
     template <class Function, class V, typename... Args>
     impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args) const
     {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::function(function), x.eval(), stop, output, std::forward<Args>(args)...);
+        return static_cast<const Impl&>(*this).optimize(Builder<V>::function(function), x.eval(), std::forward<Args>(args)...);
     }
 
     Stop stop;      ///< Stopping condition
@@ -103,15 +106,15 @@ struct GradientOptimizer : public Optimizer<Impl, Builder>
     */
     //@{
     template <class Function, class Gradient, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args) const
+    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), x.eval(), std::forward<Args>(args)...);
     }
 
     template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args) const
+    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::functionGradient(function), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function), x.eval(), std::forward<Args>(args)...);
     }
 
     // template <class Function, class Gradient, class Hessian, class V, typename... Args>
@@ -134,18 +137,6 @@ struct LineSearchOptimizer : public GradientOptimizer<Impl, Builder>
     {
     }
 
-    template <class Function, class Gradient, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args) const
-    {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), x.eval(), lineSearch, Base::stop, Base::output, std::forward<Args>(args)...);
-    }
-
-    template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args) const
-    {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::functionGradient(function), x.eval(), lineSearch, Base::stop, Base::output, std::forward<Args>(args)...);
-    }
-
     void initialize ()
     {
         Base::initialize();
@@ -162,9 +153,9 @@ struct BoundConstrainedOptimizer : public Optimizer<Impl, Builder>
     NLPP_USING_OPTIMIZER(Base, Optimizer<Impl, Builder>);
 
     template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower,  const Eigen::MatrixBase<V>& upper, Args&&... args) const
+    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower,  const Eigen::MatrixBase<V>& upper, Args&&... args)
     {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::function(function), lower.eval(), upper.eval(), Base::stop, Base::output, std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(Builder<V>::function(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
     }
 };
 
@@ -196,7 +187,7 @@ struct Optimizer : ::nlpp::impl::Optimizer<Optimizer<V>, ::nlpp::wrap::poly::Bui
         Base::initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::poly::Function<V>, V, const Stop&, const Output&) const = 0;
+    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, V) = 0;
 };
 
 template <class V = ::nlpp::Vec>
@@ -209,20 +200,22 @@ struct GradientOptimizer : ::nlpp::impl::GradientOptimizer<GradientOptimizer<V>,
         Base::initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V, const Stop&, const Output&) const = 0;
+    virtual V optimize (const ::nlpp::wrap::poly::FunctionGradient<V>&, V) = 0;
 };
 
 template <class V = ::nlpp::Vec>
-struct LineSearchOptimizer : ::nlpp::impl::LineSearchOptimizer<LineSearchOptimizer<V>, ::nlpp::wrap::poly::Builder>
+struct LineSearchOptimizer : GradientOptimizer<V>
 {
-    NLPP_USING_LINESEARCH_OPTIMIZER(Base, ::nlpp::impl::LineSearchOptimizer<LineSearchOptimizer<V>, ::nlpp::wrap::poly::Builder>);
+    NLPP_USING_GRADIENT_OPTIMIZER(Base, GradientOptimizer<V>);
+    using LineSearch = ::nlpp::poly::LineSearch_<V>;
 
     virtual void initialize ()
     {
         Base::initialize();
+        lineSearch.initialize();
     }
 
-    virtual V optimize (::nlpp::wrap::poly::FunctionGradient<V>, V, const LineSearch&, const Stop&, const Output&) const = 0;
+    LineSearch lineSearch;
 };
 
 } // namespace poly

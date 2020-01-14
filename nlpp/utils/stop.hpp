@@ -253,8 +253,7 @@ struct GradientOptimizer_ : public ::nlpp::poly::PolyClass<GradientOptimizerBase
         impl->initialize();
     }
 
-    // virtual bool operator () (const ::nlpp::poly::GradientOptimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx, const V& gx)
-    virtual bool operator () (const ::nlpp::impl::GradientOptimizer<::nlpp::poly::GradientOptimizer<V>, ::nlpp::wrap::poly::Builder>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx, const V& gx)
+    virtual bool operator () (const ::nlpp::poly::GradientOptimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx, const V& gx)
     {
         return impl->operator()(optimizer, x, fx, gx);
     }

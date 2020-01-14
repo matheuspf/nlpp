@@ -3,7 +3,7 @@
 
 
 template <class Impl, class Func, class V>
-void exec (const nlpp::LineSearchOptimizer<Impl>& opt, const Func& func, const Eigen::MatrixBase<V>& x0)
+void exec (nlpp::LineSearchOptimizer<Impl>& opt, const Func& func, const Eigen::MatrixBase<V>& x0)
 {
     nlpp::Vec res;
     
@@ -14,8 +14,6 @@ void exec (const nlpp::LineSearchOptimizer<Impl>& opt, const Func& func, const E
     handy::print(res.transpose());
 
 }
-
-
 
 int main ()
 {

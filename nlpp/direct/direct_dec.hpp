@@ -27,7 +27,7 @@ public:
     using Base::eps;
 
     template <class F, class V>
-    V optimize (const F&, const V&, const V&, Stop, Output) const;
+    V optimize (const F&, const V&, const V&);
 
 private:
 

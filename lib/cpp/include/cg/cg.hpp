@@ -20,7 +20,7 @@ struct CG : public nlpp::impl::CG<CGBase<V>>
 {
     NLPP_USING_LINESEARCH_OPTIMIZER(Base, nlpp::impl::CG<CGBase<V>>);
 
-	virtual V optimize (nlpp::wrap::poly::FunctionGradient<V>, V, const LineSearch&, const Stop&, const Output&) const;
+	virtual V optimize (const nlpp::wrap::poly::FunctionGradient<V>&, V);
 	virtual CG<V>* clone () const;
 };
 

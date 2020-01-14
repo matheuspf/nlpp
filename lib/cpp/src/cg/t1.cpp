@@ -4,10 +4,11 @@
 
 int main ()
 {
-    nlpp_p::CG<> opt;
+    nlpp::poly::CG<> opt_;
+    nlpp::poly::GradientOptimizer<>& opt = opt_;
     // Opt<CGType, LS, Stop, Out> opt(LS{}, 1e4);
 
-    // opt.cg = nlpp_p::HS{};
+    // opt.cg = nlpp::poly::HS{};
     opt.stop = nlpp::poly::stop::GradientOptimizer<true>(1e3);
 
     nlpp::Rosenbrock func;
