@@ -35,6 +35,7 @@
                                                    using LineSearch = typename TYPE::LineSearch;    \
                                                    using TYPE::lineSearch;
 
+#define NLPP_USING_BOUND_CONSTRAINED_OPTIMIZER(TYPE, ...) NLPP_USING_OPTIMIZER(TYPE, __VA_ARGS__)
 
 namespace nlpp
 {
@@ -171,6 +172,9 @@ using GradientOptimizer = impl::GradientOptimizer<Impl, wrap::Builder>;
 template <class Impl>
 using LineSearchOptimizer = impl::LineSearchOptimizer<Impl, wrap::Builder>;
 
+template <class Impl>
+using BoundConstrainedOptimizer = impl::BoundConstrainedOptimizer<Impl, wrap::Builder>;
+
 
 namespace poly
 {
@@ -218,6 +222,19 @@ struct LineSearchOptimizer : GradientOptimizer<V>
     LineSearch lineSearch;
 };
 
+template <class V = ::nlpp::Vec>
+struct BoundConstrainedOptimizer : ::nlpp::impl::BoundConstrainedOptimizer<BoundConstrainedOptimizer<V>, ::nlpp::wrap::poly::Builder>
+{
+    NLPP_USING_BOUND_CONSTRAINED_OPTIMIZER(Base, ::nlpp::impl::BoundConstrainedOptimizer<BoundConstrainedOptimizer<V>, ::nlpp::wrap::poly::Builder>);
+
+    virtual void initialize ()
+    {
+        Base::initialize();
+    }
+
+    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, V, V) = 0;
+};
+
 } // namespace poly
 
 namespace traits
@@ -243,6 +260,13 @@ struct Optimizer<::nlpp::poly::LineSearchOptimizer<V>>
     using LineSearch = ::nlpp::poly::LineSearch_<V>;
     using Stop = ::nlpp::poly::stop::GradientOptimizer_<V>;
     using Output = ::nlpp::poly::out::GradientOptimizer_<V>;
+};
+
+template <class V>
+struct Optimizer<::nlpp::poly::BoundConstrainedOptimizer<V>>
+{
+    using Stop = ::nlpp::poly::stop::Optimizer_<V>;
+    using Output = ::nlpp::poly::out::Optimizer_<V>;
 };
 
 } // namespace traits

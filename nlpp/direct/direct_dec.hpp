@@ -21,32 +21,11 @@ public:
 
     NLPP_USING_OPTIMIZER(Base, Base_);
     using Float = typename Base::Float;
-    using Interval = typename Base::Interval;
-    using IntervalComp = typename Base::IntervalComp;
-    using IntervalMap = typename Base::IntervalMap;
-    using Base::eps;
 
-    template <class F, class V>
-    V optimize (const F&, const V&, const V&);
+    template <class Func, class Vec>
+    Vec optimize (const Func&, Vec, Vec);
 
-private:
-
-    std::vector<Interval> potentialSet (IntervalMap& intervals, const Interval& best) const;
-    template <class Func>
-    Interval createSplits(const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals) const;
-    std::vector<Interval> convexHull (IntervalMap& intervals) const;
-    Float crossProduct (const Interval& o, const Interval& a, const Interval& b) const;
-    float intervalSize (const Interval& interval) const;
-};
-
-} // namespace impl
-
-
-template <class Impl>
-struct DirectBase : public BoundConstrainedOptimizer<Impl>
-{
-    NLPP_USING_OPTIMIZER(Base, BoundConstrainedOptimizer<Impl>);
-    using Float = typename traits::Optimizer<Impl>::Float;
+protected:
 
     struct Interval
     {
@@ -76,15 +55,30 @@ struct DirectBase : public BoundConstrainedOptimizer<Impl>
 
     using IntervalMap = std::map<Float, std::priority_queue<Interval, std::vector<Interval>, std::greater<Interval>>, IntervalComp>;
 
+    std::vector<Interval> potentialSet (IntervalMap& intervals, const Interval& best) const;
+    template <class Func>
+    Interval createSplits(const Func& func, const std::vector<Interval>& potSet, IntervalMap& intervals) const;
+    std::vector<Interval> convexHull (IntervalMap& intervals) const;
+    Float crossProduct (const Interval& o, const Interval& a, const Interval& b) const;
+    float intervalSize (const Interval& interval) const;
+
     Float eps = 1e-4;
 };
 
+} // namespace impl
+
+
+template <class Impl>
+struct DirectBase : public BoundConstrainedOptimizer<Impl>
+{
+    NLPP_USING_OPTIMIZER(Base, BoundConstrainedOptimizer<Impl>);
+    using Float = typename traits::Optimizer<Impl>::Float;
+};
 
 template <class Stop = stop::Optimizer<>, class Output = out::Optimizer<>, typename Float = types::Float>
 struct Direct : public impl::Direct<DirectBase<Direct<Stop, Output, Float>>>
 {
 };
-
 
 namespace traits
 {

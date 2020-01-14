@@ -1,21 +1,25 @@
 #pragma once
 
-#include "utils/optimizer.hpp"
+#include "nlpp/direct/direct_dec.hpp"
 
-namespace nlpp
+
+namespace nlpp::poly
 {
 
-namespace poly
+template <class V = nlpp::Vec>
+struct DirectBase : public nlpp::poly::BoundConstrainedOptimizer<V>
 {
-
-template <class V = ::nlpp::Vec>
-struct Direct : public
-{
-
+    NLPP_USING_BOUND_CONSTRAINED_OPTIMIZER(Base, nlpp::poly::BoundConstrainedOptimizer<V>);
+    using Float = nlpp::impl::Scalar<V>;
 };
 
+template <class V = ::nlpp::Vec>
+struct Direct : public ::nlpp::impl::Direct<DirectBase<V>>
+{
+    NLPP_USING_BOUND_CONSTRAINED_OPTIMIZER(Base, ::nlpp::impl::Direct<DirectBase<V>>);
+
+    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, V, V);
+    virtual Direct<V>* clone () const;
+};
 
 } // namespace poly
-
-
-} // namespace nlpp

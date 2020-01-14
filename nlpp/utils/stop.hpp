@@ -227,9 +227,9 @@ struct Optimizer_ : public ::nlpp::poly::PolyClass<OptimizerBase<V>>
         impl->initialize();
     }
 
-    virtual bool operator () (const ::nlpp::poly::Optimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx, const V& gx)
+    virtual bool operator () (const ::nlpp::poly::Optimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx)
     {
-        return impl->operator()(optimizer, x, fx, gx);
+        return impl->operator()(optimizer, x, fx);
     }
 
     int maxIterations () { return impl->maxIterations(); }

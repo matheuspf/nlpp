@@ -115,7 +115,7 @@ struct OptimizerBase : public ::nlpp::poly::CloneBase<OptimizerBase<V>>
 
     virtual void initialize () = 0;
 
-    virtual void operator() (const ::nlpp::poly::Optimizer<V>&, const V&, ::nlpp::impl::Scalar<::nlpp::impl::Scalar<V>>) = 0;
+    virtual void operator() (const ::nlpp::poly::Optimizer<V>&, const V&, ::nlpp::impl::Scalar<V>) = 0;
 };
 
 template <class V = ::nlpp::Vec>
@@ -180,9 +180,9 @@ struct Optimizer_ : public ::nlpp::poly::PolyClass<OptimizerBase<V>>
         impl->initialize();
     }
 
-    virtual void operator() (const ::nlpp::poly::Optimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx, const V& gx)
+    virtual void operator() (const ::nlpp::poly::Optimizer<V>& optimizer, const V& x, ::nlpp::impl::Scalar<V> fx)
     {
-        impl->operator()(optimizer, x, fx, gx);
+        impl->operator()(optimizer, x, fx);
     }
 };
 

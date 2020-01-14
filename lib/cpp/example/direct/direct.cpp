@@ -1,9 +1,9 @@
-#include "direct/direct.hpp"
+#include "lib/cpp/include/direct/direct.hpp"
 
-
-template <class Impl>
-void foo (nlpp::BoundConstrainedOptimizer<Impl>& opt)
+int main ()
 {
+    nlpp::Direct<> opt;
+
     auto func = [](const nlpp::Vec& x) -> double { return x.dot(x); };
 
     nlpp::Vec l = nlpp::Vec::Constant(5, -1.0);
@@ -12,14 +12,6 @@ void foo (nlpp::BoundConstrainedOptimizer<Impl>& opt)
     nlpp::Vec res = opt(func, l, u);
 
     handy::print(res.transpose());
-}
-
-
-int main ()
-{
-    nlpp::Direct<> opt;
-    foo(opt);
-
 
     return 0;
 }

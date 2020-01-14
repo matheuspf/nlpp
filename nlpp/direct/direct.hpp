@@ -8,7 +8,7 @@ namespace nlpp::impl
 
 template <class Base_>
 template <class Func, class Vec>
-Vec Direct<Base_>::optimize (const Func& func, const Vec& lower, const Vec& upper)
+Vec Direct<Base_>::optimize (const Func& func, Vec lower, Vec upper)
 {
     Vec scale = upper - lower;
 
