@@ -1,5 +1,6 @@
 #include "lib/cpp/include/direct/direct.hpp"
 
+
 int main ()
 {
     nlpp::Direct<> opt;
@@ -9,7 +10,7 @@ int main ()
     nlpp::Vec l = nlpp::Vec::Constant(5, -1.0);
     nlpp::Vec u = nlpp::Vec::Constant(5, 1.0);
 
-    nlpp::Vec res = opt(func, l, u);
+    nlpp::Vec res = opt.optimize(nlpp::wrap::poly::Builder<nlpp::Vec>::function(func), l, u);
 
     handy::print(res.transpose());
 

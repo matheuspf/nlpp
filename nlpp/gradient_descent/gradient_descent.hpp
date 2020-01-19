@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GradientDescent_dec.hpp"
+#include "gradient_descent_dec.hpp"
 
 namespace nlpp::impl
 {

@@ -7,22 +7,22 @@ namespace nlpp::impl
 {
 
 template <class Base_>
-template <class Func, class Vec>
-Vec Direct<Base_>::optimize (const Func& func, Vec lower, Vec upper)
+template <class Func, class V>
+V Direct<Base_>::optimize (const Func& func, V lower, V upper)
 {
-    Vec scale = upper - lower;
+    V scale = upper - lower;
 
-    auto scaleX = [&lower, &scale](const auto& x){
+    auto scaledX = [&lower, &scale](const auto& x){
         return (lower.array() + x.array() * scale.array()).matrix();
     };
 
-    auto scaledF = [&func, &scaleX](const auto& x){
-        return func(scaleX(x));
+    auto scaledF = [&func, &scaledX](const auto& x){
+        return func(scaledX(x));
     };
 
     int N = lower.size();
 
-    Interval best = { func(Vec::Constant(N, 0.5)), 0.5*std::sqrt(N), std::vector<int>(N), Vec(Vec::Constant(N, 0.5)) };
+    Interval best = { func(V::Constant(N, 0.5)), 0.5*std::sqrt(N), std::vector<int>(N), V(V::Constant(N, 0.5)) };
 
     IntervalMap intervals;
     intervals[best.size].push(best);
@@ -35,7 +35,7 @@ Vec Direct<Base_>::optimize (const Func& func, Vec lower, Vec upper)
         best = std::min(best, bestIter);
     }
 
-    return scaleX(best.x);
+    return scaledX(best.x);
 }
 
 

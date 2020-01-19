@@ -3,9 +3,8 @@
 #include <map>
 #include <queue>
 
-#include "utils/optimizer.hpp"
-#include "utils/stop.hpp"
-#include "utils/output.hpp"
+#include "../helpers/helpers.hpp"
+#include "../utils/optimizer.hpp"
 
 
 namespace nlpp
@@ -15,17 +14,17 @@ namespace impl
 {
 
 template <class Base_>
-class Direct : public Base_
+struct Direct : public Base_
 {
-public:
+// public:
 
     NLPP_USING_OPTIMIZER(Base, Base_);
     using Float = typename Base::Float;
 
-    template <class Func, class Vec>
-    Vec optimize (const Func&, Vec, Vec);
+    template <class Function, class V>
+    V optimize (const Function&, V, V);
 
-protected:
+// protected:
 
     struct Interval
     {
@@ -90,8 +89,6 @@ struct Optimizer<::nlpp::Direct<Stop_, Output_, Float_>>
     using Output = Output_;
     using Float = Float_;
 };
-
-
 
 } // namespace traits
 
