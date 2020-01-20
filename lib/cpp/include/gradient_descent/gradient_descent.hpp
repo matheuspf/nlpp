@@ -10,7 +10,7 @@ struct GradientDescent : public nlpp::impl::GradientDescent<nlpp::poly::LineSear
 {
     NLPP_USING_LINESEARCH_OPTIMIZER(Base, nlpp::impl::GradientDescent<nlpp::poly::LineSearchOptimizer<V>>);
 
-	virtual V optimize (const nlpp::wrap::poly::FunctionGradient<V>&, V);
+	virtual V optimize (const nlpp::wrap::poly::FunctionGradient<V>&, const V&);
 	virtual GradientDescent<V>* clone () const;
 };
 

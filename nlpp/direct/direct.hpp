@@ -8,7 +8,7 @@ namespace nlpp::impl
 
 template <class Base_>
 template <class Func, class V>
-V Direct<Base_>::optimize (const Func& func, V lower, V upper)
+V Direct<Base_>::optimize (const Func& func, const V& lower, const V& upper)
 {
     V scale = upper - lower;
 

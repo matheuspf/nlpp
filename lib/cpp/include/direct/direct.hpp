@@ -18,7 +18,7 @@ struct Direct : public ::nlpp::impl::Direct<DirectBase<V>>
 {
     NLPP_USING_BOUND_CONSTRAINED_OPTIMIZER(Base, ::nlpp::impl::Direct<DirectBase<V>>);
 
-    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, V, V);
+    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, const V&, const V&);
     virtual Direct<V>* clone () const;
 };
 

@@ -22,7 +22,7 @@ struct Direct : public Base_
     using Float = typename Base::Float;
 
     template <class Function, class V>
-    V optimize (const Function&, V, V);
+    V optimize (const Function&, const V&, const V&);
 
 // protected:
 

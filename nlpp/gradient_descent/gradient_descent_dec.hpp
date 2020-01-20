@@ -16,7 +16,7 @@ struct GradientDescent : public Base_
     NLPP_USING_LINESEARCH_OPTIMIZER(Base, Base_);
 
     template <class F, class V>
-    V optimize (const F&, V);
+    V optimize (const F&, const V&);
 };
 
 } // namespace impl
@@ -31,7 +31,7 @@ namespace traits
 {
 
 template <class LineSearch_, class Stop_, class Output_>
-struct LineSearchOptimizer<GradientDescent<LineSearch_, Stop_, Output_>>
+struct Optimizer<GradientDescent<LineSearch_, Stop_, Output_>>
 {
     using LineSearch = LineSearch_;
     using Stop = Stop_;

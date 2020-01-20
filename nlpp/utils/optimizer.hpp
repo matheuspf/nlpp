@@ -191,7 +191,7 @@ struct Optimizer : ::nlpp::impl::Optimizer<Optimizer<V>, ::nlpp::wrap::poly::Bui
         Base::initialize();
     }
 
-    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, V) = 0;
+    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, const V&) = 0;
 };
 
 template <class V = ::nlpp::Vec>
@@ -204,7 +204,7 @@ struct GradientOptimizer : ::nlpp::impl::GradientOptimizer<GradientOptimizer<V>,
         Base::initialize();
     }
 
-    virtual V optimize (const ::nlpp::wrap::poly::FunctionGradient<V>&, V) = 0;
+    virtual V optimize (const ::nlpp::wrap::poly::FunctionGradient<V>&, const V&) = 0;
 };
 
 template <class V = ::nlpp::Vec>
@@ -232,7 +232,7 @@ struct BoundConstrainedOptimizer : ::nlpp::impl::BoundConstrainedOptimizer<Bound
         Base::initialize();
     }
 
-    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, V, V) = 0;
+    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, const V&, const V&) = 0;
 };
 
 } // namespace poly

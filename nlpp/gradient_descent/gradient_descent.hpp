@@ -7,8 +7,9 @@ namespace nlpp::impl
 
 template <class Base_>
 template <class Function, class V>
-V GradientDescent<Base_>::optimize (const Function& f, V x)
+V GradientDescent<Base_>::optimize (const Function& f, const V& x0)
 {
+    V x = x0;
     impl::Scalar<V> fx;
     V gx, dir;
 

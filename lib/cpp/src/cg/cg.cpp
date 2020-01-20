@@ -5,7 +5,7 @@ namespace nlpp::poly
 {
 
 template <class V>
-V CG<V>::optimize (const ::nlpp::wrap::poly::FunctionGradient<V>& func, V x)
+V CG<V>::optimize (const ::nlpp::wrap::poly::FunctionGradient<V>& func, const V& x)
 {
 	return Base::optimize(func, x);
 }

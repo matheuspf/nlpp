@@ -4,40 +4,42 @@
 
 
 
-namespace nlpp
+namespace nlpp::fact
 {
 
-namespace fact
+template <class V, class U>
+impl::Plain<V> LLT::operator() (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess) const
 {
+    Eigen::LLT<impl::Plain<U>> llt(hess);
 
-struct SimplyInvert
+    assert(llt.info() != Eigen::Success)
+        return -llt.solve(grad);
+    
+    return -hess.colPivHouseholderQr().solve(grad)
+}
+
+template <class V, class U>
+impl::Plain<V> QR::operator() (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess) const
 {
-	template <class V, class U>
-	impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess)
-	{
-		return -hess.colPivHouseholderQr().solve(grad);
-	}
-};
+	return -hess.colPivHouseholderQr().solve(grad);
+}
 
 
 template <typename Float = types::Float>
-struct SmallIdentity
+SmallIdentity::SmallIDentity (Float float = )
+
+
+template <typename Float = types::Float>
+template <class V, class U>
+impl::Plain<V> SmallIdentity::operator() (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess) const
 {
-	SmallIdentity (Float alpha = 1e-5) : alpha(alpha) {}
+    auto minDiag = hess.diagonal().array().minCoeff();
 
-	template <class V, class U>
-	impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, U hess)
-	{
-		auto minDiag = hess.diagonal().array().minCoeff();
+    if(minDiag < 0.0)
+        hess.diagonal().array() += minDiag + alpha;
 
-		if(minDiag < 0.0)
-			hess.diagonal().array() += minDiag + alpha;
-
-		return -hess.colPivHouseholderQr().solve(grad);
-	}
-
-	Float alpha;
-};
+    return -hess.colPivHouseholderQr().solve(grad);
+}
 
 
 

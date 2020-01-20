@@ -5,7 +5,7 @@ namespace nlpp::poly
 {
 
 template <class V>
-V Direct<V>::optimize (const ::nlpp::wrap::poly::Function<V>& func, V lower, V upper)
+V Direct<V>::optimize (const ::nlpp::wrap::poly::Function<V>& func, const V& lower, const V& upper)
 {
 	return Base::optimize(func, lower, upper);
 }

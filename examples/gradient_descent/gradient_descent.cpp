@@ -1,4 +1,4 @@
-#include "GradientDescent/GradientDescent.hpp"
+#include "gradient_descent/gradient_descent.hpp"
 #include "TestFunctions/Rosenbrock.h"
 
 

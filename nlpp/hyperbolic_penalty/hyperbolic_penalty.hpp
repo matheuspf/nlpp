@@ -30,7 +30,7 @@ struct HyperbolicPenalty
 
         auto penalFunc = [&](const Vec& x) -> double
         {
-            const Eigen::ArrayXd& ineq = -inequalities(x).array();
+            auto ineq = -inequalities(x).array();
 
             return function(x) + (-lambda * ineq + Eigen::sqrt(std::pow(lambda, 2) * Eigen::pow(ineq, 2) + std::pow(tau, 2))).sum();
         };
