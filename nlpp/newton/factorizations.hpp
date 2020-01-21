@@ -1,8 +1,6 @@
 #pragma once
 
-#include "../helpers/helpers.hpp"
-
-
+#include "factorizations_dec.hpp"
 
 namespace nlpp::fact
 {
@@ -25,13 +23,9 @@ impl::Plain<V> QR::operator() (const Eigen::MatrixBase<V>& grad, const Eigen::Ma
 }
 
 
-template <typename Float = types::Float>
-SmallIdentity::SmallIDentity (Float float = )
-
-
-template <typename Float = types::Float>
+template <typename Float>
 template <class V, class U>
-impl::Plain<V> SmallIdentity::operator() (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess) const
+impl::Plain<V> SmallIdentity<Float>::operator() (const Eigen::MatrixBase<V>& grad, U hess) const
 {
     auto minDiag = hess.diagonal().array().minCoeff();
 
@@ -43,171 +37,137 @@ impl::Plain<V> SmallIdentity::operator() (const Eigen::MatrixBase<V>& grad, cons
 
 
 
-template <typename Float = types::Float>
-struct CholeskyIdentity
+template <typename Float>
+template <class V, class U>
+impl::Plain<V> CholeskyIdentity<Float>::operator() (const Eigen::MatrixBase<V>& grad, U hess) const
 {
-	CholeskyIdentity (Float beta = 1e-3, Float c = 2.0, Float maxTau = 1e8) : beta(beta), c(c), maxTau(maxTau) {}
+    impl::PlainArray<U> orgDiag = hess.diagonal().array();
 
-	template <class V, class U>
-	impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, U hess)
-	{
-		impl::PlainArray<U> orgDiag = hess.diagonal().array();
+    auto minDiag = orgDiag.minCoeff();
 
-		auto minDiag = orgDiag.minCoeff();
+    Float tau = minDiag < 0.0 ? beta - minDiag : 0.0;
 
-		Float tau = minDiag < 0.0 ? beta - minDiag : 0.0;
+    while(tau < maxTau)
+    {
+        Eigen::LLT<impl::Plain<U>> llt(hess);
 
-		while(tau < maxTau)
-		{
-			Eigen::LLT<impl::Plain<U>> llt(hess);
+        if(llt.info() == Eigen::Success)
+            return -llt.solve(grad);
 
-			if(llt.info() == Eigen::Success)
-				return -llt.solve(grad);
+        hess.diagonal().array() = orgDiag + tau;
 
-			hess.diagonal().array() = orgDiag + tau;
+        tau = std::max(c * tau, beta);
+    }
 
-			tau = std::max(c * tau, beta);
-		}
-
-		return -grad;
-	}
-
-	Float beta;
-	Float c;
-	Float maxTau;
-};
+    return -grad;
+}
 
 
-template <typename Float = types::Float>
-struct CholeskyFactorization
+template <typename Float>
+template <class V, class U>
+impl::Plain<V> CholeskyFactorization<Float>::operator() (const Eigen::MatrixBase<V>& grad, U hess) const
 {
-	CholeskyFactorization (Float delta = 1e-3) : delta(delta) {}
+    int N = hess.rows();
 
-	Vec operator () (const Vec& grad, Mat hess)
-	{
-		int N = hess.rows();
+    double maxDiag = -1e20, maxOffDiag = -1e20;
 
-		double maxDiag = -1e20, maxOffDiag = -1e20;
+    for(int i = 0; i < N; ++i)
+    {
+        maxDiag = std::max(maxDiag, std::abs(hess(i, i)));
+    
+        for(int j = 0; j < N; ++j) if(i != j)
+            maxOffDiag = std::max(maxOffDiag, std::abs(hess(i, j)));
+    }
 
-		for(int i = 0; i < N; ++i)
-		{
-			maxDiag = std::max(maxDiag, std::abs(hess(i, i)));
+    double beta = std::max(constants::eps, std::max(maxDiag, maxOffDiag / std::max(1.0, sqrt(N*N - 1.0))));
 
-			for(int j = 0; j < N; ++j) if(i != j)
-				maxOffDiag = std::max(maxOffDiag, std::abs(hess(i, j)));
-		}
+    Mat L = Mat::Identity(N, N);
+    Mat C = Mat::Identity(N, N);
+    Mat D = Mat::Constant(N, N, 0.0);
+    Mat E = Mat::Constant(N, N, 0.0);
+    Mat Q = Mat::Identity(N, N);
+    Mat O = Mat::Identity(N, N);
 
-		double beta = std::max(constants::eps, std::max(maxDiag, maxOffDiag / std::max(1.0, sqrt(N*N - 1.0))));
+    for(int i = 0; i < N; ++i)
+        C(i, i) = hess(i, i);
 
+    for(int i = 0; i < N; ++i)
+    {
+        double val = -1e20;
+        int p = 0;
 
-		Mat L = Mat::Identity(N, N);
-		Mat C = Mat::Identity(N, N);
-		Mat D = Mat::Constant(N, N, 0.0);
-		Mat E = Mat::Constant(N, N, 0.0);
-		Mat Q = Mat::Identity(N, N);
-		Mat O = Mat::Identity(N, N);
+        for(int j = i; j < N; ++j) if(std::abs(hess(j, j)) > val)
+            val = std::abs(hess(j, j)), p = j;
 
+        if(p != i)
+        {
+            Mat P = Mat::Identity(N, N);
 
-		for(int i = 0; i < N; ++i)
-			C(i, i) = hess(i, i);
+            P(i, i) = P(p, p) = 0.0;
+            P(i, p) = P(p, i) = 1.0;
 
+            hess = P * hess * P.transpose();
 
-		for(int i = 0; i < N; ++i)
-		{
-			double val = -1e20;
-			int p = 0;
+            Q = P * Q;
+            O = O * P.transpose();
+        }
 
-			for(int j = i; j < N; ++j) if(std::abs(hess(j, j)) > val)
-				val = std::abs(hess(j, j)), p = j;
+        double phi = -1e20;
 
-			if(p != i)
-			{
-				Mat P = Mat::Identity(N, N);
+        for(int j = 0; j < i; ++j)
+            L(i, j) = C(i, j) / D(j, j);
 
-				P(i, i) = P(p, p) = 0.0;
-				P(i, p) = P(p, i) = 1.0;
+        for(int j = i+1; j < N; ++j)
+        {
+            C(j, i) = hess(j, i);
 
-				hess = P * hess * P.transpose();
+            for(int k = 0; k < i; ++k)
+                C(j, i) -= L(i, k) * C(j, k);
+    
+            phi = std::max(phi, std::abs(C(j, i)));
+        }
 
-				Q = P * Q;
-				O = O * P.transpose();
-			}
+        if(i == N-1)
+            phi = 0.0;
 
+        D(i, i) = std::max(delta, std::max(std::abs(C(i, i)), pow(phi, 2) / beta));
 
-
-			double phi = -1e20;
-
-			for(int j = 0; j < i; ++j)
-				L(i, j) = C(i, j) / D(j, j);
-
-			for(int j = i+1; j < N; ++j)
-			{
-				C(j, i) = hess(j, i);
-
-				for(int k = 0; k < i; ++k)
-					C(j, i) -= L(i, k) * C(j, k);
-				
-				phi = std::max(phi, std::abs(C(j, i)));
-			}
-
-			if(i == N-1)
-				phi = 0.0;
-
-			D(i, i) = std::max(delta, std::max(std::abs(C(i, i)), pow(phi, 2) / beta));
-
-			E(i, i) = D(i, i) - C(i, i);
+        E(i, i) = D(i, i) - C(i, i);
 
 
-			for(int j = i+1; j < N; ++j)
-				C(j, j) = C(j, j) - pow(C(j, i), 2) / D(i, i);
-		}
+        for(int j = i+1; j < N; ++j)
+            C(j, j) = C(j, j) - pow(C(j, i), 2) / D(i, i);
+    }
 
+    hess = Q.inverse() * (hess + E) * O.inverse();
 
-		hess = Q.inverse() * (hess + E) * O.inverse();
+    return -hess.colPivHouseholderQr().solve(grad);
+}
 
-		return -hess.colPivHouseholderQr().solve(grad);
-	}
-
-
-	double delta;
-};
-
-
-
-
-struct IndefiniteFactorization
+template <typename Float>
+template <class V, class U>
+impl::Plain<V> IndefiniteFactorization<Float>::operator() (const Eigen::MatrixBase<V>& grad, U hess) const
 {
-	IndefiniteFactorization (double delta = 1e-2) : delta(delta) {}
+    int N = hess.rows();
 
 
-	Vec operator () (const Vec& grad, Mat hess)
-	{
-		int N = hess.rows();
+    Eigen::RealSchur<Mat> schur(hess);
+
+    Eigen::EigenSolver<Mat> eigen(schur.matrixT());
+
+    const Vec& eigVal = eigen.eigenvalues().real();
+    const Mat& eigVec = eigen.eigenvectors().real();
 
 
-		Eigen::RealSchur<Mat> schur(hess);
+    Mat F = Mat::Constant(N, N, 0.0);
 
-		Eigen::EigenSolver<Mat> eigen(schur.matrixT());
+    for(int i = 0; i < N; ++i)
+        F(i, i) = (eigVal[i] < delta ? delta - eigVal[i] : 0.0);
 
-		const Vec& eigVal = eigen.eigenvalues().real();
-
-		const Mat& eigVec = eigen.eigenvectors().real();
-
-
-		Mat F = Mat::Constant(N, N, 0.0);
-
-		for(int i = 0; i < N; ++i)
-			F(i, i) = (eigVal[i] < delta ? delta - eigVal[i] : 0.0);
-
-		F = schur.matrixT() + eigVec * F * eigVec.transpose();
+    F = schur.matrixT() + eigVec * F * eigVec.transpose();
 
 
-		return -schur.matrixU() * F.llt().solve(Mat::Identity(N, N)) * schur.matrixU().transpose() * grad;
-	}
+    return -schur.matrixU() * F.llt().solve(Mat::Identity(N, N)) * schur.matrixU().transpose() * grad;
+}
 
-	double delta;
-};
-
-} // namespace fact
-
-} // namespace nlpp
+} // namespace nlpp::fact

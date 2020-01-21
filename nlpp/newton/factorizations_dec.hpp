@@ -21,10 +21,12 @@ struct QR
 template <typename Float = types::Float>
 struct SmallIdentity
 {
-    SmallIdentity (Float alpha);
+    SmallIdentity (Float alpha=1e-5) : alpha(alpha)
+    {
+    }
 
     template <class V, class U>
-    impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess) const;
+    impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, U hess) const;
 
     Float alpha;
 };
@@ -32,10 +34,12 @@ struct SmallIdentity
 template <typename Float = types::Float>
 struct CholeskyIdentity
 {
-    CholeskyIdentity (Float beta, Float c, Float maxTau);
+    CholeskyIdentity (Float beta = 1e-3, Float c = 2.0, Float maxTau = 1e8) : beta(beta), c(c), maxTau(maxTau)
+    {
+    }
 
     template <class V, class U>
-    impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess) const;
+    impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, U hess) const;
 
     Float beta;
     Float c;
@@ -45,10 +49,12 @@ struct CholeskyIdentity
 template <typename Float = types::Float>
 struct CholeskyFactorization
 {
-    CholeskyFactorization (Float delta);
+    CholeskyFactorization (Float delta = 1e-3) : delta(delta)
+    {
+    }
 
     template <class V, class U>
-    impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess) const;
+    impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, U hess) const;
 
     Float delta;
 };
@@ -56,10 +62,12 @@ struct CholeskyFactorization
 template <typename Float = types::Float>
 struct IndefiniteFactorization
 {
-    IndefiniteFactorization (Float delta);
+    IndefiniteFactorization (Float delta = 1e-2) : delta(delta)
+    {
+    }
 
     template <class V, class U>
-    impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, const Eigen::MatrixBase<U>& hess) const;
+    impl::Plain<V> operator () (const Eigen::MatrixBase<V>& grad, U hess) const;
 
     Float delta;
 };

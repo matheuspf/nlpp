@@ -152,42 +152,6 @@ std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::funcGrad (const Eigen::Ma
 
 
 
-// template <class... _Impl>
-// template <class V>
-// Scalar<V> FunctionGradient<_Impl...>::function (const Eigen::MatrixBase<V>& x)
-// {
-//     return Func::operator()(x);
-
-//     if constexpr(isFunction<Impl, V>)
-//         return Func::operator()(x);
-
-//     else
-//         return functionGrad(x);
-// }
-
-// template <class... _Impl>
-// template <class V>
-// void FunctionGradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g)
-// {
-//     if constexpr(isGradient_0<Impl, V> || isGradient_1<Impl, V>)
-//         Grad::operator()(x, g);
-
-//     else
-//         functionGrad(x);
-// }
-
-// template <class... _Impl>
-// template <class V>
-// Plain<V> FunctionGradient<_Impl...>::gradient (const Eigen::MatrixBase<V>& x)
-// {
-//     if constexpr(isGradient_0<Impl, V> || isGradient_1<Impl, V>)
-//         return Grad::operator()(x);
-
-//     else
-//         return functionGrad(x);
-// }
-
-
 // template <class Impl>
 // Hessian<Impl>::Hessian (const Impl& impl) : Impl(impl) {}
 
