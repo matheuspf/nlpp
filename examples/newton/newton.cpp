@@ -1,8 +1,5 @@
-#include "Newton/Newton.h"
-
+#include "newton/newton.hpp"
 #include "TestFunctions/Rosenbrock.h"
-
-using namespace nlpp;
 
 
 int main ()
@@ -48,10 +45,6 @@ int main ()
 
 
     handy::print("x: ", x.transpose(), "\nfx: ", func(x), "\ngx: ", grad(x).norm(), "\n");
-
-
-
-
 
 	return 0;
 }
