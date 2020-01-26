@@ -105,15 +105,27 @@ namespace impl
 */
 //@{
 template <typename T>
-struct IsMat
+struct IsEigen
 {
     template <class U>
-    static constexpr bool impl (Eigen::EigenBase<U>*) { return true; }
+    static constexpr int impl (Eigen::EigenBase<U>*)
+    {
+        return Plain<U>::ColsAtCompileTime != 1 ? 1 : 2;
+    }
 
-    static constexpr bool impl (...) { return false; }
+    static constexpr int impl (...) { return 0; }
 
     enum { value = impl((std::decay_t<T>*)0) };
+    enum { isMat = IsEigen::value == 1, isVec = IsEigen::value == 2 };
 };
+
+
+template <typename T>
+struct IsMat : public std::bool_constant<bool(IsEigen<T>::isMat)> {};
+
+template <typename T>
+struct IsVec : public std::bool_constant<bool(IsEigen<T>::isVec)> {};
+
 
 template <typename T>
 struct IsScalar
@@ -128,9 +140,15 @@ template <typename T>
 constexpr bool isMat = IsMat<T>::value;
 
 template <typename T>
+constexpr bool isVec = IsVec<T>::value;
+
+template <typename T>
 constexpr bool isScalar = IsScalar<T>::value;
 //@}
 
+
+template <class V>
+using Plain2D = std::conditional_t<isMat<V>, Plain<V>,  Matrix<Scalar<V>, V::RowsAtCompileTime, V::RowsAtCompileTime>>;
 
 /** @name
  *  @brief Define function overloading calling precedence
