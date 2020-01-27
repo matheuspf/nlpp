@@ -148,7 +148,7 @@ constexpr bool isScalar = IsScalar<T>::value;
 
 
 template <class V>
-using Plain2D = std::conditional_t<isMat<V>, Plain<V>,  Matrix<Scalar<V>, V::RowsAtCompileTime, V::RowsAtCompileTime>>;
+using Plain2D = std::conditional_t<isMat<V>, Plain<V>,  Eigen::Matrix<Scalar<V>, V::RowsAtCompileTime, V::RowsAtCompileTime>>;
 
 /** @name
  *  @brief Define function overloading calling precedence

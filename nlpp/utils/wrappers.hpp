@@ -150,49 +150,87 @@ std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::funcGrad (const Eigen::Ma
 
 
 
+template <class Impl>
+template <class V>
+void Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+{
+    if constexpr(HasOp<V>::Hessian_0)
+        impl.hessian(x, h);
 
+    else if constexpr(HasOp<V>::Hessian_1)
+        h = impl.hessian(x);
 
-// template <class Impl>
-// Hessian<Impl>::Hessian (const Impl& impl) : Impl(impl) {}
+    else if constexpr(HasOp<V>::Hessian_2)
+        hessianFromDirectional(x, h);
 
-// template <class Impl>
-// template <class V, class U>
-// Plain<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e)
-// {
-//     if constexpr(isHessian_1<Impl, V, U>)
-//         return impl(x, e);
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
 
-//     else if constexpr(isHessian_2<Impl, V>)
-//         return impl(x) * e;
+template <class Impl>
+template <class V>
+Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x) const
+{
+    if constexpr(HasOp<V>::Hessian_1)
+        impl.hessian(x);
 
-//     else
-//         static_assert(always_false<V>, "The functor has no interface for the given parameter");
-// }
+    else if constexpr(HasOp<V>::Hessian_0)
+    {
+        Plain2D<V> h(x.rows(), x.rows());
+        impl.hessian(x, h);
+        return h;
+    }
 
-// template <class Impl>
-// template <class V>
-// Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x)
-// {
-//     if constexpr(isHessian_1<Impl, V>)
-//     {
-//         Plain<V> e = Plain<V>::Constant(x.rows(), Scalar<V>{0.0});
-//         Plain2D<V> m(x.rows(), x.rows());
+    else if constexpr(HasOp<V>::Hessian_2)
+        return hessianFromDirectional(x);
 
-//         for(int i = 0; i < e.rows(); ++i)
-//         {
-//             e(i) = Scalar<V>{1.0};
-//             m.row(i) = impl(x, e);
-//             e(i) = Scalar<V>{0.0};
-//         }
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
 
-//         return m;
-//     }
+template <class Impl>
+template <class V>
+Plain<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+{
+    if constexpr(HasOp<V>::Hessian_2)
+        return impl.hessian(x, e);
 
-//     else if constexpr(isHessian_2<Impl, V>)
-//         return impl(x);
+    else if constexpr(HasOp<V>::Hessian_0)
+    {
+        Plain2D<V> h(x.rows(), x.rows());
+        impl.hessian(x, h);
+        return h * x;
+    }
 
-//     else
-//         static_assert(always_false<V>, "The functor has no interface for the given parameter");
-// }
+    else if constexpr(HasOp<V>::Hessian_1)
+        return impl.hessian(x) * x;
+
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
+
+template <class Impl>
+template <class V>
+Plain2D<V> Hessian<Impl>::hessianFromDirectional (const Eigen::MatrixBase<V>& x) const
+{
+    Plain2D<V> h(x.rows(), x.rows());
+    hessianFromDirectional(x, h);
+    return h;
+}
+
+template <class Impl>
+template <class V>
+void Hessian<Impl>::hessianFromDirectional (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+{
+    Plain<V> e = Plain<V>::Constant(x.rows(), Scalar<V>{0.0});
+    
+    for(int i = 0; i < e.rows(); ++i)
+    {
+        e(i) = Scalar<V>{1.0};
+        h.row(i) = impl.hessian(x, e);
+        e(i) = Scalar<V>{0.0};
+    }
+}
+
 
 } // namespace nlpp::wrap::impl

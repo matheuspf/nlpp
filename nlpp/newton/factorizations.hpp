@@ -10,10 +10,10 @@ impl::Plain<V> LLT::operator() (const Eigen::MatrixBase<V>& grad, const Eigen::M
 {
     Eigen::LLT<impl::Plain<U>> llt(hess);
 
-    assert(llt.info() != Eigen::Success)
+    if(llt.info() == Eigen::Success)
         return -llt.solve(grad);
     
-    return -hess.colPivHouseholderQr().solve(grad)
+    return -hess.colPivHouseholderQr().solve(grad);
 }
 
 template <class V, class U>

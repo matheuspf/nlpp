@@ -107,6 +107,9 @@ struct Forward;
 template <class Function, template <class, class> class Difference, class Step>
 struct Gradient;
 
+template <class Function, template <class, class> class Difference, class Step, typename Float>
+struct Hessian;
+
 } // namespace fd
 
 

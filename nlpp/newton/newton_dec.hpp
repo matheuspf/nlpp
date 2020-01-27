@@ -2,7 +2,7 @@
 
 #include "../utils/optimizer.hpp"
 #include "../LineSearch/StrongWolfe/StrongWolfe.hpp"
-#include "factorizations.hpp"
+#include "factorizations_dec.hpp"
 
 
 namespace nlpp
@@ -27,7 +27,7 @@ struct Newton : public Base_
 template <class Impl>
 struct NewtonBase : public impl::LineSearchOptimizer<Impl>
 {
-    typename traits::Optimizer<Impl>::Factorizationfactorization;
+    typename traits::Optimizer<Impl>::Factorization factorization;
 };
 
 template <class Factorization = fact::SmallIdentity<>, class LineSearch = StrongWolfe<>,

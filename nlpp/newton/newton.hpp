@@ -1,6 +1,7 @@
 #pragma once
 
 #include "newton_dec.hpp"
+#include "factorizations.hpp"
 
 namespace nlpp::impl
 {
