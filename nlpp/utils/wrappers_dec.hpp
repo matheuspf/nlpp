@@ -603,10 +603,10 @@ struct Builder
         if constexpr(HasOp::Hessian)
             return ::nlpp::wrap::hessian(fs...);
 
-        else if(HasOp::gradient)
-            return ::nlpp::wrap::hessian(::nlpp::fd::Hessian<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep, double>(Impl(fs...)));
+        // else if constexpr(HasOp::Gradient)
+        //     return ::nlpp::wrap::hessian(::nlpp::fd::Hessian<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep, double>(Impl(fs...)));
 
-        else if(HasOp::function)
+        else if constexpr(HasOp::Function)
             return ::nlpp::wrap::hessian(::nlpp::fd::Hessian<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep, double>(Impl(fs...)));
 
         else

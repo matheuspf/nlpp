@@ -127,13 +127,13 @@ struct HessianOptimizer : public GradientOptimizer<Impl, Builder>
     template <class Function, class Gradient, class V, typename... Args>
     impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), Builder<V>::hessian(function), x.eval(), std::forward<Args>(args)...);
     }
 
     template <class Function, class V, typename... Args>
     impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function), Builder<V>::hessian(function), x.eval(), std::forward<Args>(args)...);
     }
 };
 
@@ -177,6 +177,9 @@ using Optimizer = impl::Optimizer<Impl, wrap::Builder>;
 
 template <class Impl>
 using GradientOptimizer = impl::GradientOptimizer<Impl, wrap::Builder>;
+
+template <class Impl>
+using HessianOptimizer = impl::HessianOptimizer<Impl, wrap::Builder>;
 
 template <class Impl>
 using BoundConstrainedOptimizer = impl::BoundConstrainedOptimizer<Impl, wrap::Builder>;

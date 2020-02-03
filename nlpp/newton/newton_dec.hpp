@@ -25,7 +25,7 @@ struct Newton : public Base_
 
 
 template <class Impl>
-struct NewtonBase : public impl::LineSearchOptimizer<Impl>
+struct NewtonBase : public impl::LineSearchOptimizer<HessianOptimizer, Impl>
 {
     typename traits::Optimizer<Impl>::Factorization factorization;
 };
