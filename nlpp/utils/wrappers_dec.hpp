@@ -89,7 +89,7 @@ using OperatorType = detected_t<std::invoke_result_t, T, Args...>;
 NLPP_MAKE_CALLER(function);
 NLPP_MAKE_CALLER(gradient);
 NLPP_MAKE_CALLER(funcGrad);
-NLPP_MAKE_CALLER(hessian);
+NLPP_MAKE_CALLER(lol);
 
 
 template <class Impl, class V>
@@ -127,16 +127,49 @@ struct IsFuncGrad : std::bool_constant< IsFuncGrad_0<Impl, V>::value || IsFuncGr
 
 
 template <class Impl, class V>
-struct IsHessian_0 : std::bool_constant< isVec<V> && std::is_same_v<hessianType<Impl, Plain<V>, Plain2D<V>&>, void> > {};
+struct IsHessian_0 : std::bool_constant< isVec<V> && std::is_same_v<lolType<Impl, Plain<V>, Plain2D<V>&>, void> > {};
 
 template <class Impl, class V>
-struct IsHessian_1 : std::bool_constant< isVec<V> && isMat<hessianType<Impl, Plain<V>>> > {};
+struct IsHessian_1 : std::bool_constant< isVec<V> && isMat<lolType<Impl, Plain<V>>> > {};
 
 template <class Impl, class V>
-struct IsHessian_2 : std::bool_constant< isVec<V> && isVec<hessianType<Impl, Plain<V>, Plain<V>>> > {};
+struct IsHessian_2 : std::bool_constant< isVec<V> && isVec<lolType<Impl, Plain<V>, Plain<V>>> > {};
 
 template <class Impl, class V>
 struct IsHessian : std::bool_constant< IsHessian_0<Impl, V>::value || IsHessian_1<Impl, V>::value || IsHessian_2<Impl, V>::value > {};
+
+
+template <class TFs, class V>
+struct OpId
+{
+    enum : int
+    {
+        Function = GetOpId<IsFunction, V, TFs>,
+        Gradient = GetOpId<IsGradient, V, TFs>, Gradient_0 = GetOpId<IsGradient_0, V, TFs>, 
+            Gradient_1 = GetOpId<IsGradient_1, V, TFs>,  Gradient_2 = GetOpId<IsGradient_2, V, TFs>,
+            Directional = GetOpId<IsDirectional, V, TFs>,
+        FuncGrad = GetOpId<IsFuncGrad, V, TFs>, FuncGrad_0 = GetOpId<IsFuncGrad_0, V, TFs>,
+            FuncGrad_1 = GetOpId<IsFuncGrad_1, V, TFs>,  FuncGrad_2 = GetOpId<IsFuncGrad_2, V, TFs>,
+        Hessian = GetOpId<IsHessian, V, TFs>, Hessian_0 = GetOpId<IsHessian_0, V, TFs>,
+            Hessian_1 = GetOpId<IsHessian_1, V, TFs>,  Hessian_2 = GetOpId<IsHessian_2, V, TFs>
+    };
+};
+
+template <class TFs, class V>
+struct HasOp
+{
+    enum : bool
+    {
+        Function = OpId<TFs, V>::Function >= 0,
+        Gradient = OpId<TFs, V>::Gradient >= 0, Gradient_0 = OpId<TFs, V>::Gradient_0 >= 0,
+            Gradient_1 = OpId<TFs, V>::Gradient_1 >= 0, Gradient_2 = OpId<TFs, V>::Gradient_2 >= 0,
+            Directional = OpId<TFs, V>::Directional >= 0,
+        FuncGrad = OpId<TFs, V>::FuncGrad >= 0, FuncGrad_0 = OpId<TFs, V>::FuncGrad_0 >= 0,
+            FuncGrad_1 = OpId<TFs, V>::FuncGrad_1 >= 0, FuncGrad_2 = OpId<TFs, V>::FuncGrad_2 >= 0, 
+        Hessian = OpId<TFs, V>::Hessian >= 0, Hessian_0 = OpId<TFs, V>::Hessian_0 >= 0,
+            Hessian_1 = OpId<TFs, V>::Hessian_1 >= 0, Hessian_2 = OpId<TFs, V>::Hessian_2 >= 0
+    };
+};
 
 
 template <class... Fs>
@@ -150,37 +183,12 @@ struct Visitor
     {
     }
 
-    template <class V>
-    struct OpId
-    {
-        enum : int
-        {
-            Function = GetOpId<IsFunction, V, TFs>,
-            Gradient = GetOpId<IsGradient, V, TFs>, Gradient_0 = GetOpId<IsGradient_0, V, TFs>, 
-                Gradient_1 = GetOpId<IsGradient_1, V, TFs>,  Gradient_2 = GetOpId<IsGradient_2, V, TFs>,
-                Directional = GetOpId<IsDirectional, V, TFs>,
-            FuncGrad = GetOpId<IsFuncGrad, V, TFs>, FuncGrad_0 = GetOpId<IsFuncGrad_0, V, TFs>,
-                FuncGrad_1 = GetOpId<IsFuncGrad_1, V, TFs>,  FuncGrad_2 = GetOpId<IsFuncGrad_2, V, TFs>,
-            Hessian = GetOpId<IsHessian, V, TFs>, Hessian_0 = GetOpId<IsHessian_0, V, TFs>,
-                Hessian_1 = GetOpId<IsHessian_1, V, TFs>,  Hessian_2 = GetOpId<IsHessian_2, V, TFs>
-        };
-    };
 
     template <class V>
-    struct HasOp
-    {
-        enum : bool
-        {
-            Function = OpId<V>::Function >= 0,
-            Gradient = OpId<V>::Gradient >= 0, Gradient_0 = OpId<V>::Gradient_0 >= 0,
-                Gradient_1 = OpId<V>::Gradient_1 >= 0, Gradient_2 = OpId<V>::Gradient_2 >= 0,
-                Directional = OpId<V>::Directional >= 0,
-            FuncGrad = OpId<V>::FuncGrad >= 0, FuncGrad_0 = OpId<V>::FuncGrad_0 >= 0,
-                FuncGrad_1 = OpId<V>::FuncGrad_1 >= 0, FuncGrad_2 = OpId<V>::FuncGrad_2 >= 0, 
-            Hessian = OpId<V>::Hessian >= 0, Hessian_0 = OpId<V>::Hessian_0 >= 0,
-                Hessian_1 = OpId<V>::Hessian_1 >= 0, Hessian_2 = OpId<V>::Hessian_2 >= 0
-        };
-    };
+    using OpId = OpId<TFs, V>;
+
+    template <class V>
+    using HasOp = HasOp<TFs, V>;
 
 
     template <class V, bool Enable = HasOp<V>::Function, std::enable_if_t<Enable, int> = 0>
@@ -189,29 +197,37 @@ struct Visitor
         return functionCall(std::get<OpId<V>::Function>(fs), x);
     }
 
-    template <class V, bool Enable = HasOp<V>::Gradient_0, std::enable_if_t<Enable, int> = 0>
+    // template <class V, bool Enable = HasOp<V>::Gradient_0, std::enable_if_t<Enable, int> = 0>
+    template <class V, bool Enable = GetOpId<IsGradient_0, V, TFs> >= 0, std::enable_if_t<Enable, int> = 0>
     void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const
     {
-        gradientCall(std::get<OpId<V>::Gradient_0>(fs), x, g);
+        // nlpp::impl::PrintType<V>{};
+        // nlpp::impl::PrintType<TFs>{};
+        // nlpp::wrap::impl::GetOpId<nlpp::wrap::impl::IsGradient_0, V, TFs>;
+        // GetOpId<IsGradient_0, V, TFs>;
+        // nlpp::wrap::impl::OpId<TFs, V>::Gradient_0;
+
+        // gradientCall(std::get<OpId<V>::Gradient_0>(fs), x, g);
+        gradientCall(std::get<GetOpId<IsGradient_0, V, TFs>>(fs), x, g);
     }
 
-    template <class V, bool Enable = HasOp<V>::Gradient_1, std::enable_if_t<Enable, int> = 0>
-    Plain<V> gradient (const Eigen::MatrixBase<V>& x) const
-    {
-        return gradientCall(std::get<OpId<V>::Gradient_1>(fs), x);
-    }
+    // template <class V, bool Enable = HasOp<V>::Gradient_1, std::enable_if_t<Enable, int> = 0>
+    // Plain<V> gradient (const Eigen::MatrixBase<V>& x) const
+    // {
+    //     return gradientCall(std::get<OpId<V>::Gradient_1>(fs), x);
+    // }
 
-    template <class V, bool Enable = HasOp<V>::Gradient_2, std::enable_if_t<Enable, int> = 0>
-    void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
-    {
-        gradientCall(std::get<OpId<V>::Gradient_2>(fs), x, g, fx);
-    }
+    // template <class V, bool Enable = HasOp<V>::Gradient_2, std::enable_if_t<Enable, int> = 0>
+    // void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
+    // {
+    //     gradientCall(std::get<OpId<V>::Gradient_2>(fs), x, g, fx);
+    // }
 
-    template <class V, bool Enable = HasOp<V>::Directional, std::enable_if_t<Enable, int> = 0>
-    Scalar<V> gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
-    {
-        return gradientCall(std::get<OpId<V>::Directional>(fs), x, e);
-    }
+    // template <class V, bool Enable = HasOp<V>::Directional, std::enable_if_t<Enable, int> = 0>
+    // Scalar<V> gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+    // {
+    //     return gradientCall(std::get<OpId<V>::Directional>(fs), x, e);
+    // }
 
 
     template <class V, bool Enable = HasOp<V>::FuncGrad_0 || HasOp<V>::FuncGrad_1, std::enable_if_t<Enable, int> = 0>
@@ -240,19 +256,19 @@ struct Visitor
     template <class V, bool Enable = HasOp<V>::Hessian_0, std::enable_if_t<Enable, int> = 0>
     void hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
     {
-        hessianCall(std::get<OpId<V>::Hessian_0>(fs), x, h);
+        lolCall(std::get<OpId<V>::Hessian_0>(fs), x, h);
     }
 
     template <class V, bool Enable = HasOp<V>::Hessian_1, std::enable_if_t<Enable, int> = 0>
     Plain2D<V> hessian (const Eigen::MatrixBase<V>& x) const
     {
-        return hessianCall(std::get<OpId<V>::Hessian_1>(fs), x);
+        return lolCall(std::get<OpId<V>::Hessian_1>(fs), x);
     }
 
     template <class V, bool Enable = HasOp<V>::Hessian_2, std::enable_if_t<Enable, int> = 0>
     Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
     {
-        return hessianCall(std::get<OpId<V>::Hessian_2>(fs), x, e);
+        return lolCall(std::get<OpId<V>::Hessian_2>(fs), x, e);
     }
 
 
