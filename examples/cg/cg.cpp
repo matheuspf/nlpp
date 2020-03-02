@@ -42,7 +42,14 @@ int main ()
     using Impl = nlpp::wrap::impl::Visitor<nlpp::fd::Gradient<nlpp::Rosenbrock>>;
     using V = nlpp::Vec;
 
-    using T = nlpp::wrap::impl::gradientType<Impl, nlpp::impl::Plain<V>, nlpp::impl::Plain<V>&>;
+    // using T = nlpp::wrap::impl::gradientType<Impl, nlpp::impl::Plain<V>, nlpp::impl::Plain<V>&>;
+    using T = nlpp::wrap::impl::funcGradType<Impl, nlpp::impl::Plain<V>, nlpp::impl::Plain<V>&>;
+    // using T = nlpp::wrap::impl::IsGradient_0<Impl, nlpp::Vec>;
+    // auto v = nlpp::wrap::impl::GetOpId<nlpp::wrap::impl::IsGradient_0, nlpp::Vec, std::tuple<Impl>>;
+
+    // auto v = nlpp::wrap::impl::OpId<std::tuple<Impl>, nlpp::Vec>::Gradient_0;
+    // auto v = nlpp::wrap::impl::TestId<std::tuple<Impl>, nlpp::Vec>::Gradient_0;
+
 
 
     // nlpp::wrap::FunctionGradient<nlpp::Rosenbrock, nlpp::fd::Gradient<nlpp::Rosenbrock>> f(nlpp::Rosenbrock{}, nlpp::fd::Gradient<nlpp::Rosenbrock>(nlpp::Rosenbrock{}));

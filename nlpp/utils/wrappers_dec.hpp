@@ -172,6 +172,23 @@ struct HasOp
 };
 
 
+template <class TFs, class V>
+struct TestId
+{
+    enum : int
+    {
+        Gradient = GetOpId<IsGradient, V, TFs>, Gradient_0 = GetOpId<IsGradient_0, V, TFs>, 
+            Gradient_1 = GetOpId<IsGradient_1, V, TFs>,  Gradient_2 = GetOpId<IsGradient_2, V, TFs>,
+            Directional = GetOpId<IsDirectional, V, TFs>,
+        // FuncGrad = GetOpId<IsFuncGrad, V, TFs>, FuncGrad_0 = GetOpId<IsFuncGrad_0, V, TFs>,
+            // FuncGrad_1 = GetOpId<IsFuncGrad_1, V, TFs>,  FuncGrad_2 = GetOpId<IsFuncGrad_2, V, TFs>,
+        // Hessian = GetOpId<IsHessian, V, TFs>, Hessian_0 = GetOpId<IsHessian_0, V, TFs>,
+        //     Hessian_1 = GetOpId<IsHessian_1, V, TFs>,  Hessian_2 = GetOpId<IsHessian_2, V, TFs>
+    };
+};
+
+
+
 template <class... Fs>
 struct Visitor
 {
