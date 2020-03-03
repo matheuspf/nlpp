@@ -15,6 +15,11 @@
 
 // }
 
+
+template <class T, class... Args> \
+using TestInvoke = decltype(std::declval<T>().funcGrad(std::declval<Args>()...));
+
+
 int main ()
 {
     // nlpp::CG<> opt;
@@ -43,13 +48,15 @@ int main ()
     using V = nlpp::Vec;
 
     // using T = nlpp::wrap::impl::gradientType<Impl, nlpp::impl::Plain<V>, nlpp::impl::Plain<V>&>;
-    using T = nlpp::wrap::impl::funcGradType<Impl, nlpp::impl::Plain<V>, nlpp::impl::Plain<V>&>;
+    // using T = nlpp::wrap::impl::funcGradType<nlpp::fd::Gradient<nlpp::Rosenbrock>, nlpp::impl::Plain<V>, nlpp::impl::Plain<V>&>;
+    // using T = nlpp::wrap::impl::funcGradType<Impl, nlpp::impl::Plain<V>, nlpp::impl::Plain<V>&>;
     // using T = nlpp::wrap::impl::IsGradient_0<Impl, nlpp::Vec>;
     // auto v = nlpp::wrap::impl::GetOpId<nlpp::wrap::impl::IsGradient_0, nlpp::Vec, std::tuple<Impl>>;
 
     // auto v = nlpp::wrap::impl::OpId<std::tuple<Impl>, nlpp::Vec>::Gradient_0;
     // auto v = nlpp::wrap::impl::TestId<std::tuple<Impl>, nlpp::Vec>::Gradient_0;
 
+    using T = nlpp::impl::is_detected<TestInvoke, Impl, nlpp::impl::Plain<V>, nlpp::impl::Plain<V>&>;
 
 
     // nlpp::wrap::FunctionGradient<nlpp::Rosenbrock, nlpp::fd::Gradient<nlpp::Rosenbrock>> f(nlpp::Rosenbrock{}, nlpp::fd::Gradient<nlpp::Rosenbrock>(nlpp::Rosenbrock{}));
