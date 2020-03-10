@@ -89,7 +89,7 @@ using OperatorType = detected_t<std::invoke_result_t, T, Args...>;
 NLPP_MAKE_CALLER(function);
 NLPP_MAKE_CALLER(gradient);
 NLPP_MAKE_CALLER(funcGrad);
-NLPP_MAKE_CALLER(hessian);
+// NLPP_MAKE_CALLER(hessian);
 
 
 template <class Impl, class V>
@@ -126,18 +126,18 @@ template <class Impl, class V>
 struct IsFuncGrad : std::bool_constant< IsFuncGrad_0<Impl, V>::value || IsFuncGrad_1<Impl, V>::value || IsFuncGrad_2<Impl, V>::value > {};
 
 
-template <class Impl, class V>
-struct IsHessian_0 : std::bool_constant< isVec<V> && std::is_same_v<hessianType<Impl, Plain<V>, Plain2D<V>&>, void> > {};
-
-template <class Impl, class V>
-struct IsHessian_1 : std::bool_constant< isVec<V> && isMat<hessianType<Impl, Plain<V>>> > {};
-
-template <class Impl, class V>
-struct IsHessian_2 : std::bool_constant< isVec<V> && isVec<hessianType<Impl, Plain<V>, Plain<V>>> > {};
-
-template <class Impl, class V>
-struct IsHessian : std::bool_constant< IsHessian_0<Impl, V>::value || IsHessian_1<Impl, V>::value || IsHessian_2<Impl, V>::value > {};
-
+// template <class Impl, class V>
+// struct IsHessian_0 : std::bool_constant< isVec<V> && std::is_same_v<hessianType<Impl, Plain<V>, Plain2D<V>&>, void> > {};
+// 
+// template <class Impl, class V>
+// struct IsHessian_1 : std::bool_constant< isVec<V> && isMat<hessianType<Impl, Plain<V>>> > {};
+// 
+// template <class Impl, class V>
+// struct IsHessian_2 : std::bool_constant< isVec<V> && isVec<hessianType<Impl, Plain<V>, Plain<V>>> > {};
+// 
+// template <class Impl, class V>
+// struct IsHessian : std::bool_constant< IsHessian_0<Impl, V>::value || IsHessian_1<Impl, V>::value || IsHessian_2<Impl, V>::value > {};
+// 
 
 template <class... Fs>
 struct Visitor
@@ -161,8 +161,8 @@ struct Visitor
                 Directional = GetOpId<IsDirectional, V, TFs>,
             FuncGrad = GetOpId<IsFuncGrad, V, TFs>, FuncGrad_0 = GetOpId<IsFuncGrad_0, V, TFs>,
                 FuncGrad_1 = GetOpId<IsFuncGrad_1, V, TFs>,  FuncGrad_2 = GetOpId<IsFuncGrad_2, V, TFs>,
-            Hessian = GetOpId<IsHessian, V, TFs>, Hessian_0 = GetOpId<IsHessian_0, V, TFs>,
-                Hessian_1 = GetOpId<IsHessian_1, V, TFs>,  Hessian_2 = GetOpId<IsHessian_2, V, TFs>
+            // Hessian = GetOpId<IsHessian, V, TFs>, Hessian_0 = GetOpId<IsHessian_0, V, TFs>,
+            //     Hessian_1 = GetOpId<IsHessian_1, V, TFs>,  Hessian_2 = GetOpId<IsHessian_2, V, TFs>
         };
     };
 
@@ -177,8 +177,8 @@ struct Visitor
                 Directional = OpId<V>::Directional >= 0,
             FuncGrad = OpId<V>::FuncGrad >= 0, FuncGrad_0 = OpId<V>::FuncGrad_0 >= 0,
                 FuncGrad_1 = OpId<V>::FuncGrad_1 >= 0, FuncGrad_2 = OpId<V>::FuncGrad_2 >= 0, 
-            Hessian = OpId<V>::Hessian >= 0, Hessian_0 = OpId<V>::Hessian_0 >= 0,
-                Hessian_1 = OpId<V>::Hessian_1 >= 0, Hessian_2 = OpId<V>::Hessian_2 >= 0
+            // Hessian = OpId<V>::Hessian >= 0, Hessian_0 = OpId<V>::Hessian_0 >= 0,
+            //     Hessian_1 = OpId<V>::Hessian_1 >= 0, Hessian_2 = OpId<V>::Hessian_2 >= 0
         };
     };
 
@@ -237,23 +237,23 @@ struct Visitor
     }
 
 
-    template <class V, bool Enable = HasOp<V>::Hessian_0, std::enable_if_t<Enable, int> = 0>
-    void hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
-    {
-        hessianCall(std::get<OpId<V>::Hessian_0>(fs), x, h);
-    }
+    // template <class V, bool Enable = HasOp<V>::Hessian_0, std::enable_if_t<Enable, int> = 0>
+    // void hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+    // {
+    //     hessianCall(std::get<OpId<V>::Hessian_0>(fs), x, h);
+    // }
 
-    template <class V, bool Enable = HasOp<V>::Hessian_1, std::enable_if_t<Enable, int> = 0>
-    Plain2D<V> hessian (const Eigen::MatrixBase<V>& x) const
-    {
-        return hessianCall(std::get<OpId<V>::Hessian_1>(fs), x);
-    }
+    // template <class V, bool Enable = HasOp<V>::Hessian_1, std::enable_if_t<Enable, int> = 0>
+    // Plain2D<V> hessian (const Eigen::MatrixBase<V>& x) const
+    // {
+    //     return hessianCall(std::get<OpId<V>::Hessian_1>(fs), x);
+    // }
 
-    template <class V, bool Enable = HasOp<V>::Hessian_2, std::enable_if_t<Enable, int> = 0>
-    Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
-    {
-        return hessianCall(std::get<OpId<V>::Hessian_2>(fs), x, e);
-    }
+    // template <class V, bool Enable = HasOp<V>::Hessian_2, std::enable_if_t<Enable, int> = 0>
+    // Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+    // {
+    //     return hessianCall(std::get<OpId<V>::Hessian_2>(fs), x, e);
+    // }
 
 
     template <class V, bool Enable = HasOp<V>::FuncGrad, std::enable_if_t<Enable, int> = 0>
@@ -442,54 +442,54 @@ struct FunctionGradient
 };
 
 
-template <class Impl>
-struct Hessian : public Impl
-{
-    template <class V>
-    using HasOp = typename Impl:: template HasOp<V>;
+// template <class Impl>
+// struct Hessian : public Impl
+// {
+//     template <class V>
+//     using HasOp = typename Impl:: template HasOp<V>;
 
-    template <typename... Args>
-    Hessian (Args&&... args) : impl(std::forward<Args>(args)...) {}
-
-
-    template <class V>
-    void hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const;
-
-    template <class V>
-    Plain2D<V> hessian (const Eigen::MatrixBase<V>& x) const;
-
-    template <class V>
-    Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const;
+//     template <typename... Args>
+//     Hessian (Args&&... args) : impl(std::forward<Args>(args)...) {}
 
 
-    template <class V>
-    void operator() (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
-    {
-        hessian(x, h);
-    }
+//     template <class V>
+//     void hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const;
 
-    template <class V>
-    Plain2D<V> operator() (const Eigen::MatrixBase<V>& x) const
-    {
-        return hessian(x);
-    }
+//     template <class V>
+//     Plain2D<V> hessian (const Eigen::MatrixBase<V>& x) const;
 
-    template <class V>
-    Plain<V> operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
-    {
-        return hessian(x, e);
-    }
+//     template <class V>
+//     Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const;
 
 
-    template <class V>
-    Plain2D<V> hessianFromDirectional (const Eigen::MatrixBase<V>& x) const;
+//     template <class V>
+//     void operator() (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+//     {
+//         hessian(x, h);
+//     }
 
-    template <class V>
-    void hessianFromDirectional (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const;
+//     template <class V>
+//     Plain2D<V> operator() (const Eigen::MatrixBase<V>& x) const
+//     {
+//         return hessian(x);
+//     }
+
+//     template <class V>
+//     Plain<V> operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+//     {
+//         return hessian(x, e);
+//     }
 
 
-    Impl impl;
-};
+//     template <class V>
+//     Plain2D<V> hessianFromDirectional (const Eigen::MatrixBase<V>& x) const;
+
+//     template <class V>
+//     void hessianFromDirectional (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const;
+
+
+//     Impl impl;
+// };
 
 
 } // namespace impl
@@ -504,8 +504,8 @@ using Gradient = std::conditional_t<handy::IsSpecialization<::nlpp::impl::FirstA
 template <class... Fs>
 using FunctionGradient = std::conditional_t<handy::IsSpecialization<::nlpp::impl::FirstArg<Fs...>, impl::FunctionGradient>::value, ::nlpp::impl::FirstArg<Fs...>, impl::FunctionGradient<impl::Visitor<Fs...>>>;
 
-template <class... Fs>
-using Hessian = std::conditional_t<handy::IsSpecialization<::nlpp::impl::FirstArg<Fs...>, impl::Hessian>::value, ::nlpp::impl::FirstArg<Fs...>, impl::Hessian<impl::Visitor<Fs...>>>;
+// template <class... Fs>
+// using Hessian = std::conditional_t<handy::IsSpecialization<::nlpp::impl::FirstArg<Fs...>, impl::Hessian>::value, ::nlpp::impl::FirstArg<Fs...>, impl::Hessian<impl::Visitor<Fs...>>>;
 
 /** @name 
  *  @brief Functions used only to delegate the call with automatic type deduction
@@ -532,11 +532,11 @@ FunctionGradient<Fs...> functionGradient (const Fs&... fs)
     return FunctionGradient<Fs...>(fs...);
 }
 
-template <class... Fs>
-Hessian<Fs...> hessian (const Fs&... fs)
-{
-    return hessian<Fs...>(fs...);
-}
+// template <class... Fs>
+// Hessian<Fs...> hessian (const Fs&... fs)
+// {
+//     return hessian<Fs...>(fs...);
+// }
 
 
 template <class V>
@@ -593,25 +593,25 @@ struct Builder
             static_assert(::nlpp::impl::always_false<::nlpp::impl::NthArg<0, Fs...>>, "The functor has no interface for the given parameter");
     }
 
-    template <class... Fs>
-    static auto hessian (const Fs&... fs)
-    {
-        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        using HasOp = typename Impl:: template HasOp<V>;
-        using OpId = typename Impl::template OpId<V>;
+    // template <class... Fs>
+    // static auto hessian (const Fs&... fs)
+    // {
+    //     using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+    //     using HasOp = typename Impl:: template HasOp<V>;
+    //     using OpId = typename Impl::template OpId<V>;
 
-        if constexpr(HasOp::Hessian)
-            return ::nlpp::wrap::hessian(fs...);
+    //     if constexpr(HasOp::Hessian)
+    //         return ::nlpp::wrap::hessian(fs...);
 
-        // else if constexpr(HasOp::Gradient)
-        //     return ::nlpp::wrap::hessian(::nlpp::fd::Hessian<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep, double>(Impl(fs...)));
+    //     // else if constexpr(HasOp::Gradient)
+    //     //     return ::nlpp::wrap::hessian(::nlpp::fd::Hessian<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep, double>(Impl(fs...)));
 
-        else if constexpr(HasOp::Function)
-            return ::nlpp::wrap::hessian(::nlpp::fd::Hessian<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep, double>(Impl(fs...)));
+    //     else if constexpr(HasOp::Function)
+    //         return ::nlpp::wrap::hessian(::nlpp::fd::Hessian<Impl, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep, double>(Impl(fs...)));
 
-        else
-            static_assert(::nlpp::impl::always_false<::nlpp::impl::NthArg<0, Fs...>>, "The functor has no interface for the given parameter");
-    }
+    //     else
+    //         static_assert(::nlpp::impl::always_false<::nlpp::impl::NthArg<0, Fs...>>, "The functor has no interface for the given parameter");
+    // }
 };
 
 template <class V, class... Fs>
@@ -632,11 +632,11 @@ auto makeFuncGrad (const Fs&... fs)
     return Builder<V>::functionGradient(fs...);
 }
 
-template <class V, class... Fs>
-auto makeHessian (const Fs&... fs)
-{
-    return Builder<V>::hessian(fs...);
-}
+// template <class V, class... Fs>
+// auto makeHessian (const Fs&... fs)
+// {
+//     return Builder<V>::hessian(fs...);
+// }
 
 
 namespace poly
@@ -653,8 +653,8 @@ using GradientBase = std::function<void(const Plain<V>&, Plain<V>&)>;
 template <class V>
 using FunctionGradientBase = std::function<Scalar<V>(const Plain<V>&, Plain<V>&, bool)>;
 
-template <class V>
-using HessianBase = std::function<void(const Plain<V>&, Plain2D<V>&)>;
+// template <class V>
+// using HessianBase = std::function<void(const Plain<V>&, Plain2D<V>&)>;
 
 template <class V>
 using Function = ::nlpp::wrap::Function<FunctionBase<V>>;
@@ -665,8 +665,8 @@ using Gradient = ::nlpp::wrap::Gradient<GradientBase<V>>;
 template <class V>
 using FunctionGradient = ::nlpp::wrap::FunctionGradient<FunctionGradientBase<V>>;
 
-template <class V>
-using Hessian = ::nlpp::wrap::Hessian<HessianBase<V>>;
+// template <class V>
+// using Hessian = ::nlpp::wrap::Hessian<HessianBase<V>>;
 
 
 template <class V>
@@ -726,23 +726,23 @@ struct Builder
                 }));
     }
 
-    template <class... Fs>
-    static Hessian<V> hessian (const Fs&... fs)
-    {
-        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        using HasOp = typename Impl:: template HasOp<V>;
-        using OpId = typename Impl::template OpId<V>;
+    // template <class... Fs>
+    // static Hessian<V> hessian (const Fs&... fs)
+    // {
+    //     using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+    //     using HasOp = typename Impl:: template HasOp<V>;
+    //     using OpId = typename Impl::template OpId<V>;
 
-        if constexpr(HasOp::Hessian_0)
-            return ::nlpp::wrap::hessian(HessianBase<V>(std::get<OpId::Hessian_0>(std::forward_as_tuple(fs...))));
+    //     if constexpr(HasOp::Hessian_0)
+    //         return ::nlpp::wrap::hessian(HessianBase<V>(std::get<OpId::Hessian_0>(std::forward_as_tuple(fs...))));
 
-        else
-            return ::nlpp::wrap::hessian(HessianBase<V>(
-                [hess = ::nlpp::wrap::Builder<V>::hessian(fs...)]
-                (const Plain<V>& x, Plain2D<V>& h) {
-                    hess(x, h);
-                }));
-    }
+    //     else
+    //         return ::nlpp::wrap::hessian(HessianBase<V>(
+    //             [hess = ::nlpp::wrap::Builder<V>::hessian(fs...)]
+    //             (const Plain<V>& x, Plain2D<V>& h) {
+    //                 hess(x, h);
+    //             }));
+    // }
 };
 
 } // namespace poly
