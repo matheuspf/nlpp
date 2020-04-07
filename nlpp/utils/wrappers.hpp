@@ -15,10 +15,10 @@ template <class Impl>
 template <class V>
 Scalar<V> Function<Impl>::function (const Eigen::MatrixBase<V>& x) const
 {
-    if constexpr(HasOp<V>::Function)
+    if constexpr(HasOp<IsFunction, V, TFs>)
         return impl.function(x);
     
-    else if constexpr(HasOp<V>::FuncGrad)
+    else if constexpr(HasOp<IsFuncGrad, V, TFs>)
         return impl.getFuncGrad(x);
 
     else
@@ -30,16 +30,16 @@ template <class Impl>
 template <class V>
 void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
 {
-    if constexpr(HasOp<V>::Gradient_2)
+    if constexpr(HasOp<IsGradient_2, V, TFs>)
         impl.gradient(x, g, fx);
 
-    else if constexpr(HasOp<V>::Gradient_0)
+    else if constexpr(HasOp<IsGradient_0, V, TFs>)
         impl.gradient(x, g);
 
-    else if constexpr(HasOp<V>::Gradient_1)
+    else if constexpr(HasOp<IsGradient_1, V, TFs>)
         g = impl.gradient(x);
 
-    else if constexpr(HasOp<V>::FuncGrad)
+    else if constexpr(HasOp<IsFuncGrad, V, TFs>)
         impl.getFuncGrad(x, g, true);
 
     else
@@ -50,16 +50,16 @@ template <class Impl>
 template <class V>
 void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const
 {
-    if constexpr(HasOp<V>::Gradient_0)
+    if constexpr(HasOp<IsGradient_0, V, TFs>)
         impl.gradient(x, g);
 
-    else if constexpr(HasOp<V>::Gradient_1)
+    else if constexpr(HasOp<IsGradient_1, V, TFs>)
         g = impl.gradient(x);
 
-    else if constexpr(HasOp<V>::Gradient_2)
+    else if constexpr(HasOp<IsGradient_2, V, TFs>)
         impl.gradient(x, g, std::nan("0"));
 
-    else if constexpr(HasOp<V>::FuncGrad)
+    else if constexpr(HasOp<IsFuncGrad, V, TFs>)
         impl.getFuncGrad(x, g, true);
 
     else
@@ -70,14 +70,14 @@ template <class Impl>
 template <class V>
 Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x) const
 {
-    if constexpr(HasOp<V>::Gradient_0 || HasOp<V>::Gradient_2 || HasOp<V>::FuncGrad)
+    if constexpr(HasOp<IsGradient_0, V, TFs> || HasOp<IsGradient_2, V, TFs> || HasOp<IsFuncGrad, V, TFs>)
     {
         Plain<V> g(x.rows());
 
-        if constexpr(HasOp<V>::Gradient_0)
+        if constexpr(HasOp<IsGradient_0, V, TFs>)
             impl.gradient(x, g);
         
-        else if constexpr(HasOp<V>::Gradient_2)
+        else if constexpr(HasOp<IsGradient_2, V, TFs>)
             impl.gradient(x, g, std::nan("0"));
 
         else
@@ -86,7 +86,7 @@ Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x) const
         return g;
     }
 
-    else if constexpr(HasOp<V>::Gradient_1)
+    else if constexpr(HasOp<IsGradient_1, V, TFs>)
         return impl.gradient(x);
 
     else
@@ -97,7 +97,7 @@ template <class Impl>
 template <class V>
 Scalar<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
 {
-    if constexpr(HasOp<V>::Directional)
+    if constexpr(HasOp<IsDirectional, V, TFs>)
         return impl.gradient(x, e);
 
     else
@@ -109,10 +109,10 @@ template <class Impl>
 template <class V>
 Scalar<V> FunctionGradient<Impl>::funcGrad (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad) const
 {
-    if constexpr(HasOp<V>::FuncGrad)
+    if constexpr(HasOp<IsFuncGrad, V, TFs>)
         return impl.getFuncGrad(x, g, calcGrad);
 
-    else if constexpr(HasOp<V>::Function && HasOp<V>::Gradient)
+    else if constexpr(HasOp<IsFunction, V, TFs> && HasOp<IsGradient, V, TFs>)
     {
         auto f = function(x);
 
@@ -130,7 +130,7 @@ template <class Impl>
 template <class V>
 std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::funcGrad (const Eigen::MatrixBase<V>& x) const
 {
-    if constexpr(HasOp<V>::FuncGrad_0 || HasOp<V>::FuncGrad_1)
+    if constexpr(HasOp<IsFuncGrad_0, V, TFs> || HasOp<IsFuncGrad_1, V, TFs>)
     {
         Plain<V> g(x.rows());
         Scalar<V> fx = impl.funcGrad(x, g);
@@ -138,10 +138,10 @@ std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::funcGrad (const Eigen::Ma
         return {fx, g};
     } 
  
-    else if constexpr(HasOp<V>::FuncGrad_2)
+    else if constexpr(HasOp<IsFuncGrad_2, V, TFs>)
         return impl.funcGrad(x);
 
-    else if constexpr(HasOp<V>::Function && HasOp<V>::Gradient)
+    else if constexpr(HasOp<IsFunction, V, TFs> && HasOp<IsGradient, V, TFs>)
         return {function(x), gradient(x)};
 
     else
@@ -154,13 +154,13 @@ template <class Impl>
 template <class V>
 void Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
 {
-    if constexpr(HasOp<V>::Hessian_0)
+    if constexpr(HasOp<IsHessian_0, V, TFs>)
         impl.hessian(x, h);
 
-    else if constexpr(HasOp<V>::Hessian_1)
+    else if constexpr(HasOp<IsHessian_1, V, TFs>)
         h = impl.hessian(x);
 
-    else if constexpr(HasOp<V>::Hessian_2)
+    else if constexpr(HasOp<IsHessian_2, V, TFs>)
         hessianFromDirectional(x, h);
 
     else
@@ -171,17 +171,17 @@ template <class Impl>
 template <class V>
 Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x) const
 {
-    if constexpr(HasOp<V>::Hessian_1)
+    if constexpr(HasOp<IsHessian_1, V, TFs>)
         impl.hessian(x);
 
-    else if constexpr(HasOp<V>::Hessian_0)
+    else if constexpr(HasOp<IsHessian_0, V, TFs>)
     {
         Plain2D<V> h(x.rows(), x.rows());
         impl.hessian(x, h);
         return h;
     }
 
-    else if constexpr(HasOp<V>::Hessian_2)
+    else if constexpr(HasOp<IsHessian_2, V, TFs>)
         return hessianFromDirectional(x);
 
     else
@@ -192,17 +192,17 @@ template <class Impl>
 template <class V>
 Plain<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
 {
-    if constexpr(HasOp<V>::Hessian_2)
+    if constexpr(HasOp<IsHessian_2, V, TFs>)
         return impl.hessian(x, e);
 
-    else if constexpr(HasOp<V>::Hessian_0)
+    else if constexpr(HasOp<IsHessian_0, V, TFs>)
     {
         Plain2D<V> h(x.rows(), x.rows());
         impl.hessian(x, h);
         return h * x;
     }
 
-    else if constexpr(HasOp<V>::Hessian_1)
+    else if constexpr(HasOp<IsHessian_1, V, TFs>)
         return impl.hessian(x) * x;
 
     else
