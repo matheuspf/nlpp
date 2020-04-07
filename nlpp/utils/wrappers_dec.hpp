@@ -89,35 +89,42 @@ using OperatorType = detected_t<std::invoke_result_t, T, Args...>;
 NLPP_MAKE_CALLER(function);
 NLPP_MAKE_CALLER(gradient);
 NLPP_MAKE_CALLER(funcGrad);
-// NLPP_MAKE_CALLER(hessian);
+NLPP_MAKE_CALLER(hessian);
 
-
+// Float (const Vec&)
 template <class Impl, class V>
 struct IsFunction : std::bool_constant< isVec<V> && std::is_floating_point_v<functionType<Impl, Plain<V>>> > {};
 
 
+// void (const Vec&, Vec&)
 template <class Impl, class V>
 struct IsGradient_0 : std::bool_constant< isVec<V> && std::is_same_v<gradientType<Impl, Plain<V>, Plain<V>&>, void> > {};
 
+// Vec (const Vec&)
 template <class Impl, class V>
 struct IsGradient_1 : std::bool_constant< isVec<V> && isVec<gradientType<Impl, Plain<V>>> > {};
 
+// Vec (const Vec&, Vec&, Float)
 template <class Impl, class V>
 struct IsGradient_2 : std::bool_constant< isVec<V> && std::is_same_v<gradientType<Impl, Plain<V>, Plain<V>&, Scalar<V>>, void> > {};
 
 template <class Impl, class V>
 struct IsGradient : std::bool_constant< IsGradient_0<Impl, V>::value || IsGradient_1<Impl, V>::value || IsGradient_2<Impl, V>::value > {};
 
+// Float (const Vec&, const Vec&)
 template <class Impl, class V>
 struct IsDirectional : std::bool_constant< isVec<V> && std::is_floating_point_v<gradientType<Impl, Plain<V>, Plain<V>>> > {};
 
 
+// Float (const Vec&, Vec&, bool)
 template <class Impl, class V>
 struct IsFuncGrad_0 : std::bool_constant< isVec<V> && std::is_floating_point_v<funcGradType<Impl, Plain<V>, Plain<V>&, bool>> > {};
 
+// Float (const Vec&, Vec&)
 template <class Impl, class V>
 struct IsFuncGrad_1 : std::bool_constant< isVec<V> && std::is_floating_point_v<funcGradType<Impl, Plain<V>, Plain<V>&>> > {};
 
+// std::pair<Float, Vec> (const Vec&)
 template <class Impl, class V>
 struct IsFuncGrad_2 : std::bool_constant< isVec<V> && std::is_floating_point_v<NthArg<0, funcGradType<Impl, Plain<V>>>> &&
                                           isVec<NthArg<1, funcGradType<Impl, Plain<V>>>> > {};
@@ -126,18 +133,21 @@ template <class Impl, class V>
 struct IsFuncGrad : std::bool_constant< IsFuncGrad_0<Impl, V>::value || IsFuncGrad_1<Impl, V>::value || IsFuncGrad_2<Impl, V>::value > {};
 
 
-// template <class Impl, class V>
-// struct IsHessian_0 : std::bool_constant< isVec<V> && std::is_same_v<hessianType<Impl, Plain<V>, Plain2D<V>&>, void> > {};
-// 
-// template <class Impl, class V>
-// struct IsHessian_1 : std::bool_constant< isVec<V> && isMat<hessianType<Impl, Plain<V>>> > {};
-// 
-// template <class Impl, class V>
-// struct IsHessian_2 : std::bool_constant< isVec<V> && isVec<hessianType<Impl, Plain<V>, Plain<V>>> > {};
-// 
-// template <class Impl, class V>
-// struct IsHessian : std::bool_constant< IsHessian_0<Impl, V>::value || IsHessian_1<Impl, V>::value || IsHessian_2<Impl, V>::value > {};
-// 
+// void (const Vec&, Mat&)
+template <class Impl, class V>
+struct IsHessian_0 : std::bool_constant< isVec<V> && std::is_same_v<hessianType<Impl, Plain<V>, Plain2D<V>&>, void> > {};
+
+// Mat (const Vec&)
+template <class Impl, class V>
+struct IsHessian_1 : std::bool_constant< isVec<V> && isMat<hessianType<Impl, Plain<V>>> > {};
+
+// Vec (const Vec&, const Vec&)
+template <class Impl, class V>
+struct IsHessian_2 : std::bool_constant< isVec<V> && isVec<hessianType<Impl, Plain<V>, Plain<V>>> > {};
+
+template <class Impl, class V>
+struct IsHessian : std::bool_constant< IsHessian_0<Impl, V>::value || IsHessian_1<Impl, V>::value || IsHessian_2<Impl, V>::value > {};
+
 
 template <class... Fs>
 struct Visitor

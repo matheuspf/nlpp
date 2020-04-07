@@ -124,10 +124,16 @@ struct HessianOptimizer : public GradientOptimizer<Impl, Builder>
 {
     NLPP_USING_GRADIENT_OPTIMIZER(Base, GradientOptimizer<Impl, Builder>);
 
+    template <class Function, class Gradient, class Hessian, class V, typename... Args>
+    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Hessian& hessian, const Eigen::MatrixBase<V>& x, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), Builder<V>::hessian(hessian), x.eval(), std::forward<Args>(args)...);
+    }
+
     template <class Function, class Gradient, class V, typename... Args>
     impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args)
     {
-        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), Builder<V>::hessian(function), x.eval(), std::forward<Args>(args)...);
+        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), Builder<V>::hessian(gradient), x.eval(), std::forward<Args>(args)...);
     }
 
     template <class Function, class V, typename... Args>
@@ -143,9 +149,27 @@ struct BoundConstrainedOptimizer : public Optimizer<Impl, Builder>
     NLPP_USING_OPTIMIZER(Base, Optimizer<Impl, Builder>);
 
     template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower,  const Eigen::MatrixBase<V>& upper, Args&&... args)
+    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower, const Eigen::MatrixBase<V>& upper, Args&&... args)
     {
         return static_cast<Impl&>(*this).optimize(Builder<V>::function(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
+    }
+};
+
+template <class Impl, template <class> class Builder>
+struct BoundConstrainedGradientOptimizer : public GradientOptimizer<Impl, Builder>
+{
+    NLPP_USING_OPTIMIZER(Base, GradientOptimizer<Impl, Builder>);
+
+    template <class Function, class Gradient, class V, typename... Args>
+    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& lower, const Eigen::MatrixBase<V>& upper, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), Builder<V>::hessian(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
+    }
+
+    template <class Function, class V, typename... Args>
+    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower, const Eigen::MatrixBase<V>& upper, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(Builder<V>::functionGradient(function), Builder<V>::hessian(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
     }
 };
 
