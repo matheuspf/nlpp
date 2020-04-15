@@ -11,7 +11,9 @@ struct CGBase : public nlpp::poly::LineSearchOptimizer<V>
 {
     NLPP_USING_LINESEARCH_OPTIMIZER(Base, nlpp::poly::LineSearchOptimizer<V>);
 
-    Projection<V> cg;
+    using CGType = Projection<V>;
+
+    CGType cg;
 	double v = 0.1;
 };
 
@@ -20,7 +22,7 @@ struct CG : public nlpp::impl::CG<CGBase<V>>
 {
     NLPP_USING_LINESEARCH_OPTIMIZER(Base, nlpp::impl::CG<CGBase<V>>);
 
-	virtual V optimize (const nlpp::wrap::poly::FunctionGradient<V>&, const V&);
+	virtual V optimize (const nlpp::wrap::poly::FunctionGradient<V>&, const V&) const;
 	virtual CG<V>* clone () const;
 };
 

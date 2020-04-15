@@ -16,11 +16,15 @@ template <class Base_>
 struct CG : public Base_
 {
     NLPP_USING_LINESEARCH_OPTIMIZER(Base, Base_);
+    using CGType = typename Base::CGType;
     using Base::cg;
     using Base::v;
 
     template <class Function, class V>
-    V optimize (const Function&, const V&);
+    V optimize (const Function&, const V&) const;
+
+    template <class Function, class V>
+    V optimize (const Function&, const V&, CGType, LineSearch, Stop, Output) const;
 };
 
 } // namespace impl
@@ -28,7 +32,8 @@ struct CG : public Base_
 template <class Impl>
 struct CGBase : public LineSearchOptimizer<Impl>
 {
-    typename traits::Optimizer<Impl>::CGType cg;
+    using CGType = typename traits::Optimizer<Impl>::CGType;
+    CGType cg;
     double v = 0.1;     ///< The minimum factor of orthogonality that the current direction must have
 };
 
