@@ -143,7 +143,19 @@ struct BoundConstrainedOptimizer : public Optimizer<Impl, Builder>
     NLPP_USING_OPTIMIZER(Base, Optimizer<Impl, Builder>);
 
     template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower,  const Eigen::MatrixBase<V>& upper, Args&&... args)
+    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower, const Eigen::MatrixBase<V>& upper, Args&&... args)
+    {
+        return static_cast<Impl&>(*this).optimize(Builder<V>::function(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
+    }
+};
+
+template <class Impl, template <class> class Builder>
+struct ConstrainedOptimizer : public Optimizer<Impl, Builder>
+{
+    NLPP_USING_OPTIMIZER(Base, Optimizer<Impl, Builder>);
+
+    template <class Function, class V, typename... Args>
+    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower, const Eigen::MatrixBase<V>& upper, Args&&... args)
     {
         return static_cast<Impl&>(*this).optimize(Builder<V>::function(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
     }
@@ -167,6 +179,26 @@ struct LineSearchOptimizer : public BaseOptimizer<Impl>
     }
 
     LineSearch lineSearch;
+};
+
+template <template <class> class BaseOptimizer, class Impl>
+struct TrustRegionOptimizer : public BaseOptimizer<Impl>
+{
+    NLPP_USING_GRADIENT_OPTIMIZER(Base, BaseOptimizer<Impl>);
+    using TrustRegion = typename traits::Optimizer<Impl>::TrustRegion;
+
+    TrustRegionOptimizer (const TrustRegion& trustRegion = TrustRegion{}, const Stop& stop = Stop{}, const Output& output = Output{}) :
+                         trustRegion(trustRegion), Base(stop, output)
+    {
+    }
+
+    void initialize ()
+    {
+        Base::initialize();
+        trustRegion.initialize();
+    }
+
+    TrustRegion trustRegion;
 };
 
 } // namespace impl

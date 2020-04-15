@@ -142,37 +142,25 @@ template <class Impl, class V>
 struct IsHessian : std::bool_constant< IsHessian_0<Impl, V>::value || IsHessian_1<Impl, V>::value || IsHessian_2<Impl, V>::value > {};
 
 
-// template <class TFs, class V>
-// struct OpId
-// {
-//     enum : int
-//     {
-//         Function = GetOpId<IsFunction, V, TFs>,
-//         Gradient = GetOpId<IsGradient, V, TFs>, Gradient_0 = GetOpId<IsGradient_0, V, TFs>, 
-//             Gradient_1 = GetOpId<IsGradient_1, V, TFs>,  Gradient_2 = GetOpId<IsGradient_2, V, TFs>,
-//             Directional = GetOpId<IsDirectional, V, TFs>,
-//         FuncGrad = GetOpId<IsFuncGrad, V, TFs>, FuncGrad_0 = GetOpId<IsFuncGrad_0, V, TFs>,
-//             FuncGrad_1 = GetOpId<IsFuncGrad_1, V, TFs>,  FuncGrad_2 = GetOpId<IsFuncGrad_2, V, TFs>,
-//         Hessian = GetOpId<IsHessian, V, TFs>, Hessian_0 = GetOpId<IsHessian_0, V, TFs>,
-//             Hessian_1 = GetOpId<IsHessian_1, V, TFs>,  Hessian_2 = GetOpId<IsHessian_2, V, TFs>
-//     };
-// };
+template <class... Fs>
+struct Visitor;
 
-// template <class TFs, class V>
-// struct HasOp
-// {
-//     enum : bool
-//     {
-//         Function = OpId<TFs, V>::Function >= 0,
-//         Gradient = OpId<TFs, V>::Gradient >= 0, Gradient_0 = OpId<TFs, V>::Gradient_0 >= 0,
-//             Gradient_1 = OpId<TFs, V>::Gradient_1 >= 0, Gradient_2 = OpId<TFs, V>::Gradient_2 >= 0,
-//             Directional = OpId<TFs, V>::Directional >= 0,
-//         FuncGrad = OpId<TFs, V>::FuncGrad >= 0, FuncGrad_0 = OpId<TFs, V>::FuncGrad_0 >= 0,
-//             FuncGrad_1 = OpId<TFs, V>::FuncGrad_1 >= 0, FuncGrad_2 = OpId<TFs, V>::FuncGrad_2 >= 0, 
-//         Hessian = OpId<TFs, V>::Hessian >= 0, Hessian_0 = OpId<TFs, V>::Hessian_0 >= 0,
-//             Hessian_1 = OpId<TFs, V>::Hessian_1 >= 0, Hessian_2 = OpId<TFs, V>::Hessian_2 >= 0
-//     };
-// };
+
+template <class>
+struct VisitorTraits;
+
+template <class... Fs>
+struct VisitorTraits<Visitor<Fs...>>
+{
+    using TFs = typename Visitor<Fs...>::TFs;
+};
+
+template <class... Fs>
+struct VisitorTraits<std::reference_wrapper<const Visitor<Fs...>>>
+{
+    using TFs = typename Visitor<Fs...>::TFs;
+};
+
 
 
 template <class... Fs>
@@ -233,13 +221,13 @@ struct Visitor
     {
         return funcGradCall(std::get<OpId<IsFuncGrad_1, V, TFs>>(fs), x, g);
     }
-// 
+
     template <class V, bool Enable = HasOp<IsFuncGrad_2, V, TFs>, std::enable_if_t<Enable, int> = 0>
     std::pair<Scalar<V>, Plain<V>> funcGrad (const Eigen::MatrixBase<V>& x) const
     {
         return funcGradCall(std::get<OpId<IsFuncGrad_2, V, TFs>>(fs), x);
     }
-// 
+
 
     template <class V, bool Enable = HasOp<IsHessian_0, V, TFs>, std::enable_if_t<Enable, int> = 0>
     void hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
@@ -298,9 +286,8 @@ struct Visitor
 template <class Impl>
 struct Function
 {
-    // template <class V>
-    // using HasOp = typename Impl:: template HasOp<V>;
-    using TFs = typename Impl::TFs;
+    using TFs = typename std::decay_t<Impl>::TFs;
+
 
     template <typename... Args>
     Function (Args&&... args) : impl(std::forward<Args>(args)...) {}
@@ -326,9 +313,7 @@ struct Function
 template <class Impl>
 struct Gradient
 {
-    // template <class V>
-    // using HasOp = typename Impl:: template HasOp<V>;
-    using TFs = typename Impl::TFs;
+    using TFs = typename std::decay_t<Impl>::TFs;
 
     template <typename... Args>
     Gradient (Args&&... args) : impl(std::forward<Args>(args)...) {}
@@ -376,15 +361,6 @@ struct Gradient
 };
 
 
-/** @name 
- *  @brief The uniform interface wrapper for function/gradient functors
- *  
- *  @details This class provides the uniform interface where, given an user defined function/gradient functor or
- *           both function and gradient functors separated, you can call for function/gradient, function only pr
- *           gradient only, always avoiding to execute additional function calls when possible.
-*/
-//@{
-
 /// Forward declaration
 
 /** @brief Specialization for when both function and gradients are given separatelly
@@ -399,13 +375,10 @@ struct Gradient
 template <class Impl>
 struct FunctionGradient
 {
-    // template <class V>
-    // using HasOp = typename Impl:: template HasOp<V>;
-    using TFs = typename Impl::TFs;
+    using TFs = typename std::decay_t<Impl>::TFs;
 
     template <typename... Args>
-    FunctionGradient (Args&&... args) : impl(std::forward<Args>(args)...), func(std::forward<Args>(args)...), grad(std::forward<Args>(args)...) {}
-
+    FunctionGradient (Args&&... args) : impl(std::forward<Args>(args)...), func(impl), grad(impl) {}
 
     template <class V>
     Scalar<V> funcGrad (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true) const;
@@ -441,20 +414,15 @@ struct FunctionGradient
 
     Impl impl;
 
-    Function<Impl> func;
-    Gradient<Impl> grad;
-
-    //Function<std::reference_wrapper<const Impl>> func;
-    //Gradient<std::reference_wrapper<const Impl>> grad;
+    Function<const Impl&> func;
+    Gradient<const Impl&> grad;
 };
 
 
 template <class Impl>
 struct Hessian : public Impl
 {
-    // template <class V>
-    // using HasOp = typename Impl:: template HasOp<V>;
-    using TFs = typename Impl::TFs;
+    using TFs = typename std::decay_t<Impl>::TFs;
 
     template <typename... Args>
     Hessian (Args&&... args) : impl(std::forward<Args>(args)...) {}
@@ -519,15 +487,12 @@ using Hessian = std::conditional_t<handy::IsSpecialization<::nlpp::impl::FirstAr
  *  @brief Functions used only to delegate the call with automatic type deduction
 */
 //@{
-
-/// Delegate the call to Function<Impl, Float>(impl)
 template <class F>
 Function<F> function (const F& f)
 {
     return Function<F>(f);
 }
 
-/// Delegate the call to Gradient<Impl, Float>(impl)
 template <class... Fs>
 Gradient<Fs...> gradient (const Fs&... fs)
 {
@@ -553,10 +518,8 @@ struct Builder
     template <class... Fs>
     static auto function (const Fs&... fs)
     {
-        // using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        // using HasOp = typename Impl:: template HasOp<V>;
-        // using OpId = typename Impl::template OpId<V>;
-        using TFs = std::tuple<Fs...>;
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using TFs = typename Impl::TFs;
 
         if constexpr(impl::HasOp<impl::IsFunction, V, TFs>)
             return ::nlpp::wrap::function(std::get<impl::OpId<impl::IsFunction, V, TFs>>(std::forward_as_tuple(fs...)));
@@ -572,9 +535,7 @@ struct Builder
     static auto gradient (const Fs&... fs)
     {
         using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        // using HasOp = typename Impl:: template HasOp<V>;
-        // using OpId = typename Impl::template OpId<V>;
-        using TFs = std::tuple<Fs...>;
+        using TFs = typename Impl::TFs;
 
         if constexpr(impl::HasOp<impl::IsGradient, V, TFs> || impl::HasOp<impl::IsFuncGrad, V, TFs>)
             return ::nlpp::wrap::gradient(fs...);
@@ -590,9 +551,7 @@ struct Builder
     static auto functionGradient (const Fs&... fs)
     {
         using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        // using HasOp = typename Impl:: template HasOp<V>;
-        // using OpId = typename Impl::template OpId<V>;
-        using TFs = std::tuple<Fs...>;
+        using TFs = typename Impl::TFs;
 
         if constexpr(impl::HasOp<impl::IsFuncGrad, V, TFs> || (impl::HasOp<impl::IsFunction, V, TFs> && impl::HasOp<impl::IsGradient, V, TFs>))
             return ::nlpp::wrap::functionGradient(fs...);
@@ -608,9 +567,7 @@ struct Builder
     static auto hessian (const Fs&... fs)
     {
         using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        // using HasOp = typename Impl:: template HasOp<V>;
-        // using OpId = typename Impl::template OpId<V>;
-        using TFs = std::tuple<Fs...>;
+        using TFs = typename Impl::TFs;
 
         if constexpr(impl::HasOp<impl::IsHessian, V, TFs>)
             return ::nlpp::wrap::hessian(fs...);
@@ -687,10 +644,8 @@ struct Builder
     template <class... Fs>
     static Function<V> function (const Fs&... fs)
     {
-        // using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        // using HasOp = typename Impl:: template HasOp<V>;
-        // using OpId = typename Impl::template OpId<V>;
-        using TFs = std::tuple<Fs...>;
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using TFs = typename Impl::TFs;
 
         if constexpr(impl::HasOp<impl::IsFunction, V, TFs>)
             return ::nlpp::wrap::function(FunctionBase<V>(std::get<impl::OpId<impl::IsFunction, V, TFs>>(std::forward_as_tuple(fs...))));
@@ -706,10 +661,8 @@ struct Builder
     template <class... Fs>
     static Gradient<V> gradient (const Fs&... fs)
     {
-        // using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        // using HasOp = typename Impl:: template HasOp<V>;
-        // using OpId = typename Impl::template OpId<V>;
-        using TFs = std::tuple<Fs...>;
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using TFs = typename Impl::TF;
 
         if constexpr(impl::HasOp<impl::IsGradient_0, V, TFs>)
             return ::nlpp::wrap::gradient(GradientBase<V>(std::get<impl::OpId<impl::IsGradient_0, V, TFs>>(std::forward_as_tuple(fs...))));
@@ -725,10 +678,8 @@ struct Builder
     template <class... Fs>
     static FunctionGradient<V> functionGradient (const Fs&... fs)
     {
-        // using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        // using HasOp = typename Impl:: template HasOp<V>;
-        // using OpId = typename Impl::template OpId<V>;
-        using TFs = std::tuple<Fs...>;
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using TFs = typename Impl::TF;
 
         if constexpr(impl::HasOp<impl::IsFuncGrad_0, V, TFs>)
             return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(std::get<impl::OpId<impl::IsFuncGrad_0, V, TFs>>(std::forward_as_tuple(fs...))));
@@ -744,10 +695,8 @@ struct Builder
     template <class... Fs>
     static Hessian<V> hessian (const Fs&... fs)
     {
-        // using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        // using HasOp = typename Impl:: template HasOp<V>;
-        // using OpId = typename Impl::template OpId<V>;
-        using TFs = std::tuple<Fs...>;
+        using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
+        using TFs = typename Impl::TF;
 
         if constexpr(impl::HasOp<impl::IsHessian_0, V, TFs>)
             return ::nlpp::wrap::hessian(HessianBase<V>(std::get<impl::OpId<impl::IsHessian_0, V, TFs>>(std::forward_as_tuple(fs...))));
