@@ -662,7 +662,7 @@ struct Builder
     static Gradient<V> gradient (const Fs&... fs)
     {
         using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        using TFs = typename Impl::TF;
+        using TFs = typename Impl::TFs;
 
         if constexpr(impl::HasOp<impl::IsGradient_0, V, TFs>)
             return ::nlpp::wrap::gradient(GradientBase<V>(std::get<impl::OpId<impl::IsGradient_0, V, TFs>>(std::forward_as_tuple(fs...))));
@@ -679,7 +679,7 @@ struct Builder
     static FunctionGradient<V> functionGradient (const Fs&... fs)
     {
         using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        using TFs = typename Impl::TF;
+        using TFs = typename Impl::TFs;
 
         if constexpr(impl::HasOp<impl::IsFuncGrad_0, V, TFs>)
             return ::nlpp::wrap::functionGradient(FunctionGradientBase<V>(std::get<impl::OpId<impl::IsFuncGrad_0, V, TFs>>(std::forward_as_tuple(fs...))));
@@ -696,7 +696,7 @@ struct Builder
     static Hessian<V> hessian (const Fs&... fs)
     {
         using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
-        using TFs = typename Impl::TF;
+        using TFs = typename Impl::TFs;
 
         if constexpr(impl::HasOp<impl::IsHessian_0, V, TFs>)
             return ::nlpp::wrap::hessian(HessianBase<V>(std::get<impl::OpId<impl::IsHessian_0, V, TFs>>(std::forward_as_tuple(fs...))));
