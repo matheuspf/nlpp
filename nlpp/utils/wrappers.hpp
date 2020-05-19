@@ -11,9 +11,9 @@ namespace nlpp::wrap::impl
 // template <class Impl>
 // Function<Impl>::Function (const Impl& impl) : Impl(impl) {}
 
-template <class Impl>
-template <class V>
-Scalar<V> Function<Impl>::function (const Eigen::MatrixBase<V>& x) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+Scalar<V> Functions<Cond, Impl>::function (const Eigen::MatrixBase<V>& x) const
 {
     if constexpr(HasOp<IsFunction, V, TFs>)
         return impl.function(x);
@@ -26,9 +26,9 @@ Scalar<V> Function<Impl>::function (const Eigen::MatrixBase<V>& x) const
 }
 
 
-template <class Impl>
-template <class V>
-void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+void Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
 {
     if constexpr(HasOp<IsGradient_2, V, TFs>)
         impl.gradient(x, g, fx);
@@ -46,9 +46,9 @@ void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scala
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
-template <class V>
-void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+void Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const
 {
     if constexpr(HasOp<IsGradient_0, V, TFs>)
         impl.gradient(x, g);
@@ -66,9 +66,9 @@ void Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
-template <class V>
-Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+Plain<V> Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x) const
 {
     if constexpr(HasOp<IsGradient_0, V, TFs> || HasOp<IsGradient_2, V, TFs> || HasOp<IsFuncGrad, V, TFs>)
     {
@@ -93,9 +93,9 @@ Plain<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x) const
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
-template <class V>
-Scalar<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+Scalar<V> Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
 {
     if constexpr(HasOp<IsDirectional, V, TFs>)
         return impl.gradient(x, e);
@@ -105,9 +105,9 @@ Scalar<V> Gradient<Impl>::gradient (const Eigen::MatrixBase<V>& x, const Eigen::
 }
 
 
-template <class Impl>
-template <class V>
-Scalar<V> FunctionGradient<Impl>::funcGrad (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+Scalar<V> Functions<Cond, Impl>::funcGrad (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad) const
 {
     if constexpr(HasOp<IsFuncGrad, V, TFs>)
         return impl.getFuncGrad(x, g, calcGrad);
@@ -126,9 +126,9 @@ Scalar<V> FunctionGradient<Impl>::funcGrad (const Eigen::MatrixBase<V>& x, Plain
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
-template <class V>
-std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::funcGrad (const Eigen::MatrixBase<V>& x) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+std::pair<Scalar<V>, Plain<V>> Functions<Cond, Impl>::funcGrad (const Eigen::MatrixBase<V>& x) const
 {
     if constexpr(HasOp<IsFuncGrad_0, V, TFs> || HasOp<IsFuncGrad_1, V, TFs>)
     {
@@ -150,9 +150,9 @@ std::pair<Scalar<V>, Plain<V>> FunctionGradient<Impl>::funcGrad (const Eigen::Ma
 
 
 
-template <class Impl>
-template <class V>
-void Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+void Functions<Cond, Impl>::hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
 {
     if constexpr(HasOp<IsHessian_0, V, TFs>)
         impl.hessian(x, h);
@@ -167,12 +167,12 @@ void Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
-template <class V>
-Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+Plain2D<V> Functions<Cond, Impl>::hessian (const Eigen::MatrixBase<V>& x) const
 {
     if constexpr(HasOp<IsHessian_1, V, TFs>)
-        impl.hessian(x);
+        return impl.hessian(x);
 
     else if constexpr(HasOp<IsHessian_0, V, TFs>)
     {
@@ -188,9 +188,9 @@ Plain2D<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x) const
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
-template <class V>
-Plain<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+Plain<V> Functions<Cond, Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
 {
     if constexpr(HasOp<IsHessian_2, V, TFs>)
         return impl.hessian(x, e);
@@ -209,18 +209,18 @@ Plain<V> Hessian<Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::Mat
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <class Impl>
-template <class V>
-Plain2D<V> Hessian<Impl>::hessianFromDirectional (const Eigen::MatrixBase<V>& x) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+Plain2D<V> Functions<Cond, Impl>::hessianFromDirectional (const Eigen::MatrixBase<V>& x) const
 {
     Plain2D<V> h(x.rows(), x.rows());
     hessianFromDirectional(x, h);
     return h;
 }
 
-template <class Impl>
-template <class V>
-void Hessian<Impl>::hessianFromDirectional (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+template <Conditions Cond, class Impl>
+template <class V, bool Enable, std::enable_if_t<Enable, int>>
+void Functions<Cond, Impl>::hessianFromDirectional (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
 {
     Plain<V> e = Plain<V>::Constant(x.rows(), Scalar<V>{0.0});
     

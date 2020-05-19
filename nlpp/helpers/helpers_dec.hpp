@@ -6,7 +6,7 @@
 #include "include.hpp"
 #include "types.hpp"
 #include "traits.hpp"
-#include "forwardDeclarations.hpp"
+#include "forward_declarations.hpp"
 
 /// Expands variadic arguments
 #define NLPP_EXPAND(...) __VA_ARGS__
@@ -31,6 +31,11 @@
 #define NLPP_APPLY_N(MACRO, ...) NLPP_EXPAND(NLPP_CONCAT(MACRO, NLPP_NUM_ARGS(__VA_ARGS__)))(__VA_ARGS__)
 //@}
 
+#define NLPP_ENUM_OPERATOR(CLASS, OP, INT) \
+inline constexpr CLASS operator OP (CLASS a, CLASS b)   \
+{   \
+    return static_cast<CLASS>(static_cast<INT>(a) OP static_cast<INT>(b));  \
+}
 
 
 #define NLPP_USING_POLY_CLASS(ClassName, BaseName, ...) \

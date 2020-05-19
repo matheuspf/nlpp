@@ -21,13 +21,6 @@ namespace nlpp::impl
 
 template <class Base_>
 template <class Function, class V>
-V CG<Base_>::optimize (const Function& f, const V& x0) const
-{
-    return optimize(f, x0, cg, lineSearch, stop, output);
-}
-
-template <class Base_>
-template <class Function, class V>
 V CG<Base_>::optimize (const Function& f, const V& x0, CGType cg, LineSearch lineSearch, Stop stop, Output output) const
 {
     V x = x0;

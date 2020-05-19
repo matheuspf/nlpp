@@ -60,145 +60,41 @@ namespace impl
  *        resort to multiple inheritance. Also, this way we can have easy access to any member of the parameters class
 */
 
-template <class Impl, template <class> class Builder>
+using ::nlpp::wrap::Functions, ::nlpp::wrap::Domain, ::nlpp::wrap::Constraints;
+
+template <class Impl>
 struct Optimizer
 {
+    using LineSearch = typename traits::Optimizer<Impl>::LineSearch;
     using Stop = typename traits::Optimizer<Impl>::Stop;
     using Output = typename traits::Optimizer<Impl>::Output;
 
-    Optimizer (const Stop& stop = Stop{}, const Output& output = Output{}) : stop(stop), output(output)
+    Optimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
     {
     }
 
-    void initialize ()
+    template <class... Args>
+    impl::Plain<V> operator () (const Args&... args) const
     {
-        stop.initialize();
-        output.initialize();
+        // return opt<V>(...);
     }
 
-    template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args) const
+    // template <class V, class... FunctionArgs, class... DomainArgs, class... ConstraintArgs>
+    // impl::Plain<V> opt (const Functions<V, FunctionArgs...>& functions, const Domain<V, DomainArgs...>& domain, const Constraints<V, ConstraintArgs...>& constraints) const
+    // {
+    //     return static_cast<const Impl&>(*this).optimize(functions, domain, constraints);
+    // }
+
+    template <class V, class Functions, class Domain, class Constraints>
+    impl::Plain<V> opt (const Functions& functions, const Domain& domain, const Constraints& constraints) const
     {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::function(function), x.eval(), std::forward<Args>(args)...);
+        return static_cast<const Impl&>(*this).optimize(functions, domain, constraints);
     }
 
-    Stop stop;      ///< Stopping condition
-    Output output;  ///< The output callback
-};
-
-template <class Impl, template <class> class Builder>
-struct GradientOptimizer : public Optimizer<Impl, Builder>
-{
-    NLPP_USING_OPTIMIZER(Base, Optimizer<Impl, Builder>);
-
-    /** @name
-     *  @brief Ensure uniform interface, wrapping arguments before delegation
-     * 
-     *  @details Given a function OR function and gradient OR function/gradient, wrap the calls accordingly before delegating
-     *           the call to the @c optimize function of the actual implementation. If a function only is given, a default finite 
-     *           gradient estimation is used. The wrapping interface takes care of the complexity, so we only need to delegate the 
-     *           given parameters.
-     * 
-     *  @tparam Function A scalar function functor
-     *  @tparam Gradient A gradient function functor
-     *  @tparam FunctionGradient A function/gradient functor
-     *  @tparam V A Eigen object input argument, which could be also an expression (it is evaluated before the call to the optimize function)
-     *  @tparam Args... Any additional parameter to be passed to the optimizer
-    */
-    //@{
-    template <class Function, class Gradient, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args) const
-    {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), x.eval(), std::forward<Args>(args)...);
-    }
-
-    template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args) const
-    {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::functionGradient(function), x.eval(), std::forward<Args>(args)...);
-    }
-};
-
-template <class Impl, template <class> class Builder>
-struct HessianOptimizer : public GradientOptimizer<Impl, Builder>
-{
-    NLPP_USING_GRADIENT_OPTIMIZER(Base, GradientOptimizer<Impl, Builder>);
-
-    template <class Function, class Gradient, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Gradient& gradient, const Eigen::MatrixBase<V>& x, Args&&... args) const
-    {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::functionGradient(function, gradient), Builder<V>::hessian(function), x.eval(), std::forward<Args>(args)...);
-    }
-
-    template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& x, Args&&... args) const
-    {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::functionGradient(function), Builder<V>::hessian(function), x.eval(), std::forward<Args>(args)...);
-    }
-};
-
-template <class Impl, template <class> class Builder>
-struct BoundConstrainedOptimizer : public Optimizer<Impl, Builder>
-{
-    NLPP_USING_OPTIMIZER(Base, Optimizer<Impl, Builder>);
-
-    template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower, const Eigen::MatrixBase<V>& upper, Args&&... args) const
-    {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::function(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
-    }
-};
-
-template <class Impl, template <class> class Builder>
-struct ConstrainedOptimizer : public Optimizer<Impl, Builder>
-{
-    NLPP_USING_OPTIMIZER(Base, Optimizer<Impl, Builder>);
-
-    template <class Function, class V, typename... Args>
-    impl::Plain<V> operator () (const Function& function, const Eigen::MatrixBase<V>& lower, const Eigen::MatrixBase<V>& upper, Args&&... args) const
-    {
-        return static_cast<const Impl&>(*this).optimize(Builder<V>::function(function), lower.eval(), upper.eval(), std::forward<Args>(args)...);
-    }
-};
-
-template <template <class> class BaseOptimizer, class Impl>
-struct LineSearchOptimizer : public BaseOptimizer<Impl>
-{
-    NLPP_USING_GRADIENT_OPTIMIZER(Base, BaseOptimizer<Impl>);
-    using LineSearch = typename traits::Optimizer<Impl>::LineSearch;
-
-    LineSearchOptimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) :
-                         lineSearch(lineSearch), Base(stop, output)
-    {
-    }
-
-    void initialize ()
-    {
-        Base::initialize();
-        lineSearch.initialize();
-    }
 
     LineSearch lineSearch;
-};
-
-template <template <class> class BaseOptimizer, class Impl>
-struct TrustRegionOptimizer : public BaseOptimizer<Impl>
-{
-    NLPP_USING_GRADIENT_OPTIMIZER(Base, BaseOptimizer<Impl>);
-    using TrustRegion = typename traits::Optimizer<Impl>::TrustRegion;
-
-    TrustRegionOptimizer (const TrustRegion& trustRegion = TrustRegion{}, const Stop& stop = Stop{}, const Output& output = Output{}) :
-                         trustRegion(trustRegion), Base(stop, output)
-    {
-    }
-
-    void initialize ()
-    {
-        Base::initialize();
-        trustRegion.initialize();
-    }
-
-    TrustRegion trustRegion;
+    Stop stop;      ///< Stopping condition
+    Output output;  ///< The output callback
 };
 
 } // namespace impl
@@ -207,18 +103,6 @@ struct TrustRegionOptimizer : public BaseOptimizer<Impl>
 template <class Impl>
 using Optimizer = impl::Optimizer<Impl, wrap::Builder>;
 
-template <class Impl>
-using GradientOptimizer = impl::GradientOptimizer<Impl, wrap::Builder>;
-
-template <class Impl>
-using HessianOptimizer = impl::HessianOptimizer<Impl, wrap::Builder>;
-
-template <class Impl>
-using BoundConstrainedOptimizer = impl::BoundConstrainedOptimizer<Impl, wrap::Builder>;
-
-template <class Impl>
-using LineSearchOptimizer = impl::LineSearchOptimizer<GradientOptimizer, Impl>;
-
 
 namespace poly
 {
@@ -226,93 +110,36 @@ namespace poly
 using ::nlpp::impl::Scalar, ::nlpp::impl::Plain;
 
 template <class V = ::nlpp::Vec>
-struct Optimizer : ::nlpp::impl::Optimizer<Optimizer<V>, ::nlpp::wrap::poly::Builder>
+struct Optimizer
 {
-    NLPP_USING_OPTIMIZER(Base, ::nlpp::impl::Optimizer<Optimizer<V>, ::nlpp::wrap::poly::Builder>);
-
-    virtual void initialize ()
-    {
-        Base::initialize();
-    }
-
-    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, const V&) const = 0;
-};
-
-template <class V = ::nlpp::Vec>
-struct GradientOptimizer : ::nlpp::impl::GradientOptimizer<GradientOptimizer<V>, ::nlpp::wrap::poly::Builder>
-{
-    NLPP_USING_OPTIMIZER(Base, ::nlpp::impl::GradientOptimizer<GradientOptimizer<V>, ::nlpp::wrap::poly::Builder>);
-
-    virtual void initialize ()
-    {
-        Base::initialize();
-    }
-
-    virtual V optimize (const ::nlpp::wrap::poly::FunctionGradient<V>&, const V&) const = 0;
-};
-
-template <class V = ::nlpp::Vec>
-struct BoundConstrainedOptimizer : ::nlpp::impl::BoundConstrainedOptimizer<BoundConstrainedOptimizer<V>, ::nlpp::wrap::poly::Builder>
-{
-    NLPP_USING_BOUND_CONSTRAINED_OPTIMIZER(Base, ::nlpp::impl::BoundConstrainedOptimizer<BoundConstrainedOptimizer<V>, ::nlpp::wrap::poly::Builder>);
-
-    virtual void initialize ()
-    {
-        Base::initialize();
-    }
-
-    virtual V optimize (const ::nlpp::wrap::poly::Function<V>&, const V&, const V&) const = 0;
-};
-
-template <class V = ::nlpp::Vec>
-struct LineSearchOptimizer : GradientOptimizer<V>
-{
-    NLPP_USING_GRADIENT_OPTIMIZER(Base, GradientOptimizer<V>);
     using LineSearch = ::nlpp::poly::LineSearch_<V>;
+    using Stop = ::nlpp::poly::stop::GradientOptimizer_<V>;
+    using Output = ::nlpp::poly::out::GradientOptimizer_<V>;
 
-    virtual void initialize ()
+    using Functions = ::nlpp::wrap::poly::Functions<V>;
+    using Domain = ::nlpp::wrap::poly::Domain<V>;
+    using Constraints = ::nlpp::wrap::poly::Constraints<V>;
+
+    Optimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
     {
-        Base::initialize();
-        lineSearch.initialize();
     }
+
+
+    template <class... Args>
+    impl::Plain<V> operator () (const Args&... args) const
+    {
+        // return optimize(...);
+    }
+
+    virtual impl::Plain<V> optimize (const Functions&, const Domain&, const Constraints&) const = 0;
+
 
     LineSearch lineSearch;
+    Stop stop;      ///< Stopping condition
+    Output output;  ///< The output callback
 };
 
 } // namespace poly
 
-namespace traits
-{
 
-template <class V>
-struct Optimizer<::nlpp::poly::Optimizer<V>>
-{
-    using Stop = ::nlpp::poly::stop::Optimizer_<V>;
-    using Output = ::nlpp::poly::out::Optimizer_<V>;
-};
-
-template <class V>
-struct Optimizer<::nlpp::poly::GradientOptimizer<V>>
-{
-    using Stop = ::nlpp::poly::stop::GradientOptimizer_<V>;
-    using Output = ::nlpp::poly::out::GradientOptimizer_<V>;
-};
-
-template <class V>
-struct Optimizer<::nlpp::poly::LineSearchOptimizer<V>>
-{
-    using LineSearch = ::nlpp::poly::LineSearch_<V>;
-    using Stop = ::nlpp::poly::stop::GradientOptimizer_<V>;
-    using Output = ::nlpp::poly::out::GradientOptimizer_<V>;
-};
-
-template <class V>
-struct Optimizer<::nlpp::poly::BoundConstrainedOptimizer<V>>
-{
-    using Stop = ::nlpp::poly::stop::Optimizer_<V>;
-    using Output = ::nlpp::poly::out::Optimizer_<V>;
-};
-
-} // namespace traits
- 
 } // namespace nlpp
