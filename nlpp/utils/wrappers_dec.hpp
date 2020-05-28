@@ -218,8 +218,8 @@ struct Visitor
         gradientCall(std::get<OpId<IsGradient_2, V, TFs>>(fs), x, g, fx);
     }
 
-    template <class V, bool Enable = HasOp<IsDirectional, V, TFs>, std::enable_if_t<Enable, int> = 0>
-    Scalar<V> gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+    template <class V, class U = V, bool Enable = HasOp<IsDirectional, V, TFs>, std::enable_if_t<Enable, int> = 0>
+    Scalar<V> gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
     {
         return gradientCall(std::get<HasOp<IsDirectional, V, TFs>>(fs), x, e);
     }
@@ -260,8 +260,8 @@ struct Visitor
         return hessianCall(std::get<OpId<IsHessian_1, V, TFs>>(fs), x);
     }
 
-    template <class V, bool Enable = HasOp<IsHessian_2, V, TFs>, std::enable_if_t<Enable, int> = 0>
-    Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+    template <class V, class U = V, bool Enable = HasOp<IsHessian_2, V, TFs>, std::enable_if_t<Enable, int> = 0>
+    Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
     {
         return hessianCall(std::get<OpId<IsHessian_2, V, TFs>>(fs), x, e);
     }
@@ -329,8 +329,8 @@ struct Functions
     template <class V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
     void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const;
 
-    template <class V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
-    Scalar<V> gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const;
+    template <class V, class U = V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
+    Scalar<V> gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const;
 
 
     template <class V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
@@ -346,8 +346,8 @@ struct Functions
     template <class V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
     Plain2D<V> hessian (const Eigen::MatrixBase<V>& x) const;
 
-    template <class V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
-    Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const;
+    template <class V, class U = V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
+    Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const;
 
     template <class V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
     Plain2D<V> hessianFromDirectional (const Eigen::MatrixBase<V>& x) const;

@@ -205,11 +205,11 @@ struct FiniteDifference
               - x.rows() == e.rows()
               - e.cols() == 1
     */
-    // template <class V>
-    // auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
-    // {
-    //     return static_cast<const Impl&>(*this).hessian(x, e, gradient(x));
-    // }
+    template <class V, class U>
+    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
+    {
+        return static_cast<const Impl&>(*this).hessian(x, e, gradient(x));
+    }
 
 
     /** @brief General directional derivative calculation @f$\nabla^2 f(x)^\intercal e$@f.
@@ -226,21 +226,21 @@ struct FiniteDifference
      *             # (@c x.size() == @c e.size()) OR (@c x and @c e are scalars )
      *          
     */
-    template <class V>
-    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
+    template <class V, class U>
+    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
     {
         return static_cast<const Impl&>(*this).gradient(x, e, f(x));
     }
 
-    template <class V>
+    template <class V, class U>
     auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
     {
         return directional(x, e, f(x));
     }
 
     ///@copydoc directional()
-    template <class V>
-    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e, typename V::Scalar fx) const
+    template <class V, class U>
+    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, typename V::Scalar fx) const
     {
         return static_cast<const Impl&>(*this).directional(x, e, fx, step(x));
     }
@@ -318,8 +318,8 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     *   @param fx Scalar result of @c f(x)
     *   @returns @f$\lim_{h\to0} \frac{f(x+e) - f(x)}{h}@f$
     */
-    template <class Derived>
-    auto gradient (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx) const
+    template <class V, class U>
+    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, typename V::Scalar fx) const
     {
         return directional(x, e, fx);
     }
@@ -360,15 +360,15 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
 
         impl::Plain<V> fxi(x.rows(), x.cols());
 
-        changeEval([&](const auto& x, int i, double){ fxi(i) = this->f(x); }, x, h);
+        changeEval([&](const auto& x, int i, Float){ fxi(i) = this->f(x); }, x, h);
 
-        changeEval([&](const auto& x, int i, double)
+        changeEval([&](const auto& x, int i, Float)
         {
-            changeEval([&](const auto& y, int j, double)
+            changeEval([&](const auto& y, int j, Float)
             {
                 hess(i, j) = hess(j, i) = (this->f(y) - fxi(i) - fxi(j) + fx) / h2;
                 
-            }, x, h, handy::range(0, x.size()));
+            }, x, h, handy::range(i, x.size()));
         }, x, h);
     }
 
@@ -413,13 +413,13 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
      *  @param fx Scalar result of @c f(x)
      *  @returns @f$ \nabla^2 f(x) \intercal e @f$
      */
-    // template <class Derived>
-    // auto hessian (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, const Eigen::MatrixBase<Derived>& gx)
-    // {
-    //     auto h = step(x);
+    template <class V, class U, class W>
+    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, const Eigen::MatrixBase<W>& gx) const
+    {
+        auto h = step(x);
         
-    //     return (gradient(x + h * e) - gx) / h;
-    // }
+        return (gradient(x + h * e) - gx) / h;
+    }
     //@}
 
 
@@ -433,8 +433,8 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
      *  @param h The infinitezimal step size
      *  @returns f(x)
     */
-    template <class Derived>
-    auto directional (const Eigen::MatrixBase<Derived>& x, const Eigen::MatrixBase<Derived>& e, typename Derived::Scalar fx, typename Derived::Scalar h) const
+    template <class V, class U>
+    auto directional (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, typename V::Scalar fx, typename V::Scalar h) const
     {
         return (f(x + h * e) - fx) / h;
     }

@@ -6,7 +6,8 @@ struct F1
 {
     double function (const nlpp::Vec& x) const
     {
-        return x.dot(x);
+        // return x.dot(x);
+        return x[0] * x[0];
     }
 
     // double operator() (const nlpp::Vec& x) const
@@ -21,11 +22,7 @@ struct F2
     auto hessian (const Eigen::MatrixBase<V>& x, nlpp::impl::Plain2D<V>& h) const
     {
     }
-
-    template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x, nlpp::impl::Plain2D<V>& h) const
-    {
-    }
+template <class V> auto operator() (const Eigen::MatrixBase<V>& x, nlpp::impl::Plain2D<V>& h) const { }
 
     template <class V>
     auto hessian (const Eigen::MatrixBase<V>& x) const
@@ -84,9 +81,8 @@ int main ()
     std::cout << r1.first << "\t" << r1.second.transpose() << "\n\n";
 
 
-    auto r2 = func.hessian(x0, -x0);
+    auto r2 = func.hessian(x0);
     std::cout << r2 << "\n\n";
-
 
     return 0;
 }
