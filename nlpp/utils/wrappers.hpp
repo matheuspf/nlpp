@@ -95,9 +95,9 @@ Plain<V> Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x) const
 
 template <Conditions Cond, class Impl>
 template <class V, class U, bool Enable, std::enable_if_t<Enable, int>>
-Scalar<V> Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
+Scalar<V> Functions<Cond, Impl>::gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
 {
-    if constexpr(HasOp<IsDirectional, V, TFs>)
+    if constexpr(HasOp<IsGradient_3, V, TFs>)
         return impl.gradient(x, e);
 
     else
@@ -190,7 +190,7 @@ Plain2D<V> Functions<Cond, Impl>::hessian (const Eigen::MatrixBase<V>& x) const
 
 template <Conditions Cond, class Impl>
 template <class V, class U, bool Enable, std::enable_if_t<Enable, int>>
-Plain<V> Functions<Cond, Impl>::hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
+Plain<V> Functions<Cond, Impl>::hessianDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
 {
     if constexpr(HasOp<IsHessian_2, V, TFs>)
         return impl.hessian(x, e);

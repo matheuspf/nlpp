@@ -101,8 +101,17 @@ struct AutoStep;
 template <typename Float>
 struct SimpleStep;
 
+template <typename Float>
+struct NormalizedStep;
+
 template <class Function, class Step>
 struct Forward;
+
+template <class Function, class Step>
+struct Backward;
+
+template <class Function, class Step>
+struct Central;
 
 template <class Function, template <class, class> class Difference, class Step>
 struct Gradient;
