@@ -1,0 +1,56 @@
+#include "utils/wrappers.hpp"
+#include "utils/finiteDifference.hpp"
+
+
+struct F1
+{
+    template <class V>
+    nlpp::impl::Scalar<V> function (const Eigen::MatrixBase<V>& x) const
+    {
+        return x[0] * x[0];
+    }
+};
+
+struct F2
+{
+    template <class V>
+    auto hessian (const Eigen::MatrixBase<V>& x, nlpp::impl::Plain2D<V>& h) const
+    {
+    }
+    
+    template <class V>
+    auto hessian (const Eigen::MatrixBase<V>& x) const
+    {
+        return Eigen::MatrixXd(10, 10);
+    }
+    
+    template <class V>
+    auto operator() (const Eigen::MatrixBase<V>& x) const
+    {
+        return Eigen::MatrixXd(10, 10);
+    }
+
+};
+
+
+int main ()
+{
+    using V = Eigen::Matrix<float, 2, 1>;
+
+    auto func = nlpp::wrap::functionsBuilder<nlpp::wrap::Conditions::Function | nlpp::wrap::Conditions::Gradient | nlpp::wrap::Conditions::Hessian, V>(F1{});
+
+
+    V x0 = V::Constant(2, 1.0);
+
+    auto r1 = func.funcGrad(x0);
+    std::cout << r1.first << "\t" << r1.second.transpose() << "\n\n";
+
+    auto r2 = func.hessian(x0);
+    std::cout << r2 << "\n\n";
+
+    auto r3 = func.gradientDir(x0, -x0);
+    std::cout << r3 << "\n\n";
+
+
+    return 0;
+}

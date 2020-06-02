@@ -174,13 +174,6 @@ struct FiniteDifference
         return static_cast<const Impl&>(*this).gradient(x, g, f(x));
     }
 
-    template <class V, class U>
-    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-    {
-        return static_cast<const Impl&>(*this).gradient(x, e, f(x));
-    }
-
-
     /** @brief Hessian evalutation. Uses CRTP, delegating the call to @c Impl with @c f(x) calculated.
     
         @param x The variable which we want to calculate the hessian of @c f. It can be both an
@@ -200,13 +193,6 @@ struct FiniteDifference
         return static_cast<const Impl&>(*this).hessian(x, f(x));
     }
 
-    template <class V, class U>
-    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-    {
-        return static_cast<const Impl&>(*this).hessian(x, e, gradient(x));
-    }
-
-
     /** @brief General directional derivative calculation @f$\nabla^2 f(x)^\intercal e$@f.
      *  
      *  @details Calculate the directional derivative of @c f at @c x in the direction of @c e. That is:
@@ -221,7 +207,6 @@ struct FiniteDifference
      *             # (@c x.size() == @c e.size()) OR (@c x and @c e are scalars )
      *          
     */
-
     template <class V, class U>
     auto gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
     {
@@ -233,6 +218,7 @@ struct FiniteDifference
     {
         return static_cast<const Impl&>(*this).hessianDir(x, e, gradient(x));
     }
+
 
     Function f;     ///< Functor variable
 
@@ -286,17 +272,6 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
         changeEval([&](const auto& x, int i, double h){ g(i) = (this->f(x) - fx) / h; }, x, step);
     }
 
-    /** @brief Directional gradient calculation
-    *   @param x Eigen::MatrixBase vector/matrix
-    *   @param e Eigen::MatrixBase vector/matrix
-    *   @param fx Scalar result of @c f(x)
-    *   @returns @f$\lim_{h\to0} \frac{f(x+e) - f(x)}{h}@f$
-    */
-    template <class V, class U>
-    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, Scalar<V> fx) const
-    {
-        return gradientDir(x, e, fx);
-    }
     //@}
 
 
@@ -340,23 +315,6 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
 
         return hess;
     }
-
-    /** @brief Hessian vector product calculation at point @c x with direction @c e
-     * 
-     *  @details This is a very useful procedure, which costs a single function call (plus the call to @c f(x))
-     *           to calculate a hessian vector product. Some algorithms only need this product instead of the
-     *           full hessian.
-     * 
-     *  @param x Eigen::MatrixBase vector/matrix
-     *  @param e Eigen::MatrixBase vector/matrix
-     *  @param fx Scalar result of @c f(x)
-     *  @returns @f$ \nabla^2 f(x) \intercal e @f$
-     */
-    template <class V, class U, class W>
-    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, const Eigen::MatrixBase<W>& gx) const
-    {
-        return hessianDir(x, e, gx);
-    }
     //@}
 
 
@@ -370,6 +328,13 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
      *  @param h The infinitezimal step size
      *  @returns f(x)
     */
+
+    /** @brief Directional gradient calculation
+    *   @param x Eigen::MatrixBase vector/matrix
+    *   @param e Eigen::MatrixBase vector/matrix
+    *   @param fx Scalar result of @c f(x)
+    *   @returns @f$\lim_{h\to0} \frac{f(x+e) - f(x)}{h}@f$
+    */
     template <class V, class U>
     auto gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, Scalar<V> fx) const
     {
@@ -377,6 +342,17 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
         return (f(x + h * e) - fx) / h;
     }
 
+    /** @brief Hessian vector product calculation at point @c x with direction @c e
+     * 
+     *  @details This is a very useful procedure, which costs a single function call (plus the call to @c f(x))
+     *           to calculate a hessian vector product. Some algorithms only need this product instead of the
+     *           full hessian.
+     * 
+     *  @param x Eigen::MatrixBase vector/matrix
+     *  @param e Eigen::MatrixBase vector/matrix
+     *  @param fx Scalar result of @c f(x)
+     *  @returns @f$ \nabla^2 f(x) \intercal e @f$
+     */
     template <class V, class U, class W>
     auto hessianDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, const Eigen::MatrixBase<W>& gx) const
     {
@@ -480,13 +456,6 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
     {
         changeEval([&](const auto& x, int i, double h){ static_cast<impl::Plain<V>>(g)(i) = (fx - this->f(x)) / h; }, x, step);
     }
-
-    template <class V, class U>
-    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, Scalar<V> fx) const
-    {
-        return gradientDir(x, e, fx);
-    }
-// 
     //@}
 
 
@@ -534,12 +503,6 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
 
         return hess;
     }
-
-    template <class V, class U, class W>
-    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, const Eigen::MatrixBase<W>& gx) const
-    {
-        return hessianDir(x, e, gx);
-    }
     //@}
 
 
@@ -557,8 +520,6 @@ struct Backward : public FiniteDifference<Backward<Function, Step>>
         auto h = step(x);
         return (gx - gradient(x - h * e)) / h;
     }
-
-
 
     /** @name
      *  @brief Calculate @f$f(x-inc*e_i)$@f for @f$i \in range$@f
@@ -690,18 +651,6 @@ struct Central : public FiniteDifference<Central<Function, Step>>
             y(i) = x(i);
         }
     }
-
-    template <class V, class U>
-    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, Scalar<V>) const
-    {
-        return gradientDir(x, e);
-    }
-
-    template <class V, class U>
-    auto gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-    {
-        return gradientDir(x, e);
-    }
     //@}
 
 
@@ -770,18 +719,6 @@ struct Central : public FiniteDifference<Central<Function, Step>>
         hessian(x, hess, fx);
 
         return hess;
-    }
-
-    template <class V, class U, class W>
-    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, const Eigen::MatrixBase<W>&) const
-    {
-        return hessianDir(x, e);
-    }
-
-    template <class V, class U, class W>
-    auto hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-    {
-        return hessianDir(x, e);
     }
     //@}
 
@@ -872,18 +809,6 @@ struct Gradient : public Difference<wrap::Functions<wrap::Conditions::Function, 
     auto operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, ::nlpp::impl::Scalar<V> fx) const
     {
         return gradient(x, g, fx);
-    }
-
-    template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e) const
-    {
-        return gradient(x, e);
-    }
-
-    template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& e, ::nlpp::impl::Scalar<V> fx) const
-    {
-        return gradient(x, e, fx);
     }
 };
 
