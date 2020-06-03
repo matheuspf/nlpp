@@ -332,41 +332,77 @@ struct Functions
     template <class V, bool Enable = HasFunction, std::enable_if_t<Enable, int> = 0>
     Scalar<V> function (const Eigen::MatrixBase<V>& x) const;
 
+    template <class V, bool Enable = (HasFunction && !HasGradient), std::enable_if_t<Enable, int> = 0>
+    Scalar<V> operator() (const Eigen::MatrixBase<V>& x) const
+    {
+        return function(x);
+    }
+
 
     template <class V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
     void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const;
 
+    template <class V, bool Enable = (HasGradient && !HasFunction), std::enable_if_t<Enable, int> = 0>
+    void operator()(const Eigen::MatrixBase<V>& x, Plain<V>& g) const
+    {
+        gradient(x, g);
+    }
+
     template <class V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
     Plain<V> gradient (const Eigen::MatrixBase<V>& x) const;
+
+    template <class V, bool Enable = (HasGradient && !HasFunction), std::enable_if_t<Enable, int> = 0>
+    Plain<V> operator() (const Eigen::MatrixBase<V>& x) const
+    {
+        return gradient(x);
+    }
 
     template <class V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
     void gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const;
 
-    // template <class V, class U = V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
-    // Scalar<V> gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-    // {
-    //     return gradientDir(x, e);
-    // }
+    template <class V, bool Enable = (HasGradient && !HasFunction), std::enable_if_t<Enable, int> = 0>
+    void operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
+    {
+        return gradient(x, g, fx);
+    }
 
 
     template <class V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
     Scalar<V> funcGrad (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true) const;
 
+    template <class V, bool Enable = (HasGradient && HasFunction), std::enable_if_t<Enable, int> = 0>
+    Scalar<V> operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true) const
+    {
+        return funcGrad(x, g, calcGrad);
+    }
+
     template <class V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
     std::pair<Scalar<V>, Plain<V>> funcGrad (const Eigen::MatrixBase<V>& x) const;
+
+    template <class V, bool Enable = (HasGradient && HasFunction), std::enable_if_t<Enable, int> = 0>
+    std::pair<Scalar<V>, Plain<V>> operator() (const Eigen::MatrixBase<V>& x) const
+    {
+        return funcGrad(x);
+    }
 
 
     template <class V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
     void hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const;
 
+    template <class V, bool Enable = (HasHessian && !HasFunction && !HasGradient), std::enable_if_t<Enable, int> = 0>
+    void operator() (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+    {
+        hessian(x, h);
+    }
+
     template <class V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
     Plain2D<V> hessian (const Eigen::MatrixBase<V>& x) const;
 
-    // template <class V, class U = V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
-    // Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-    // {
-    //     return hessianDir(x, e);
-    // }
+    template <class V, bool Enable = (HasHessian && !HasFunction && !HasGradient), std::enable_if_t<Enable, int> = 0>
+    Plain2D<V> operator() (const Eigen::MatrixBase<V>& x) const
+    {
+        return hessian(x);
+    }
 
 
     template <class V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
@@ -381,27 +417,6 @@ struct Functions
 
     template <class V, class U = V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
     Plain<V> hessianDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const;
-
-
-
-    template <class V, bool Enable = (HasFunction && HasGradient), std::enable_if_t<Enable, int> = 0>
-    Scalar<V> operator() (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true) const
-    {
-        return funcGrad(x, g, calcGrad);
-    }
-
-    template <class V, bool Enable = (HasFunction && HasGradient), std::enable_if_t<Enable, int> = 0>
-    std::pair<Scalar<V>, Plain<V>> operator() (const Eigen::MatrixBase<V>& x) const
-    {
-        return funcGrad(x);
-    }
-
-
-    template <class V, bool Enable = !HasGradient, std::enable_if_t<Enable, int> = 0>
-    Scalar<V> operator() (const Eigen::MatrixBase<V>& x) const
-    {
-        return function(x);
-    }
 
 
     Impl impl;
@@ -463,8 +478,11 @@ constexpr Hessian<Fs...> hessian (const Fs&... fs)
 }
 
 
-template <Conditions Cond, class V, class... Fs>
-constexpr auto functionsBuilder (const Fs&... fs)
+namespace fd
+{
+
+template <Conditions Cond, class V = ::nlpp::Vec, class... Fs>
+constexpr auto functions (const Fs&... fs)
 {
     using Impl = ::nlpp::wrap::impl::Visitor<Fs...>;
     using TFs = typename Impl::TFs;
@@ -496,6 +514,26 @@ constexpr auto functionsBuilder (const Fs&... fs)
     else
         return ::nlpp::wrap::functions<Cond>(fs..., HessianFD(func));
 }
+
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr auto gradient (const Fs&... fs)
+{
+    return functions<Conditions::Gradient, V>(fs...);
+}
+
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr auto funcGrad (const Fs&... fs)
+{
+    return functions<Conditions::Function | Conditions::Gradient, V>(fs...);
+}
+
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr auto hessian (const Fs&... fs)
+{
+    return functions<Conditions::Hessian, V>(fs...);
+}
+
+} // namespace fd
 
 
 namespace poly

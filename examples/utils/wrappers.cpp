@@ -1,4 +1,5 @@
-#include "Helpers/Wrappers.h"
+#include "utils/wrappers.hpp"
+#include "utils/finite_difference_dec.hpp"
 
 using namespace nlpp;
 
@@ -8,7 +9,7 @@ using Vec = Eigen::VectorXd;
 struct Func
 {
     template <class V>
-    double function (const Eigen::MatrixBase<V>& x)
+    impl::Scalar<V> function (const Eigen::MatrixBase<V>& x) const
     {
         return x(0) + x(1);
     }
@@ -17,8 +18,7 @@ struct Func
 struct Grad1
 {
     template <class V>
-    auto gradient (const Eigen::MatrixBase<V>& x)
-    //auto operator () (const Eigen::Vector2f& x)
+    auto gradient (const Eigen::MatrixBase<V>& x) const
     {
         return 2 * x;
     }
@@ -27,7 +27,7 @@ struct Grad1
 struct Grad2
 {
     template <class V>
-    void operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
+    void operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g) const
     {
         g = 2 * x;
     }
@@ -36,7 +36,7 @@ struct Grad2
 struct FuncGrad1
 {
     template <class V>
-    auto operator () (const Eigen::MatrixBase<V>& x)
+    auto operator () (const Eigen::MatrixBase<V>& x) const
     {
         return std::make_pair(Func{}(x), Grad1{}(x));
     }
@@ -45,9 +45,9 @@ struct FuncGrad1
 struct FuncGrad2
 {
     template <class V>
-    double operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g)
+    impl::Scalar<V> operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g, bool calcGrad) const
     {
-        if(g.size())
+        if(calcGrad)
             Grad2{}(x, g);
 
         return Func{}.function(x);
@@ -63,12 +63,17 @@ struct Hessian
     // }
 
     template <class V>
-    impl::Plain2D<V> operator () (const Eigen::MatrixBase<V>& x)
+    impl::Plain2D<V> operator () (const Eigen::MatrixBase<V>& x) const
     {
         return x * x.transpose();
     }
 };
 
+
+auto genericFunction = [](const auto& x)
+{
+    return x(0) + x(1);
+};
 
 
 int main ()
@@ -81,10 +86,10 @@ int main ()
     auto grad1 = wrap::gradient(Grad1{});
     auto grad2 = wrap::gradient(Grad2{});
 
-    auto funcGrad1 = wrap::functionGradient(Func{}, Grad2{});
-    auto funcGrad2 = wrap::functionGradient(FuncGrad2{});
-
-    auto funcGrad3 = wrap::functionGradient(Func{});
+    auto funcGrad1 = wrap::funcGrad(Func{}, Grad2{});
+    auto funcGrad2 = wrap::funcGrad(FuncGrad2{});
+    // auto funcGrad3 = wrap::funcGrad(Func{});
+    auto funcGrad3 = wrap::fd::funcGrad(Func{});
 
     auto hess = wrap::hessian(Hessian{});
 
@@ -95,7 +100,7 @@ int main ()
     handy::print(grad1(x).transpose(), grad1(y).transpose());
     handy::print(grad1(x+x).transpose(), grad1(y+y).transpose());
     grad2(x, gx), grad2(y, gy); handy::print(gx.transpose(), gy.transpose());
-    grad2(x+x, gx), grad2(y+y, gy); handy::print(gx.transpose(), gy.transpose(), "\n");    
+    grad2(x+x, gx), grad2(y+y, gy); handy::print(gx.transpose(), gy.transpose(), "\n");
 
     handy::print(std::get<0>(funcGrad1(x+x)), std::get<0>(funcGrad1(y+y)));
     handy::print(std::get<1>(funcGrad1(x)).transpose(), std::get<1>(funcGrad1(y)).transpose());
@@ -104,13 +109,12 @@ int main ()
     handy::print(funcGrad1.function(y+y), funcGrad1.gradient(x+x).transpose());
     handy::print(funcGrad2.function(y+y), funcGrad2.gradient(x+x).transpose(), "\n");
 
-    //handy::print(std::get<0>(funcGrad3(x+x)), std::get<1>(funcGrad3(y+y)).transpose());
+    // //handy::print(std::get<0>(funcGrad3(x+x)), std::get<1>(funcGrad3(y+y)).transpose());
     handy::print(funcGrad3(x+x, gx), gx.transpose(), "\n");
 
-    handy::print(hess(x+x, x).transpose(), "\n");
-    handy::print(hess(x+x).transpose());
+    handy::print(hess.hessianDir(x+x, x).transpose(), "\n");
+    std:: cout << hess(x+x).transpose() << "\n";
 
-    
 
     return 0;
 }
