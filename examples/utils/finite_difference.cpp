@@ -37,7 +37,7 @@ int main ()
 {
     using V = Eigen::Matrix<float, 2, 1>;
 
-    auto func = nlpp::wrap::functionsBuilder<nlpp::wrap::Conditions::Function | nlpp::wrap::Conditions::Gradient | nlpp::wrap::Conditions::Hessian, V>(F1{});
+    auto func = nlpp::wrap::fd::functions<nlpp::wrap::Conditions::Function | nlpp::wrap::Conditions::Gradient | nlpp::wrap::Conditions::Hessian, V>(F1{});
 
 
     V x0 = V::Constant(2, 1.0);

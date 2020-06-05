@@ -53,16 +53,17 @@ enum class Conditions : std::size_t
     Function                    = 1 << 0,
     Gradient                    = 1 << 1,
     Hessian                     = 1 << 2,
+    AllFunctions                = (1 << 3) - 1,
 
-    InitialPoint                = 1 << 3,
-    Bounds                      = 1 << 4,
-    LinearEqualities            = 1 << 5,
-    LinearInequalities          = 1 << 6,
+    InitialPoint                = 1 << 10,
+    Bounds                      = 1 << 11,
+    LinearEqualities            = 1 << 12,
+    LinearInequalities          = 1 << 13,
 
-    NLEqualities                = 1 << 7,
-    NLInequalities              = 1 << 8,
-    NLEqualitiesJacobian        = 1 << 9,
-    NLInequalitiesJacobian      = 1 << 10,
+    NLEqualities                = 1 << 20,
+    NLInequalities              = 1 << 21,
+    NLEqualitiesJacobian        = 1 << 22,
+    NLInequalitiesJacobian      = 1 << 23,
 };
 
 NLPP_ENUM_OPERATOR(Conditions, |, std::size_t)
@@ -542,36 +543,63 @@ namespace poly
 using ::nlpp::impl::Scalar, ::nlpp::impl::Plain, ::nlpp::impl::Plain2D, ::nlpp::wrap::impl::HasOp;
 
 
-template <class V>
-using Function = std::function<Scalar<V>(const Plain<V>&)>;
+template <class V = ::nlpp::Vec>
+using FunctionBase = std::function<Scalar<V>(const Plain<V>&)>;
 
-template <class V>
-using Gradient = std::function<void(const Plain<V>&, Plain<V>&)>;
+template <class V = ::nlpp::Vec>
+using GradientBase = std::function<void(const Plain<V>&, Plain<V>&)>;
 
-template <class V>
-using FunctionGradient = std::function<Scalar<V>(const Plain<V>&, Plain<V>&, bool)>;
+template <class V = ::nlpp::Vec>
+using FuncGradBase = std::function<Scalar<V>(const Plain<V>&, Plain<V>&, bool)>;
 
-template <class V>
-using Hessian = std::function<void(const Plain<V>&, Plain2D<V>&)>;
+template <class V = ::nlpp::Vec>
+using HessianBase = std::function<void(const Plain<V>&, Plain2D<V>&)>;
 
 
-template <class V>
-using Visitor = ::nlpp::wrap::impl::Visitor<Function<V>, Gradient<V>, Hessian<V>>;
+template <class V = ::nlpp::Vec>
+using Visitor = ::nlpp::wrap::impl::Visitor<FunctionBase<V>, GradientBase<V>, HessianBase<V>>;
 // using Visitor = ::nlpp::wrap::impl::Visitor<Function<V>, Gradient<V>, FunctionGradient<V>, Hessian<V>>;
 
-template <class V>
-using Functions = ::nlpp::wrap::Functions<(Conditions::Function | Conditions::Gradient | Conditions::Hessian), Visitor<V>>;
+template <class V = ::nlpp::Vec>
+using Functions = ::nlpp::wrap::Functions<Conditions::AllFunctions, Visitor<V>>;
 
 
-template <class V, class... Fs>
+template <class V = ::nlpp::Vec, class... Fs>
 constexpr Functions<V> functions (const Fs&... fs)
 {
     return Functions<V>(fs...);
 }
 
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr Functions<V> function (const Fs&... fs)
+{
+    return functions<V>(fs...);
+}
 
-template <Conditions Cond, class V, class... Fs>
-constexpr auto functionsBuilder (const Fs&... fs)
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr Functions<V> gradient (const Fs&... fs)
+{
+    return functions<V>(fs...);
+}
+
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr Functions<V> funcGrad (const Fs&... fs)
+{
+    return functions<V>(fs...);
+}
+
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr Functions<V> hessian (const Fs&... fs)
+{
+    return functions<V>(fs...);
+}
+
+
+namespace fd
+{
+
+template <Conditions Cond, class V = ::nlpp::Vec, class... Fs>
+constexpr auto functions (const Fs&... fs)
 {
     using TFs = std::tuple<Fs...>;
 
@@ -615,8 +643,28 @@ constexpr auto functionsBuilder (const Fs&... fs)
             hessian = [impl = ::nlpp::wrap::impl::Visitor<Fs...>(fs...)](const Plain<V>& x, Plain<V>& h) { impl.hessian(x, h); };
     }
 
-    return functions<V>(function, gradient, hessian);
+    return ::nlpp::wrap::poly::functions<V>(function, gradient, hessian);
 }
+
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr auto gradient (const Fs&... fs)
+{
+    return functions<Conditions::Gradient, V>(fs...);
+}
+
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr auto funcGrad (const Fs&... fs)
+{
+    return functions<Conditions::Function | Conditions::Gradient, V>(fs...);
+}
+
+template <class V = ::nlpp::Vec, class... Fs>
+constexpr auto hessian (const Fs&... fs)
+{
+    return functions<Conditions::Hessian, V>(fs...);
+}
+
+} // namespace fd
 
 
 } // namespace poly

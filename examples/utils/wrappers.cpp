@@ -93,6 +93,7 @@ int main ()
 
     auto hess = wrap::hessian(Hessian{});
 
+    auto funcs = wrap::fd::functions<wrap::Conditions::AllFunctions, Eigen::VectorXf>(genericFunction);
 
     handy::print(func(x), func(y));
     handy::print(func(x+x), func(y+y), "\n");
@@ -113,8 +114,12 @@ int main ()
     handy::print(funcGrad3(x+x, gx), gx.transpose(), "\n");
 
     handy::print(hess.hessianDir(x+x, x).transpose(), "\n");
-    std:: cout << hess(x+x).transpose() << "\n";
+    std:: cout << hess(x+x).transpose() << "\n\n";
 
+    handy::print(funcs.function(x+x), funcs.function(y+y));
+    handy::print(funcs.gradient(x+x).transpose(), funcs.gradient(y+y).transpose());
+    handy::print(funcs.hessianDir(y+y, x).transpose());
+    handy::print(std::get<0>(funcs(x+x)), std::get<0>(funcs(y+y)));
 
     return 0;
 }
