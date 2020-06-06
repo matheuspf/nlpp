@@ -12,21 +12,14 @@ struct Optimizer;
 template <int Level = 0, typename Float = types::Float>
 struct GradientOptimizer;
 
+
 template <typename Float>
 struct Optimizer<0, Float>
 {
-    // Optimizer (const handy::Print& printer = handy::Print()) : printer(printer) {}
-
-    void initialize () 
-    {
-    }
-
     template <typename... Args>
     void operator() (Args&&...)
     {
     }
-
-    // handy::Print printer;
 };
 
 template <typename Float>
@@ -36,39 +29,35 @@ struct GradientOptimizer<0, Float> : public Optimizer<0, Float> {};
 template <typename Float>
 struct Optimizer<1, Float> : public Optimizer<0, Float>
 {
-    Optimizer (const handy::Print& printer = handy::Print("", "\n\n")) : Optimizer<0, Float>(printer) {}
+    Optimizer (const handy::Print& printer = handy::Print("", "\n\n")) : printer(printer) {}
 
     template <class Opt, class V>
     void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx)
     {
         printer("x:", x.transpose(), "\nfx:", fx);
     }
+
+    handy::Print printer;
 };
 
 template <typename Float>
 struct GradientOptimizer<1, Float> : public Optimizer<1, Float>
 {
     using Base = Optimizer<1, Float>;
+    using Base::printer;
 
-    GradientOptimizer (const handy::Print& printer = handy::Print("", "")) : Base(printer) {}
+    GradientOptimizer (const handy::Print& printer = handy::Print("", "\n\n")) : Base(printer) {}
 
-    template <class Opt, class V>
-    void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx)
+    template <class Opt, class V, class U>
+    void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<U>& gx)
     {
-        Base::operator()(optimizer, x, fx);
-        printer( "\ngx:", gx.transpose(), "\n\n");
+        printer("x:", x.transpose(), "\nfx:", fx, "\ngx:", gx.transpose());
     }
 };
 
 template <class Float>
 struct Optimizer<2, Float>
 {
-    void initialize () 
-    {
-        vFx.clear();
-        vX.clear();
-    }
-
     template <class Opt, class V>
     void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx)
     {
@@ -86,14 +75,8 @@ struct GradientOptimizer<2, Float> : public Optimizer<2, Float>
 {
     using Base = Optimizer<2, Float>;
 
-    void initialize () 
-    {
-        Base::initialize();
-        vGx.clear();
-    }
-
-    template <class Opt, class V>
-    void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx)
+    template <class Opt, class V, class U>
+    void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<U>& gx)
     {
         Base::operator()(optimizer, x, fx);
         vGx.push_back(::nlpp::impl::cast<Float>(gx));

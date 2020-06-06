@@ -1,6 +1,6 @@
 #pragma once
 
-#include "helpers/helpers.hpp"
+#include "helpers/helpers_dec.hpp"
 
 
 namespace nlpp::stop
@@ -9,13 +9,8 @@ namespace nlpp::stop
 template <bool Exclusive = false, typename Float = types::Float>
 struct Optimizer
 {
-    Optimizer(int maxIterations_ = 1000, double xTol = 1e-4, double fTol = 1e-4) : 
-                      maxIterations_(maxIterations_), xTol(xTol), fTol(fTol), initialized(false) {}
-
-    void initialize ()
-    {
-        initialized = false;
-    }
+    Optimizer(int maxIterations = 1000, Float xTol = 1e-4, Float fTol = 1e-4) : 
+              maxIterations(maxIterations), xTol(xTol), fTol(fTol), initialized(false) {}
 
     template <class Opt, class V>
     bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx) 
@@ -37,13 +32,8 @@ struct Optimizer
         return doStop;
     }
 
-    int maxIterations ()
-    {
-        return maxIterations_;
-    }
-
     template <typename... Conds>
-    bool stop (Conds... conds)
+    constexpr bool stop (Conds... conds)
     {
         if constexpr(Exclusive)
             return (conds && ...);
@@ -59,7 +49,7 @@ struct Optimizer
 	Float xTol;            ///< Minimum tolerance on the norm of the input (@c x) between iterations
 	Float fTol;            ///< Minimum tolerance on the value of the function (@c x) between iterations
 
-    int maxIterations_;      ///< Maximum number of outer iterations
+    int maxIterations;      ///< Maximum number of outer iterations
     bool initialized;
 };
 
@@ -69,11 +59,11 @@ struct GradientOptimizer : public Optimizer<Exclusive, Float>
 {
     using Base = Optimizer<Exclusive, Float>;
 
-    GradientOptimizer(int maxIterations_ = 1000, double xTol = 1e-4, double fTol = 1e-4, double gTol = 1e-4) : 
-                      Base(maxIterations_, xTol, fTol), gTol(gTol) {}
+    GradientOptimizer(int maxIterations = 1000, Float xTol = 1e-4, Float fTol = 1e-4, Float gTol = 1e-4) :
+                      Base(maxIterations, xTol, fTol), gTol(gTol) {}
 
-    template <class Opt, class V>
-    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx, const Eigen::MatrixBase<V>& gx) 
+    template <class Opt, class V, class U>
+    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx, const Eigen::MatrixBase<U>& gx)
     {
         bool gStop = gx.norm() < gTol;
 
@@ -92,26 +82,17 @@ struct GradientOptimizer : public Optimizer<Exclusive, Float>
 template <typename Float>
 struct GradientNorm
 {
-    GradientNorm (int maxIterations_ = 1e3, Float norm = 1e-4) : maxIterations_(maxIterations_), norm(norm)
+    GradientNorm (int maxIterations = 1e3, Float norm = 1e-4) : maxIterations(maxIterations), norm(norm)
     {
     }
 
-    void initialize ()
-    {
-    }
-
-    template <class Opt, class V>
-    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>&, Float, const Eigen::MatrixBase<V>& gx) 
+    template <class Opt, class V, class U>
+    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>&, Float, const Eigen::MatrixBase<U>& gx) 
     {
         return (gx.norm() / gx.size()) < norm;
     }
 
-    int maxIterations ()
-    {
-        return maxIterations_;
-    }
-
-    int maxIterations_;
+    int maxIterations;
     Float norm;
 };
 
