@@ -1,11 +1,9 @@
 #pragma once
 
-#include "../LineSearch.hpp"
-
-#include "LineSearch/Interpolation/Interpolation.hpp"
-
-#include "LineSearch/InitialStep/Constant.hpp"
-#include "LineSearch/InitialStep/FirstOrder.hpp"
+#include "line_search/line_search.hpp"
+#include "line_search/interpolation/interpolation.hpp"
+#include "line_search/initial_step/constant.hpp"
+#include "line_search/initial_step/first_order.hpp"
 
 
 namespace nlpp
@@ -15,17 +13,11 @@ namespace impl
 {
 
 template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
-struct StrongWolfe : public LineSearchBase<Float, InitialStep>
+struct StrongWolfe
 {
-	using Base = LineSearchBase<Float, InitialStep>;
-	using Base::f0;
-	using Base::g0;
-	using Base::initialStep;
-
-
 	StrongWolfe (Float c1 = 1e-4, Float c2 = 0.9, const InitialStep& initialStep = InitialStep(), Float aMaxC = 100.0, 
 				 Float rho = constants::phi, int maxIterBrack = 20, int maxIterInt = 1e2, Float tol = constants::eps_<Float>) :
-				 c1(c1), c2(c2), Base(initialStep), aMaxC(aMaxC), rho(rho), maxIterBrack(maxIterBrack), maxIterInt(maxIterInt), tol(tol)
+				 c1(c1), c2(c2), initialStep(initialStep), aMaxC(aMaxC), rho(rho), maxIterBrack(maxIterBrack), maxIterInt(maxIterInt), tol(tol)
 	{
 		// assert(a0 > 0.0 && "a0 must be positive");
 		assert(c1 > 0.0  && c2 > 0.0 && "c1 and c2 must be positive");
@@ -37,9 +29,9 @@ struct StrongWolfe : public LineSearchBase<Float, InitialStep>
 	template <class Function>
 	Float lineSearch (Function f)
 	{
-		std::tie(f0, g0) = f(0.0);
+		auto [f0, g0] = f(0.0);
 
-		Float a0 = initialStep(f0, g0);
+		Float a0 = initialStep(*this, f0, g0);
 
 		Float a = 0.0, fa = f0, ga = g0;
 		Float b = a0, fb, gb;
@@ -147,6 +139,7 @@ struct StrongWolfe : public LineSearchBase<Float, InitialStep>
 
 	Float c1;
 	Float c2;
+	InitialStep initialStep;
 	Float aMaxC;
 	Float rho;
 	int maxIterBrack;
@@ -164,11 +157,6 @@ struct StrongWolfe : public impl::StrongWolfe<Float, InitialStep>,
 	using Interface = LineSearch<StrongWolfe<Float, InitialStep>>;
 	using Impl = impl::StrongWolfe<Float, InitialStep>;
 	using Impl::Impl;
-
-	void initialize ()
-	{
-		Impl::initialize();
-	}
 
 	template <class Function>
 	auto lineSearch (Function f)

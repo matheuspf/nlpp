@@ -1,77 +1,27 @@
-#include "LineSearch/Goldstein/Goldstein.hpp"
-
-#include "GradientDescent/GradientDescent.h"
-
-#include "Newton/Newton.h"
-
+#include "line_search/backtracking/backtracking.hpp"
 
 using namespace nlpp;
 
 
-
-double senoid (double x)
+auto bowl (const Vec& x)
 {
-	return sin(x*x);
+    return pow(x[0] - 3, 2) + pow(x[1] - 3, 2);
 }
-
-double bowl (double x)
-{
-	return pow(x - 3, 2);
-}
-
-
-
-struct Bowl
-{
-	Bowl (Vec c = Vec::Constant(2, 0.0)) : c(c) {}
-
-	double operator () (const Vec& x) const
-	{
-		return (x - c).norm();
-	}
-
-	Vec c;
-};
-
-
 
 
 int main ()
 {
-	Goldstein ls(2.999);
+    Backtracking<> bckt(5.0);
 
-	double x = 1.5;
+    auto ff = wrap::fd::funcGrad(&bowl);
 
-	x += ls(bowl, x);
+    Vec x(2); x << 1, 1;
+    Vec d(2); d << 1, 1;
 
-	handy::print(x);
+    auto r = bckt(ff, x, d);
 
-
-
-	// GradientDescent<Goldstein> gd(Goldstein(1.0));
-
-	// gd.maxIterations = 1e2;
-
-	// Vec x(2); x << 10.0, 10.0;
-
-	// x = gd(Bowl{}, x);
-
-	// DB(x);
-
-
-
-	// Newton<Goldstein> nm(Goldstein(1.0));
-
-
-	// Vec x = Vec::Constant(10, 2.0);
-
-
-	// x = nm(Rosenbrock(), x);
-
-	// DB(x.transpose() << "         " << Rosenbrock()(x) << "\n");
-
-	// DB(fd::gradient(Rosenbrock())(x).transpose());
-
+    std::cout << r << "\n";
+    std::cout << ff.function(x + r * d) << "\n";
 
 
 

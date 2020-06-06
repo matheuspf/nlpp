@@ -37,7 +37,7 @@ struct CGBase : public Optimizer<Impl>
 {
     using CGType = typename traits::Optimizer<Impl>::CGType;
     CGType cg;
-    double v = 0.1;     ///< The minimum factor of orthogonality that the current direction must have
+    types::Float v = 0.1;     ///< The minimum factor of orthogonality that the current direction must have
 };
 
 template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>

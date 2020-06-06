@@ -6,8 +6,8 @@
 
 #include "helpers/helpers.hpp"
 #include "utils/wrappers.hpp"
-#include "utils/finiteDifference.hpp"
-#include "InitialStep/Constant.hpp"
+#include "utils/finite_difference_dec.hpp"
+#include "initial_step/constant.hpp"
 
 
 
@@ -18,12 +18,12 @@ namespace wrap
 {
 
 /// A utility to wrap a vector function to a scalar function along a direction @c d
-template <class FunctionGradient, class V>
+template <class Functions, class V>
 struct LineSearch
 {
 	using Float = ::nlpp::impl::Scalar<V>;
 
-	LineSearch (const FunctionGradient& f, const V& x, const V& d) : f(f), x(x), d(d)
+	LineSearch (const Functions& f, const V& x, const V& d) : f(f), x(x), d(d)
 	{
 	}
 
@@ -31,9 +31,9 @@ struct LineSearch
 	{
 		V xn = x + a * d;
 
-		auto fx = f.function(xn);
+		Float fx = f.function(xn);
 		//auto gx = f.directional(xn, d, fx);
-		auto gx = f.gradient(xn, d);
+		Float gx = f.gradientDir(xn, d);
 
 		return std::make_pair(fx, gx);
 	}
@@ -45,10 +45,10 @@ struct LineSearch
 
 	Float gradient (Float a) const
 	{
-		return f.gradient(x, d);
+		return f.gradientDir(x, d);
 	}
 
-	FunctionGradient f;
+	const Functions& f;
 	const V& x;
 	const V& d;
 };
@@ -56,9 +56,6 @@ struct LineSearch
 } // namespace wrap
 
 
-
-namespace impl
-{
 
 /** @brief Line search base class for CRTP
  *  
@@ -74,108 +71,50 @@ namespace impl
  *  @tparam Impl The actual line search implementation
  * 	@tparam Whether we must save the norm of the given vector before delegating the calls
 */
-template <class Impl, template <class> class Builder>
+template <class Impl>
 struct LineSearch
 {
-    void initialize () 
+    template <class Functions, class V, class U>
+	::nlpp::impl::Scalar<V> operator() (const Functions& functions, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& dir)
 	{
-		static_cast<Impl&>(*this).initialize();
-	}
-
-    template <class Function, class V>
-	::nlpp::impl::Scalar<V> impl (Function f, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
-	{
-		return static_cast<Impl&>(*this).lineSearch(wrap::LineSearch<Function, V>(f, x, dir));
-	}
-
-
-	template <class Function, class V>
-	::nlpp::impl::Scalar<V> operator () (Function f, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
-	{
-		return impl(Builder<V>::functionGradient(f), x, dir);
-	}
-
-	template <class Function, class Gradient, class V>
-	::nlpp::impl::Scalar<V> operator () (Function f, Gradient g, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<V>& dir)
-	{
-		return impl(Builder<V>::functionGradient(f, g), x, dir);
-	}
-
-    // template <class Function, class Gradient, typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
-	// auto operator () (Function f, Gradient g, Float x, Float dir = 1.0)
-	// {
-	// 	return operator()([&](Float a){ return f(x + a * dir); },
-	// 					  [&](Float a){ return g(x + a * dir) * dir; });
-	// }
-
-	// template <class Function, typename Float, typename Float, std::enable_if_t<std::is_floating_point<Float>::value, int> = 0>
-	// auto operator () (Function f, Float x, Float dir = 1.0)
-	// {
-	// 	return operator()(f, fd::gradient(f), x, dir);
-	// }
-};
-
-} // namespace impl
-
-template <class Impl>
-using LineSearch = impl::LineSearch<Impl, ::nlpp::wrap::Builder>;
-
-
-namespace poly
-{
-
-template <class V = ::nlpp::Vec>
-struct LineSearchBase : public ::nlpp::poly::CloneBase<LineSearchBase<V>>
-{
-	virtual ~LineSearchBase ()	{}
-
-	virtual void initialize () = 0;
-
-	virtual ::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V>) = 0;
-};
-
-
-template <class V = ::nlpp::Vec>
-struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearchBase<V>>,
-					 public ::nlpp::impl::LineSearch<LineSearch_<V>, ::nlpp::wrap::poly::Builder>
-{
-	NLPP_USING_POLY_CLASS(LineSearch_, Base, ::nlpp::poly::PolyClass<LineSearchBase<V>>);
-
-	LineSearch_ () : Base(std::make_unique<StrongWolfe<V, ConstantStep<::nlpp::impl::Scalar<V>>>>()) {}
-
-    void initialize ()
-	{
-		return impl->initialize();
-	}
-
-	::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V> f)
-	{
-		return impl->lineSearch(f);
+		return static_cast<Impl&>(*this).lineSearch(wrap::LineSearch<Functions, V>(functions, x, dir));
 	}
 };
 
-} // namespace poly
+
+// namespace poly
+// {
+
+// template <class V = ::nlpp::Vec>
+// struct LineSearchBase : public ::nlpp::poly::CloneBase<LineSearchBase<V>>
+// {
+// 	virtual ~LineSearchBase ()	{}
+
+// 	virtual void initialize () = 0;
+
+// 	virtual ::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V>) = 0;
+// };
 
 
+// template <class V = ::nlpp::Vec>
+// struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearchBase<V>>,
+// 					 public ::nlpp::impl::LineSearch<LineSearch_<V>, ::nlpp::wrap::poly::Builder>
+// {
+// 	NLPP_USING_POLY_CLASS(LineSearch_, Base, ::nlpp::poly::PolyClass<LineSearchBase<V>>);
 
-template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
-struct LineSearchBase
-{
-	LineSearchBase (const InitialStep& initialStep) : initialStep(initialStep) {}
+// 	LineSearch_ () : Base(std::make_unique<StrongWolfe<V, ConstantStep<::nlpp::impl::Scalar<V>>>>()) {}
 
+//     void initialize ()
+// 	{
+// 		return impl->initialize();
+// 	}
 
-    void initialize ()
-	{
-		initialStep.initialize();
-	}
+// 	::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V> f)
+// 	{
+// 		return impl->lineSearch(f);
+// 	}
+// };
 
-
-	Float aStart;
-	Float f0;
-	Float g0;
-
-	InitialStep initialStep;
-};
-
+// } // namespace poly
 
 } // namespace nlpp

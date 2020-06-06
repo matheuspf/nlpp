@@ -11,12 +11,13 @@ struct FirstOrderStep
 {
     FirstOrderStep (Float a0 = 1.0, Float aMin = std::sqrt(constants::eps_<Float>)) : a0(a0), aMin(aMin), initialized(false) {}
 
-    void itialize ()
+    Float operator () ()
     {
-        initialized = false;
+        return a0;
     }
 
-    Float operator () (Float f1, Float g1)
+    template <class LS>
+    Float operator () (const LS& ls, Float f1, Float g1)
     {
         Float a = a0;
 

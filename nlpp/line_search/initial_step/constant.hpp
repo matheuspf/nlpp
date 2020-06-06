@@ -13,11 +13,13 @@ struct ConstantStep
 {
     ConstantStep (Float a0 = 1.0) : a0(a0) {}
 
-    void initialize () {}
+    template <class LS, class... Args>
+    Float operator () (const LS& ls, const Args&...)
+    {
+        return a0;
+    }
 
-    Float operator () (...) const { return a0; }
-
-    Float a0;	
+    Float a0;
 };
 
 } // namespace nlpp
