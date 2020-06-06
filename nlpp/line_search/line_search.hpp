@@ -9,53 +9,66 @@
 #include "utils/finite_difference_dec.hpp"
 #include "initial_step/constant.hpp"
 
+#define NLPP_USING_LINESEARCH(TYPE, ...)            \
+    using TYPE = __VA_ARGS__;                       \
+    using TYPE::TYPE;                               \
+    using Float = typename TYPE::Float;             \
+    using InitialStep = typename TYPE::InitialStep; \
+    using TYPE::initialStep;
 
 
-namespace nlpp
+namespace nlpp::ls
 {
 
 namespace wrap
 {
 
 /// A utility to wrap a vector function to a scalar function along a direction @c d
-template <class Functions, class V>
+template <class Functions, class V, class U>
 struct LineSearch
 {
-	using Float = ::nlpp::impl::Scalar<V>;
+    using Float = ::nlpp::impl::Scalar<V>;
 
-	LineSearch (const Functions& f, const V& x, const V& d) : f(f), x(x), d(d)
-	{
-	}
+    LineSearch(const Functions &f, const V &x, const U &d) : f(f), x(x), d(d)
+    {
+    }
 
-	std::pair<Float, Float> operator () (Float a) const
-	{
-		V xn = x + a * d;
+    std::pair<Float, Float> operator()(Float a) const
+    {
+        return funcGrad(a);
+    }
 
-		Float fx = f.function(xn);
-		//auto gx = f.directional(xn, d, fx);
-		Float gx = f.gradientDir(xn, d);
+    std::pair<Float, Float> funcGrad (Float a) const
+    {
+        auto xn = x + a * d;
 
-		return std::make_pair(fx, gx);
-	}
+        Float fx = f.function(xn);
+        auto gx = f.gradientDir(xn, d, fx);
 
-	Float function (Float a) const
-	{
-		return f.function(x + a * d);
-	}
+        return std::make_pair(fx, gx);
+    }
 
-	Float gradient (Float a) const
-	{
-		return f.gradientDir(x, d);
-	}
+    Float function(Float a) const
+    {
+        return f.function(x + a * d);
+    }
 
-	const Functions& f;
-	const V& x;
-	const V& d;
+    Float gradient(Float a) const
+    {
+        return f.gradientDir(x, d);
+    }
+
+    Float gradient(Float a, Float fx) const
+    {
+        return f.gradientDir(x, d, fx);
+    }
+
+    const Functions &f;
+    const V &x;
+    const U &d;
 };
 
 } // namespace wrap
-
-
 
 /** @brief Line search base class for CRTP
  *  
@@ -74,13 +87,19 @@ struct LineSearch
 template <class Impl>
 struct LineSearch
 {
-    template <class Functions, class V, class U>
-	::nlpp::impl::Scalar<V> operator() (const Functions& functions, const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& dir)
-	{
-		return static_cast<Impl&>(*this).lineSearch(wrap::LineSearch<Functions, V>(functions, x, dir));
-	}
-};
+    using Float = typename traits::LineSearch<Impl>::Float;
+    using InitialStep = typename traits::LineSearch<Impl>::InitialStep;
 
+    LineSearch(const InitialStep &initialStep = InitialStep{}) : initialStep(initialStep) {}
+
+    template <class Functions, class V, class U>
+    ::nlpp::impl::Scalar<V> operator()(const Functions &functions, const Eigen::MatrixBase<V> &x, const Eigen::MatrixBase<U> &dir)
+    {
+        return static_cast<Impl&>(*this).lineSearch(wrap::LineSearch<Functions, V, U>(functions, x, dir));
+    }
+
+    InitialStep initialStep;
+};
 
 // namespace poly
 // {
@@ -94,7 +113,6 @@ struct LineSearch
 
 // 	virtual ::nlpp::impl::Scalar<V> lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, V>) = 0;
 // };
-
 
 // template <class V = ::nlpp::Vec>
 // struct LineSearch_ : public ::nlpp::poly::PolyClass<LineSearchBase<V>>,
@@ -117,4 +135,4 @@ struct LineSearch
 
 // } // namespace poly
 
-} // namespace nlpp
+} // namespace nlpp::ls

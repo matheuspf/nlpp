@@ -11,7 +11,7 @@ auto bowl (const Vec& x)
 
 int main ()
 {
-    Backtracking<> bckt(5.0);
+    ls::Backtracking<> bckt(5.0);
 
     auto ff = wrap::fd::funcGrad(&bowl);
 

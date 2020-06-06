@@ -133,7 +133,11 @@ template <class Impl, class V>
 struct IsGradient_3 : std::bool_constant< isVec<V> && std::is_floating_point_v<gradientType<Impl, Plain<V>, Plain<V>>> > {};
 
 template <class Impl, class V>
-struct IsGradient : std::bool_constant< IsGradient_0<Impl, V>::value || IsGradient_1<Impl, V>::value || IsGradient_2<Impl, V>::value || IsGradient_3<Impl, V>::value > {};
+struct IsGradient_4 : std::bool_constant< isVec<V> && std::is_floating_point_v<gradientType<Impl, Plain<V>, Plain<V>, Scalar<V>>> > {};
+
+template <class Impl, class V>
+struct IsGradient : std::bool_constant< IsGradient_0<Impl, V>::value || IsGradient_1<Impl, V>::value ||
+                                        IsGradient_2<Impl, V>::value || IsGradient_3<Impl, V>::value || IsGradient_4<Impl, V>::value > {};
 
 
 template <class Impl, class V>
@@ -219,12 +223,6 @@ struct Visitor
         gradientCall(std::get<OpId<IsGradient_2, V, TFs>>(fs), x, g, fx);
     }
 
-    template <class V, class U = V, bool Enable = HasOp<IsGradient_3, V, TFs>, std::enable_if_t<Enable, int> = 0>
-    Scalar<V> gradient (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-    {
-        return gradientDir(x, e);
-    }
-
 
     template <class V, bool Enable = HasOp<IsFuncGrad_0, V, TFs> || HasOp<IsFuncGrad_1, V, TFs>, std::enable_if_t<Enable, int> = 0>
     Scalar<V> funcGrad (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad = true) const
@@ -261,17 +259,17 @@ struct Visitor
         return hessianCall(std::get<OpId<IsHessian_1, V, TFs>>(fs), x);
     }
 
-    template <class V, class U = V, bool Enable = HasOp<IsHessian_2, V, TFs>, std::enable_if_t<Enable, int> = 0>
-    Plain<V> hessian (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-    {
-        return hessianDir(x, e);
-    }
-
 
     template <class V, class U = V, bool Enable = HasOp<IsGradient_3, V, TFs>, std::enable_if_t<Enable, int> = 0>
     Scalar<V> gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
     {
         return gradientCall(std::get<HasOp<IsGradient_3, V, TFs>>(fs), x, e);
+    }
+
+    template <class V, class U = V, bool Enable = HasOp<IsGradient_4, V, TFs>, std::enable_if_t<Enable, int> = 0>
+    Scalar<V> gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, Scalar<V> fx) const
+    {
+        return gradientCall(std::get<HasOp<IsGradient_4, V, TFs>>(fs), x, e, fx);
     }
 
     template <class V, class U = V, bool Enable = HasOp<IsHessian_2, V, TFs>, std::enable_if_t<Enable, int> = 0>
@@ -415,6 +413,9 @@ struct Functions
 
     template <class V, class U = V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
     Scalar<V> gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const;
+
+    template <class V, class U = V, bool Enable = HasGradient, std::enable_if_t<Enable, int> = 0>
+    Scalar<V> gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, Scalar<V> fx) const;
 
     template <class V, class U = V, bool Enable = HasHessian, std::enable_if_t<Enable, int> = 0>
     Plain<V> hessianDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const;

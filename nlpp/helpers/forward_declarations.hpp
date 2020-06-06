@@ -139,4 +139,16 @@ struct Hessian;
 
 } // namespace wrap::impl
 
+
+namespace traits
+{
+
+template <class>
+struct Optimizer;
+
+template <class>
+struct LineSearch;
+
+} // namespace traits
+
 } // namespace nlpp

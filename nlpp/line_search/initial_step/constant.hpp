@@ -13,8 +13,13 @@ struct ConstantStep
 {
     ConstantStep (Float a0 = 1.0) : a0(a0) {}
 
+    Float operator () ()
+    {
+        return a0;
+    }
+
     template <class LS, class... Args>
-    Float operator () (const LS& ls, const Args&...)
+    Float operator () (const LS&, const Args&...)
     {
         return a0;
     }

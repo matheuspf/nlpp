@@ -78,7 +78,7 @@ Plain<V> Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x) const
             impl.gradient(x, g);
         
         else if constexpr(HasOp<IsGradient_2, V, TFs>)
-            impl.gradient(x, g, std::nan("0"));
+            impl.gradient(x, g, function(x));
 
         else
             impl.getFuncGrad(x, g, true);
@@ -98,6 +98,23 @@ template <class V, class U, bool Enable, std::enable_if_t<Enable, int>>
 Scalar<V> Functions<Cond, Impl>::gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
 {
     if constexpr(HasOp<IsGradient_3, V, TFs>)
+        return impl.gradient(x, e);
+
+    else if constexpr(HasOp<IsGradient_4, V, TFs>)
+        return impl.gradient(x, e, function(x));
+
+    else
+        return gradient(x).dot(e);
+}
+
+template <Conditions Cond, class Impl>
+template <class V, class U, bool Enable, std::enable_if_t<Enable, int>>
+Scalar<V> Functions<Cond, Impl>::gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, Scalar<V> fx) const
+{
+    if constexpr(HasOp<IsGradient_4, V, TFs>)
+        return impl.gradient(x, e, fx);
+
+    else if constexpr(HasOp<IsGradient_3, V, TFs>)
         return impl.gradient(x, e);
 
     else
