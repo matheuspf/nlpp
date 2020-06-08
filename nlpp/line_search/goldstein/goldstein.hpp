@@ -1,134 +1,120 @@
 #pragma once
 
-#include "../LineSearch.hpp"
+#include "line_search/line_search.hpp"
+#include "line_search/initial_step/constant.hpp"
 
-#include "../InitialStep/Constant.hpp"
-
-
-namespace nlpp
+namespace nlpp::ls
 {
 
 namespace impl
 {
 
-template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
-struct Goldstein : public LineSearchBase<Float, InitialStep>
+template <class Base_>
+struct Goldstein : public Base_
 {
-	using Base = LineSearchBase<Float, InitialStep>;
-	using Base::f0;
-	using Base::g0;
-	using Base::initialStep;
+    NLPP_USING_LINESEARCH(Base, Base_);
 
+    Goldstein(Float c = 0.2, Float rho1 = 0.5, Float rho2 = 1.5, const InitialStep &initialStep = InitialStep(),
+              Float aMin = constants::eps, int maxIter = 100) :
+              mu1(c), mu2(1.0 - c), Base(initialStep), rho1(rho1), rho2(rho2), aMin(aMin), maxIter(maxIter)
+    {
+        assert(c < 0.5 && "c must be smaller than 0.5");
+        assert(rho1 < 1.0 && "rho1 must be smaller than 1.0");
+        assert(rho2 > 1.0 && "rho2 must be greater than 1.0");
+    }
 
-	Goldstein (Float c = 0.2, Float rho1 = 0.5, Float rho2 = 1.5, const InitialStep& initialStep = InitialStep(),
-			   Float aMin = constants::eps, int maxIter = 100) : 
-			   mu1(c), mu2(1.0 - c), Base(initialStep), rho1(rho1), rho2(rho2), aMin(aMin), maxIter(maxIter)
-	{
-		// assert(a0 > 1e-5 && "a0 must be positive");
-		assert(c < 0.5 && "c must be smaller than 0.5");
-		assert(rho1 < 1.0 && "rho1 must be smaller than 1.0");
-		assert(rho2 > 1.0 && "rho2 must be greater than 1.0");
-		// assert(aMin < a0 && "a0 must be greater than aMin");
-	}
+    template <class Function>
+    Float lineSearch (const Function& f)
+    {
+        auto [f0, g0] = f(0.0);
 
+        Float a0 = initialStep(*this, f0, g0);
+        Float a = a0, safeGuard = a0;
 
-	template <class Function>
-	Float lineSearch (Function f)
-	{		
-		std::tie(f0, g0) = f(0.0);
+        int iter = 0;
 
-		Float a0 = initialStep(f0, g0);
-		Float a = a0, safeGuard = a0;
+        while (a > aMin && ++iter < maxIter)
+        {
+            Float fa, ga;
 
+            std::tie(fa, ga) = f(a);
 
-		int iter = 0;
+            if (fa > f0 + mu1 * a * g0)
+            {
+                a = a * rho1;
+                continue;
+            }
 
-		while(a > aMin && ++iter < maxIter)
-		{
-			Float fa, ga;
+            safeGuard = a;
 
-			std::tie(fa, ga) = f(a);
+            if (fa < f0 + mu2 * a * g0)
+            {
+                a = a * rho2;
 
-			if(fa > f0 + mu1 * a * g0)
-			{
-				a = a * rho1;
-				continue;
-			}
+                continue;
+            }
 
-			safeGuard = a;
+            break;
+        }
 
-			if(fa < f0 + mu2 * a * g0)
-			{
-				a = a * rho2;
+        return iter < maxIter ? a : safeGuard;
+    }
 
-				continue;
-			}
-
-			break;
-		}
-
-		return iter < maxIter ? a : safeGuard;
-	}
-
-
-	Float mu1, mu2;
-	Float rho1, rho2;
-	Float aMin;
-	int maxIter;
+    Float mu1, mu2;
+    Float rho1, rho2;
+    Float aMin;
+    int maxIter;
 };
 
 } // namespace impl
 
-
-template <typename Float = types::Float, class InitialStep = ConstantStep<Float>>
-struct Goldstein : public impl::Goldstein<Float, InitialStep>,
-				   public LineSearch<Goldstein<Float, InitialStep>>
+template <typename Float_ = types::Float, class InitialStep_ = ConstantStep<Float_>>
+struct Goldstein : public impl::Goldstein<LineSearch<Goldstein<Float_, InitialStep_>>>
 {
-	using Interface = LineSearch<Goldstein<Float, InitialStep>>;
-	using Impl = impl::Goldstein<Float, InitialStep>;
-	using Impl::Impl;
-
-	void initialize ()
-	{
-		Impl::initialize();
-	}
-
-	template <class Function>
-	auto lineSearch (Function f)
-	{
-		return Impl::lineSearch(f);
-	}
+    NLPP_USING_LINESEARCH(Base, impl::Goldstein<LineSearch<Goldstein<Float_, InitialStep_>>>);
 };
 
-namespace poly
+} // namespace nlpp::ls
+
+
+namespace nlpp::traits
 {
 
-
-template <class V = Vec, class InitialStep = ConstantStep<typename V::Scalar>>
-struct Goldstein : public impl::Goldstein<::nlpp::impl::Scalar<V>, InitialStep>,
-					 public LineSearchBase<V>
+template <typename Float_, class InitialStep_>
+struct LineSearch<nlpp::ls::Goldstein<Float_, InitialStep_>>
 {
-	using Float = ::nlpp::impl::Scalar<V>;
-	using Interface = LineSearch<Float>;
-	using Impl = impl::Goldstein<Float, InitialStep>;
-	using Impl::Impl;
-
-	void initialize ()
-	{
-		Impl::initialize();
-	}
-
-	Float lineSearch (::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::Vec> f)
-	{
-		return Impl::lineSearch(f);
-	}
-
-	virtual Goldstein* clone_impl () const { return new Goldstein(*this); }
+    using Float = Float_;
+    using InitialStep = InitialStep_;
 };
 
-} // namespace poly
+} // namespace nlpp::traits
 
 
 
+// namespace poly
+// {
 
-} // namespace nlpp
+//     template <class V = Vec, class InitialStep = ConstantStep<typename V::Scalar>>
+//     struct Goldstein : public impl::Goldstein<::nlpp::impl::Scalar<V>, InitialStep>,
+//                         public LineSearchBase<V>
+//     {
+//         using Float = ::nlpp::impl::Scalar<V>;
+//         using Interface = LineSearch<Float>;
+//         using Impl = impl::Goldstein<Float, InitialStep>;
+//         using Impl::Impl;
+
+//         void initialize()
+//         {
+//             Impl::initialize();
+//         }
+
+//         Float lineSearch(::nlpp::wrap::LineSearch<::nlpp::wrap::poly::FunctionGradient<V>, ::nlpp::Vec> f)
+//         {
+//             return Impl::lineSearch(f);
+//         }
+
+//         virtual Goldstein *clone_impl() const { return new Goldstein(*this); }
+//     };
+
+// } // namespace poly
+

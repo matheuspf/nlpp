@@ -1,69 +1,28 @@
-#include "LineSearch/StrongWolfe/StrongWolfe.hpp"
-
-#include "CG/CG.h"
-
-#include "LineSearch/Backtracking/Backtracking.hpp"
-
-#include "LineSearch/Goldstein/Goldstein.hpp"
-
-#include "TestFunctions/Rosenbrock.h"
-
+#include "line_search/strong_wolfe/strong_wolfe.hpp"
 
 using namespace nlpp;
 
 
-double senoid (double x)
+auto bowl (const Vec& x)
 {
-	return sin(x*x);
+    return pow(x[0] - 3, 2) + pow(x[1] - 3, 2);
 }
-
-double bowl (double x)
-{
-	return pow(x - 3, 2);
-}
-
-
-struct Bowl
-{
-	Bowl (Vec c = Vec::Constant(2, 0.0)) : c(c) {}
-
-	double operator () (const Vec& x) const
-	{
-		return (x - c).norm();
-	}
-
-	Vec c;
-};
-
-
 
 
 int main ()
 {
-	// StrongWolfe ls;
+    ls::StrongWolfe<> swlf(0.49, 0.5);
 
-	// double a = 0.0;
+    auto ff = wrap::fd::funcGrad(&bowl);
 
-	// FOR(i, 10)
-	// {
-	// 	a += ls(Rosenbrock(), Vec::Constant(2, -1.3 + a), Vec::Constant(2, 1.0));
+    Vec x(2); x << 1, 1;
+    Vec d(2); d << 1, 1;
 
-	// 	DB(a);
-	// }
+    auto r = swlf(ff, x, d);
 
-
-	//Newton<StrongWolfe, fact::CholeskyIdentity> newton;
-	//Newton<StrongWolfe, fact::CholeskyIdentity> newton(StrongWolfe(1.0, 0.2));
-	CG<StrongWolfe> cg(StrongWolfe(1.0, 0.2));
-
-	Vec x = Vec::Constant(100, 5.0);
-
-	x = cg(Rosenbrock(), x);
+    std::cout << r << "\n";
+    std::cout << ff.function(x + r * d) << "\n";
 
 
-	handy::print(x.transpose());
-
-
-
-	return 0;
+    return 0;
 }

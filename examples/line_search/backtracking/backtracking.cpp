@@ -24,6 +24,5 @@ int main ()
     std::cout << ff.function(x + r * d) << "\n";
 
 
-
-	return 0;
+    return 0;
 }
