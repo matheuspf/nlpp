@@ -12,13 +12,10 @@
 //#include "../LineSearch/Goldstein/Goldstein.hpp"
 
 #include "helpers/helpers.hpp"
-#include "utils/finiteDifference.hpp"
-#include "utils/wrappers.hpp"
+#include "utils/finite_difference_dec.hpp"
+#include "utils/wrappers/functions.hpp"
 #include "utils/output.hpp"
 #include "utils/stop.hpp"
-
-#include "../LineSearch/LineSearch.hpp"
-#include "../LineSearch/StrongWolfe/StrongWolfe.hpp"
 
 
 /// Base parameter definitions
@@ -63,13 +60,13 @@ namespace impl
 using ::nlpp::wrap::Functions, ::nlpp::wrap::Domain, ::nlpp::wrap::Constraints;
 
 template <class Impl>
-struct Optimizer
+struct LineSearchOptimizer
 {
     using LineSearch = typename traits::Optimizer<Impl>::LineSearch;
     using Stop = typename traits::Optimizer<Impl>::Stop;
     using Output = typename traits::Optimizer<Impl>::Output;
 
-    Optimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
+    LineSearchOptimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
     {
     }
 
@@ -100,46 +97,48 @@ struct Optimizer
 } // namespace impl
 //@}
 
+
 template <class Impl>
-using Optimizer = impl::Optimizer<Impl, wrap::Builder>;
+using Optimizer = impl::Optimizer<Impl>;
 
 
-namespace poly
-{
 
-using ::nlpp::impl::Scalar, ::nlpp::impl::Plain;
+// namespace poly
+// {
 
-template <class V = ::nlpp::Vec>
-struct Optimizer
-{
-    using LineSearch = ::nlpp::poly::LineSearch_<V>;
-    using Stop = ::nlpp::poly::stop::GradientOptimizer_<V>;
-    using Output = ::nlpp::poly::out::GradientOptimizer_<V>;
+// using ::nlpp::impl::Scalar, ::nlpp::impl::Plain;
 
-    using Functions = ::nlpp::wrap::poly::Functions<V>;
-    using Domain = ::nlpp::wrap::poly::Domain<V>;
-    using Constraints = ::nlpp::wrap::poly::Constraints<V>;
+// template <class V = ::nlpp::Vec>
+// struct Optimizer
+// {
+//     using LineSearch = ::nlpp::poly::LineSearch_<V>;
+//     using Stop = ::nlpp::poly::stop::GradientOptimizer_<V>;
+//     using Output = ::nlpp::poly::out::GradientOptimizer_<V>;
 
-    Optimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
-    {
-    }
+//     using Functions = ::nlpp::wrap::poly::Functions<V>;
+//     using Domain = ::nlpp::wrap::poly::Domain<V>;
+//     using Constraints = ::nlpp::wrap::poly::Constraints<V>;
 
-
-    template <class... Args>
-    impl::Plain<V> operator () (const Args&... args) const
-    {
-        // return optimize(...);
-    }
-
-    virtual impl::Plain<V> optimize (const Functions&, const Domain&, const Constraints&) const = 0;
+//     Optimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
+//     {
+//     }
 
 
-    LineSearch lineSearch;
-    Stop stop;      ///< Stopping condition
-    Output output;  ///< The output callback
-};
+//     template <class... Args>
+//     impl::Plain<V> operator () (const Args&... args) const
+//     {
+//         // return optimize(...);
+//     }
 
-} // namespace poly
+//     virtual impl::Plain<V> optimize (const Functions&, const Domain&, const Constraints&) const = 0;
+
+
+//     LineSearch lineSearch;
+//     Stop stop;      ///< Stopping condition
+//     Output output;  ///< The output callback
+// };
+
+// } // namespace poly
 
 
 } // namespace nlpp
