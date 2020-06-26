@@ -18,8 +18,9 @@
 #pragma once
 
 #include "helpers/helpers_dec.hpp"
-#include "utils/stop.hpp"
-#include "utils/output.hpp"
+#include "conditions_dec.hpp"
+
+
 
 #define NLPP_MAKE_CALLER(NAME) \
 \
@@ -47,28 +48,6 @@ using NLPP_CONCAT(NAME, Type) = decltype(NLPP_CONCAT(NAME, Call)(std::declval<Im
 /// Wrap namespace
 namespace nlpp::wrap
 {
-
-enum class Conditions : std::size_t
-{
-    Function                    = 1 << 0,
-    Gradient                    = 1 << 1,
-    Hessian                     = 1 << 2,
-    AllFunctions                = (1 << 3) - 1,
-
-    InitialPoint                = 1 << 10,
-    Bounds                      = 1 << 11,
-    LinearEqualities            = 1 << 12,
-    LinearInequalities          = 1 << 13,
-
-    NLEqualities                = 1 << 20,
-    NLInequalities              = 1 << 21,
-    NLEqualitiesJacobian        = 1 << 22,
-    NLInequalitiesJacobian      = 1 << 23,
-};
-
-NLPP_ENUM_OPERATOR(Conditions, |, std::size_t)
-NLPP_ENUM_OPERATOR(Conditions, &, std::size_t)
-
 
 /** @defgroup GradientBaseGroup Gradient Base
     @copydoc Helpers/Gradient.h
