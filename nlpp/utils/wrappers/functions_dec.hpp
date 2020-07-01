@@ -17,31 +17,7 @@
 
 #pragma once
 
-#include "helpers/helpers_dec.hpp"
-#include "conditions_dec.hpp"
-
-
-
-#define NLPP_MAKE_CALLER(NAME) \
-\
-template <class T, class... Args> \
-using NLPP_CONCAT(NAME, Invoke) = decltype(std::declval<T>().NAME(std::declval<Args>()...));   \
-\
-template <class Impl, class... Args> \
-auto NLPP_CONCAT(NAME, Call) (const Impl& impl, Args&&... args) \
-{ \
-    if constexpr(is_detected_v<NLPP_CONCAT(NAME, Invoke), Impl, Args...>) \
-        return impl.NAME(std::forward<Args>(args)...); \
-\
-    else if constexpr(is_detected_v<std::invoke_result_t, Impl, Args...>) \
-        return impl(std::forward<Args>(args)...); \
-\
-    else \
-        return ::nlpp::impl::nonesuch{}; \
-} \
-\
-template <class Impl, class... Args> \
-using NLPP_CONCAT(NAME, Type) = decltype(NLPP_CONCAT(NAME, Call)(std::declval<Impl>(), std::declval<Args>()...));
+#include "helpers.hpp"
 
 
 
@@ -49,50 +25,13 @@ using NLPP_CONCAT(NAME, Type) = decltype(NLPP_CONCAT(NAME, Call)(std::declval<Im
 namespace nlpp::wrap
 {
 
-/** @defgroup GradientBaseGroup Gradient Base
-    @copydoc Helpers/Gradient.h
-*/
-//@{
-
-/** @name
- *  @brief Check if the class @c T is a function, gradient or function/gradient functor, taking parameters of type @c Vec
- * 
- *  @tparam T The class to check
- *  @tparam Vec The type of vector that @c T takes as argument
-*/
-//@{
 namespace impl
 {
 
-using ::nlpp::impl::Scalar, ::nlpp::impl::Plain, ::nlpp::impl::Plain2D,
-      ::nlpp::impl::isMat, ::nlpp::impl::isVec, ::nlpp::impl::detected_t,
-      ::nlpp::impl::is_detected_v, ::nlpp::impl::always_false, ::nlpp::impl::NthArg;
-
-
-template <template <class, class> class Check, class V, class TFs, class Idx>
-struct OpIdImpl;
-
-template <template <class, class> class Check, class V, class... Fs, std::size_t... Is>
-struct OpIdImpl<Check, V, std::tuple<Fs...>, std::index_sequence<Is...>>
-{
-    enum { value = (int(Check<Fs, V>::value * int(Is + 1)) + ...) - 1 };
-};
-
-template <template <class, class> class Check, class V, class TFs>
-static constexpr int OpId = OpIdImpl<Check, V, TFs, std::make_index_sequence<std::tuple_size_v<TFs>>>::value;
-
-template <template <class, class> class Check, class V, class TFs>
-static constexpr bool HasOp = OpId<Check, V, TFs> >= 0;
-
-
-template <class T, class... Args>
-using OperatorType = detected_t<std::invoke_result_t, T, Args...>;
-
-
-NLPP_MAKE_CALLER(function);
-NLPP_MAKE_CALLER(gradient);
-NLPP_MAKE_CALLER(funcGrad);
-NLPP_MAKE_CALLER(hessian);
+NLPP_MAKE_CALLER(function, true);
+NLPP_MAKE_CALLER(gradient, true);
+NLPP_MAKE_CALLER(funcGrad, true);
+NLPP_MAKE_CALLER(hessian, true);
 
 
 template <class Impl, class V>
@@ -146,25 +85,6 @@ template <class Impl, class V>
 struct IsHessian : std::bool_constant< IsHessian_0<Impl, V>::value || IsHessian_1<Impl, V>::value || IsHessian_2<Impl, V>::value > {};
 
 
-template <class... Fs>
-struct Visitor;
-
-
-template <class>
-struct VisitorTraits;
-
-template <class... Fs>
-struct VisitorTraits<Visitor<Fs...>>
-{
-    using TFs = typename Visitor<Fs...>::TFs;
-};
-
-template <class... Fs>
-struct VisitorTraits<std::reference_wrapper<const Visitor<Fs...>>>
-{
-    using TFs = typename Visitor<Fs...>::TFs;
-};
-
 
 template <class... Fs>
 struct Visitor
@@ -176,7 +96,6 @@ struct Visitor
     Visitor(const Fs&... fs) : fs(fs...)
     {
     }
-
 
     template <class V, bool Enable = HasOp<IsFunction, V, TFs>, std::enable_if_t<Enable, int> = 0>
     Scalar<V> function (const Eigen::MatrixBase<V>& x) const

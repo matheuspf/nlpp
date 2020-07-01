@@ -252,7 +252,7 @@ using FirstArg = NthArg<0, Args...>;
 
 template <typename> struct PrintType;
 
-template <int = 0> struct EmptyBase
+template <typename...> struct EmptyBase
 {
     EmptyBase(...) {}
 };

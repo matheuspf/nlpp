@@ -1,7 +1,6 @@
 #pragma once
 
-#include "helpers/helpers_dec.hpp"
-#include "conditions_dec.hpp"
+#include "helpers.hpp"
 
 #define NLPP_DEFINE_DOMAIN_VALUE(NAME, ...) \
 template <class>    \
@@ -100,10 +99,10 @@ struct LinearEqualities
 using ::nlpp::impl::isVec, ::nlpp::impl::isMat, ::nlpp::impl::Plain1D;
 
 template <class V, Conditions Cond>
-struct Domain : public std::conditional_t<(Cond & Conditions::Start), impl::Start<V>, ::nlpp::impl::EmptyBase<Conditions::Start>>,
-                public std::conditional_t<(Cond & Conditions::Bounds), impl::Bounds<V>, ::nlpp::impl::EmptyBase<Conditions::Bounds>>,
-                public std::conditional_t<(Cond & Conditions::LinearInequalities), impl::LinearInequalities<V>, ::nlpp::impl::EmptyBase<Conditions::LinearInequalities>>,
-                public std::conditional_t<(Cond & Conditions::LinearEqualities), impl::LinearEqualities<V>, ::nlpp::impl::EmptyBase<Conditions::LinearEqualities>>
+struct Domain : public std::conditional_t<bool(Cond & Conditions::Start), impl::Start<V>, ::nlpp::impl::EmptyBase<impl::Start<V>>>,
+                public std::conditional_t<bool(Cond & Conditions::Bounds), impl::Bounds<V>, ::nlpp::impl::EmptyBase<impl::Bounds<V>>>,
+                public std::conditional_t<bool(Cond & Conditions::LinearInequalities), impl::LinearInequalities<V>, ::nlpp::impl::EmptyBase<impl::LinearInequalities<V>>>,
+                public std::conditional_t<bool(Cond & Conditions::LinearEqualities), impl::LinearEqualities<V>, ::nlpp::impl::EmptyBase<impl::LinearEqualities<V>>>
 {
     enum : bool
     {
@@ -113,10 +112,10 @@ struct Domain : public std::conditional_t<(Cond & Conditions::Start), impl::Star
         HasLinearEqualities = bool(Cond & Conditions::LinearEqualities)
     };
 
-    using Start = std::conditional_t<(Cond & Conditions::Start), impl::Start<V>, ::nlpp::impl::EmptyBase<Conditions::Start>>;
-    using Bounds = std::conditional_t<(Cond & Conditions::Bounds), impl::Bounds<V>, ::nlpp::impl::EmptyBase<Conditions::Bounds>>;
-    using LinearInequalities = std::conditional_t<(Cond & Conditions::LinearInequalities), impl::LinearInequalities<V>, ::nlpp::impl::EmptyBase<Conditions::LinearInequalities>>;
-    using LinearEqualities = std::conditional_t<(Cond & Conditions::LinearEqualities), impl::LinearEqualities<V>, ::nlpp::impl::EmptyBase<Conditions::LinearEqualities>>;
+    using Start = std::conditional_t<bool(Cond & Conditions::Start), impl::Start<V>, ::nlpp::impl::EmptyBase<impl::Start<V>>>;
+    using Bounds = std::conditional_t<bool(Cond & Conditions::Bounds), impl::Bounds<V>, ::nlpp::impl::EmptyBase<impl::Bounds<V>>>;
+    using LinearInequalities = std::conditional_t<bool(Cond & Conditions::LinearInequalities), impl::LinearInequalities<V>, ::nlpp::impl::EmptyBase<impl::LinearInequalities<V>>>;
+    using LinearEqualities = std::conditional_t<bool(Cond & Conditions::LinearEqualities), impl::LinearEqualities<V>, ::nlpp::impl::EmptyBase<impl::LinearEqualities<V>>>;
 
 
     template <class V1, std::enable_if_t<isVec<V1> && HasStart, int> = 0>
