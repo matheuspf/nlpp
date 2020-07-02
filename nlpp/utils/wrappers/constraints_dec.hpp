@@ -89,10 +89,11 @@ struct ConstraintsVisitor
 };
 
 
-template <Conditions Cond, class Impl>
+
+template <Conditions Cond, class... Fs>
 struct Constraints
 {
-    using TFs = typename Impl::TFs;
+    using TFs = std::tuple<Fs...>;
 
     enum : bool
     {
@@ -104,14 +105,17 @@ struct Constraints
 
 
     template <typename... Args>
-    Constraints (Args&&... args) : impl(std::forward<Args>(args)...) {}
+    Constraints (Args&&... args) : fs(std::forward<Args>(args)...) {}
 
 
     template <class V, bool Enable = HasIneqs, std::enable_if_t<Enable, int> = 0>
     auto ineqs (const Eigen::MatrixBase<V>& x) const
     {
         if constexpr(HasOp<IsIneqs, V, TFs>)
-            return impl.ineqs(x);
+            return std::get<OpId<IsIneqs, V, TFs>>(fs).ineqs(x);
+
+        else if constexpr(HasOpId<IsConstraint, V, TFs, 0>)
+            return std::get<0>(fs)(x);
 
         else
             static_assert(always_false<V>, "The functor has no interface for the given parameter");
@@ -121,61 +125,30 @@ struct Constraints
     auto eqs (const Eigen::MatrixBase<V>& x) const
     {
         if constexpr(HasOp<IsEqs, V, TFs>)
-            return impl.eqs(x);
+            return std::get<OpId<IsEqs, V, TFs>>(fs).eqs(x);
 
-        else
-            static_assert(always_false<V>, "The functor has no interface for the given parameter");
-    }
+        else if constexpr(HasIneqs && HasOpId<IsConstraint, V, TFs, 1>)
+            return std::get<1>(fs)(x);
 
-    template <class V, bool Enable = HasIneqs && HasEqs, std::enable_if_t<Enable, int> = 0>
-    auto operator() (const Eigen::MatrixBase<V>& x) const
-    {
-        if constexpr(HasOp<IsIneqs, V, TFs> && HasOp<IsEqs, V, TFs>)
-            return impl.operator()(x);
-
-        else if constexpr(HasOp<IsIneqs, V, TFs>)
-            return std::make_pair(ineqs(x), V::Constant(0, 0.0));
-
-        else if constexpr(HasOp<IsIneqs, V, TFs>)
-            return std::make_pair(V::Constant(0, 0.0), eqs(x));
+        else if constexpr(!HasIneqs && HasOpId<IsConstraint, V, TFs, 0>)
+            return std::get<0>(fs)(x);
 
         else
             static_assert(always_false<V>, "The functor has no interface for the given parameter");
     }
 
 
-    template <class V, bool Enable = HasIneqsJac, std::enable_if_t<Enable, int> = 0>
-    auto ineqsJac (const Eigen::MatrixBase<V>& x) const
-    {
-        if constexpr(HasOp<IsIneqsJac, V, TFs>)
-            return impl.ineqsJac(x);
-
-        else
-            static_assert(always_false<V>, "The functor has no interface for the given parameter");
-    }
-
-    template <class V, bool Enable = HasEqsJac, std::enable_if_t<Enable, int> = 0>
-    auto eqsJac (const Eigen::MatrixBase<V>& x) const
-    {
-        if constexpr(HasOp<IsEqsJac, V, TFs>)
-            return impl.eqsJac(x);
-
-        else
-            static_assert(always_false<V>, "The functor has no interface for the given parameter");
-    }
-
-
-    Impl impl;
+    TFs fs;
 };
 
 } // namespace impl
 
 
 template <Conditions Cond, class... Fs>
-using Constraints = impl::Constraints<Cond, impl::ConstraintsVisitor<Fs...>>;
+using Constraints = impl::Constraints<Cond, Fs...>;
 
 template <class... Fs>
-using Unconstrained = impl::Constraints<Conditions::Empty, impl::ConstraintsVisitor<Fs...>>;
+using Unconstrained = impl::Constraints<Conditions::Empty, Fs...>;
 
 
 template <Conditions Cond, class... Fs>

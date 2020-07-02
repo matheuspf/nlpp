@@ -39,19 +39,26 @@ auto f4 = [](const auto& x)
 int main ()
 {
     using V = Vec;
+    using wrap::constraints, wrap::Constraints, wrap::Conditions;
 
     V x0 = V::Constant(2, 5.0);
 
-    auto c1 = wrap::constraints<wrap::Conditions::NLInequalities>(F1{});
-    auto c2 = wrap::constraints<wrap::Conditions::NLEqualities>(F2{});
-    // auto c12 = wrap::constraints<wrap::Conditions::NLInequalities>(F1{}, F2{});
-    // auto c1 = wrap::constraints<wrap::Conditions::NLInequalities>(F1{});
+    auto c1 = constraints<Conditions::NLInequalities>(F1{});
+    auto c2 = constraints<Conditions::NLEqualities>(F2{});
+    auto c12 = constraints<Conditions::NLInequalities | Conditions::NLEqualities>(F1{}, F2{});
+    auto c3 = constraints<Conditions::NLInequalities>(F3{});
+    auto c33 = constraints<Conditions::NLInequalities | Conditions::NLEqualities>(F3{}, F3{});
+    auto c4_1 = constraints<Conditions::NLInequalities>(f4);
+    auto c4_2 = constraints<Conditions::NLEqualities>(f4);
 
 
     std::cout << c1.ineqs(x0).transpose() << "\n";
     std::cout << c2.eqs(x0).transpose() << "\n";
-
-
+    std::cout << c12.ineqs(x0).transpose() << "\t" << c12.eqs(x0).transpose() << "\n";
+    std::cout << c3.ineqs(x0).transpose() << "\n";
+    std::cout << c33.ineqs(x0).transpose() << "\t" << c33.eqs(x0).transpose() << "\n";
+    std::cout << c4_1.ineqs(x0).transpose() << "\n";
+    std::cout << c4_2.eqs(x0).transpose() << "\n";
 
 
 

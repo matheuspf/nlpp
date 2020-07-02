@@ -80,7 +80,7 @@ template <template <class, class> class Check, class V, class TFs>
 static constexpr bool HasOp = OpId<Check, V, TFs> >= 0;
 
 template <template <class, class> class Check, class V, class TFs, std::size_t I>
-static constexpr bool HasOpId = (I < std::tuple_size_v<TFs>) && (HasOp<Check, V, std::tuple<std::tuple_element_t<I, TFs>>> >= 0);
+static constexpr bool HasOpId = (I < std::tuple_size_v<TFs>) && (HasOp<Check, V, std::tuple<std::tuple_element_t<std::min(I, std::tuple_size_v<TFs>-1), TFs>>> >= 0);
 
 
 
