@@ -24,6 +24,11 @@ struct IsEqs : std::bool_constant< isVec<V> && isVec<eqsType<Impl, Plain<V>>> > 
 template <class Impl, class V>
 struct IsConstraint : std::bool_constant< isVec<V> && isVec<CallOpType<Impl, Plain<V>>> > {};
 
+template <class Impl, class V>
+struct IsIneqsEqs : std::bool_constant< isVec<V> &&
+                                        isVec<NthArg<0, CallOpType<Impl, Plain<V>>>> &&
+                                        isVec<NthArg<1, CallOpType<Impl, Plain<V>>>> > {};
+
 
 template <class Impl, class V>
 struct IsIneqsJac : std::bool_constant< isVec<V> && isMat<ineqsJacType<Impl, Plain<V>>> > {};
@@ -36,60 +41,6 @@ struct IsJacobian : std::bool_constant< isVec<V> && isMat<CallOpType<Impl, Plain
 
 
 
-template <class... Fs>
-struct ConstraintsVisitor
-{
-    using TFs = std::tuple<Fs...>;
-
-    static_assert(sizeof...(Fs) <= 4, "Invalid number of functors");
-
-
-    ConstraintsVisitor (const Fs&... fs) : fs(fs...)
-    {
-    }
-
-    template <class V, bool Enable = HasOp<IsIneqs, V, TFs> || HasOpId<IsConstraint, V, TFs, 0>, std::enable_if_t<Enable, int> = 0>
-    auto ineqs (const Eigen::MatrixBase<V>& x) const
-    {
-        constexpr auto id = HasOp<IsIneqs, V, TFs> ? OpId<IsIneqs, V, TFs> : 0;
-        return ineqsCall(std::get<id>(fs), x);
-    }
-
-    template <class V, bool Enable = HasOp<IsEqs, V, TFs> || HasOpId<IsConstraint, V, TFs, 1>, std::enable_if_t<Enable, int> = 0>
-    auto eqs (const Eigen::MatrixBase<V>& x) const
-    {
-        constexpr auto id = HasOp<IsEqs, V, TFs> ? OpId<IsEqs, V, TFs> : 1;
-        return eqsCall(std::get<OpId<IsEqs, V, TFs>>(fs), x);
-    }
-
-    template <class V, bool Enable = (HasOp<IsIneqs, V, TFs> || HasOpId<IsConstraint, V, TFs, 0>) &&
-                                     (HasOp<IsEqs, V, TFs> || HasOpId<IsConstraint, V, TFs, 1>), std::enable_if_t<Enable, int> = 0>
-    auto operator() (const Eigen::MatrixBase<V>& x) const
-    {
-        return std::make_pair(ineqs(x), eqs(x));
-    }
-
-
-    template <class V, bool Enable = HasOp<IsIneqsJac, V, TFs> || HasOpId<IsJacobian, V, TFs, 1> || HasOpId<IsJacobian, V, TFs, 2>, std::enable_if_t<Enable, int> = 0>
-    auto ineqsJac (const Eigen::MatrixBase<V>& x) const
-    {
-        constexpr auto id = HasOp<IsIneqsJac, V, TFs> ? OpId<IsIneqsJac, V, TFs> : (HasOpId<IsJacobian, V, TFs, 1> ? 1 : 2);
-        return ineqsJacCall(std::get<id>(fs), x);
-    }
-
-    template <class V, bool Enable = HasOp<IsEqsJac, V, TFs> || HasOpId<IsJacobian, V, TFs, 3>, std::enable_if_t<Enable, int> = 0>
-    auto eqsJac (const Eigen::MatrixBase<V>& x) const
-    {
-        constexpr auto id = HasOp<IsEqsJac, V, TFs> ? OpId<IsEqsJac, V, TFs> : 3;
-        return eqsJacCall(std::get<id>(fs), x);
-    }
-
-
-    TFs fs;
-};
-
-
-
 template <Conditions Cond, class... Fs>
 struct Constraints
 {
@@ -99,8 +50,8 @@ struct Constraints
     {
         HasIneqs        = bool(Cond & Conditions::NLInequalities),
         HasEqs          = bool(Cond & Conditions::NLEqualities),
-        HasIneqsJac      = bool(Cond & Conditions::NLInequalitiesJacobian),
-        HasEqsJac        = bool(Cond & Conditions::NLEqualitiesJacobian),
+        HasIneqsJac     = bool(Cond & Conditions::NLInequalitiesJacobian),
+        HasEqsJac       = bool(Cond & Conditions::NLEqualitiesJacobian),
     };
 
 
@@ -114,8 +65,11 @@ struct Constraints
         if constexpr(HasOp<IsIneqs, V, TFs>)
             return std::get<OpId<IsIneqs, V, TFs>>(fs).ineqs(x);
 
-        else if constexpr(HasOpId<IsConstraint, V, TFs, 0>)
+        else if constexpr(IsConstraint<NthArg<0, Fs...>, V>::value)
             return std::get<0>(fs)(x);
+
+        else if constexpr(IsIneqsEqs<NthArg<0, Fs...>, V>::value)
+            return std::get<0>(std::get<0>(fs)(x));
 
         else
             static_assert(always_false<V>, "The functor has no interface for the given parameter");
@@ -127,11 +81,57 @@ struct Constraints
         if constexpr(HasOp<IsEqs, V, TFs>)
             return std::get<OpId<IsEqs, V, TFs>>(fs).eqs(x);
 
-        else if constexpr(HasIneqs && HasOpId<IsConstraint, V, TFs, 1>)
+        else if constexpr(HasIneqs && IsConstraint<NthArg<1, Fs...>, V>::value)
             return std::get<1>(fs)(x);
 
-        else if constexpr(!HasIneqs && HasOpId<IsConstraint, V, TFs, 0>)
+        else if constexpr(!HasIneqs && IsConstraint<NthArg<0, Fs...>, V>::value)
             return std::get<0>(fs)(x);
+
+        else if constexpr(IsIneqsEqs<NthArg<0, Fs...>, V>::value)
+            return std::get<1>(std::get<0>(fs)(x));
+
+        else
+            static_assert(always_false<V>, "The functor has no interface for the given parameter");
+    }
+
+    template <class V, bool Enable = HasIneqs && HasEqs, std::enable_if_t<Enable, int> = 0>
+    auto operator() (const Eigen::MatrixBase<V>& x) const
+    {
+        if constexpr(IsIneqsEqs<NthArg<0, Fs...>, V>::value)
+            return std::get<0>(fs)(x);
+
+        else
+            return std::make_pair(ineqs(x), eqs(x));
+    }
+
+
+    template <class V, bool Enable = HasIneqsJac, std::enable_if_t<Enable, int> = 0>
+    auto ineqsJac (const Eigen::MatrixBase<V>& x) const
+    {
+        if constexpr(HasOp<IsIneqsJac, V, TFs>)
+            return std::get<OpId<IsIneqsJac, V, TFs>>(fs).ineqsJac(x);
+
+        else if constexpr(!HasEqs && IsJacobian<NthArg<1, Fs...>, V>::value)
+            return std::get<1>(fs)(x);
+
+        else if constexpr(HasEqs && IsJacobian<NthArg<2, Fs...>, V>::value)
+            return std::get<2>(fs)(x);
+
+        else
+            static_assert(always_false<V>, "The functor has no interface for the given parameter");
+    }
+
+    template <class V, bool Enable = HasEqsJac, std::enable_if_t<Enable, int> = 0>
+    auto eqsJac (const Eigen::MatrixBase<V>& x) const
+    {
+        if constexpr(HasOp<IsEqsJac, V, TFs>)
+            return std::get<OpId<IsEqsJac, V, TFs>>(fs).eqsJac(x);
+
+        else if constexpr(!HasIneqs && IsJacobian<NthArg<1, Fs...>, V>::value)
+            return std::get<1>(fs)(x);
+
+        else if constexpr(HasIneqs && IsJacobian<NthArg<3, Fs...>, V>::value)
+            return std::get<3>(fs)(x);
 
         else
             static_assert(always_false<V>, "The functor has no interface for the given parameter");

@@ -98,12 +98,15 @@ struct LinearEqualities
 
 using ::nlpp::impl::isVec, ::nlpp::impl::isMat, ::nlpp::impl::Plain1D;
 
-template <class V, Conditions Cond>
-struct Domain : public std::conditional_t<bool(Cond & Conditions::Start), impl::Start<V>, ::nlpp::impl::EmptyBase<impl::Start<V>>>,
-                public std::conditional_t<bool(Cond & Conditions::Bounds), impl::Bounds<V>, ::nlpp::impl::EmptyBase<impl::Bounds<V>>>,
-                public std::conditional_t<bool(Cond & Conditions::LinearInequalities), impl::LinearInequalities<V>, ::nlpp::impl::EmptyBase<impl::LinearInequalities<V>>>,
-                public std::conditional_t<bool(Cond & Conditions::LinearEqualities), impl::LinearEqualities<V>, ::nlpp::impl::EmptyBase<impl::LinearEqualities<V>>>
+/// V_ must be PLAIN!!!
+template <class V_, Conditions Cond>
+struct Domain : public std::conditional_t<bool(Cond & Conditions::Start), impl::Start<V_>, ::nlpp::impl::EmptyBase<impl::Start<V_>>>,
+                public std::conditional_t<bool(Cond & Conditions::Bounds), impl::Bounds<V_>, ::nlpp::impl::EmptyBase<impl::Bounds<V_>>>,
+                public std::conditional_t<bool(Cond & Conditions::LinearInequalities), impl::LinearInequalities<V_>, ::nlpp::impl::EmptyBase<impl::LinearInequalities<V_>>>,
+                public std::conditional_t<bool(Cond & Conditions::LinearEqualities), impl::LinearEqualities<V_>, ::nlpp::impl::EmptyBase<impl::LinearEqualities<V_>>>
 {
+    using V = V_;
+
     enum : bool
     {
         HasStart = bool(Cond & Conditions::Start),
@@ -150,6 +153,14 @@ using StartDomain = Domain<V, Conditions::Start>;
 
 template <class V>
 using BoxDomain = Domain<V, Conditions::Bounds>;
+
+template <Conditions Cond, class V, class... Vs>
+auto domain (V&& v, Vs&&... vs)
+{
+    return Domain<::nlpp::impl::Plain<V>, Cond>(std::forward<V>(v), std::forward<Vs>(vs)...);
+}
+
+
 
 
 } // namespace nlpp::wrap

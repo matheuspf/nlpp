@@ -32,7 +32,7 @@ V CG<Base_>::optimize (const Function& f, const V& x0, CGType cg, LineSearch lin
 
     dir = -fa;
 
-    for(int iter = 0; iter < stop.maxIterations(); ++iter)
+    for(int iter = 0; iter < stop.maxIterations; ++iter)
     {
         double alpha = lineSearch(f, x, dir);
     

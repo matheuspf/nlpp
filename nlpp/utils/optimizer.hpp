@@ -14,6 +14,8 @@
 #include "helpers/helpers.hpp"
 #include "utils/finite_difference_dec.hpp"
 #include "utils/wrappers/functions.hpp"
+#include "utils/wrappers/domain.hpp"
+#include "utils/wrappers/constraints.hpp"
 #include "utils/output.hpp"
 #include "utils/stop.hpp"
 
@@ -70,11 +72,10 @@ struct LineSearchOptimizer
     {
     }
 
-    template <class... Args>
-    impl::Plain<V> operator () (const Args&... args) const
-    {
-        // return opt<V>(...);
-    }
+    // template <class... Args>
+    // impl::Plain<V> operator () (const Args&... args) const
+    // {
+    // }
 
     // template <class V, class... FunctionArgs, class... DomainArgs, class... ConstraintArgs>
     // impl::Plain<V> opt (const Functions<V, FunctionArgs...>& functions, const Domain<V, DomainArgs...>& domain, const Constraints<V, ConstraintArgs...>& constraints) const
@@ -82,8 +83,8 @@ struct LineSearchOptimizer
     //     return static_cast<const Impl&>(*this).optimize(functions, domain, constraints);
     // }
 
-    template <class V, class Functions, class Domain, class Constraints>
-    impl::Plain<V> opt (const Functions& functions, const Domain& domain, const Constraints& constraints) const
+    template <class Functions, class Domain, class Constraints>
+    auto opt (const Functions& functions, const Domain& domain, const Constraints& constraints) const
     {
         return static_cast<const Impl&>(*this).optimize(functions, domain, constraints);
     }
@@ -99,7 +100,7 @@ struct LineSearchOptimizer
 
 
 template <class Impl>
-using Optimizer = impl::Optimizer<Impl>;
+using LineSearchOptimizer = impl::LineSearchOptimizer<Impl>;
 
 
 

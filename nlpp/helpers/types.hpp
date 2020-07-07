@@ -49,19 +49,19 @@ namespace impl
 */
 //@{
 template <class V>
-using Plain = typename V::PlainObject;
+using Plain = typename std::decay_t<V>::PlainObject;
 
 template <class V>
-using PlainMatrix = typename V::PlainMatrix;
+using PlainMatrix = typename std::decay_t<V>::PlainMatrix;
 
 template <class V>
-using PlainArray = typename V::PlainArray;
+using PlainArray = typename std::decay_t<V>::PlainArray;
 
 template <class V>
-using Scalar = typename V::Scalar;
+using Scalar = typename std::decay_t<V>::Scalar;
 
 template <class V>
-using Plain1D = Eigen::Matrix<Scalar<V>, V::RowsAtCompileTime, 1>;
+using Plain1D = Eigen::Matrix<Scalar<V>, std::decay_t<V>::RowsAtCompileTime, 1>;
 
 template <class V>
 using Ref = Eigen::Ref<Plain<V>>;

@@ -35,6 +35,11 @@ auto f4 = [](const auto& x)
     return x - impl::Plain<std::decay_t<decltype(x)>>::Constant(x.rows(), 4.0);
 };
 
+auto f5 = [](const auto& x)
+{
+    return std::make_pair(F1{}.ineqs(x), F2{}.eqs(x));
+};
+
 
 int main ()
 {
@@ -48,8 +53,10 @@ int main ()
     auto c12 = constraints<Conditions::NLInequalities | Conditions::NLEqualities>(F1{}, F2{});
     auto c3 = constraints<Conditions::NLInequalities>(F3{});
     auto c33 = constraints<Conditions::NLInequalities | Conditions::NLEqualities>(F3{}, F3{});
-    auto c4_1 = constraints<Conditions::NLInequalities>(f4);
-    auto c4_2 = constraints<Conditions::NLEqualities>(f4);
+    auto c4 = constraints<Conditions::NLInequalities>(f4);
+    auto c44 = constraints<Conditions::NLInequalities | Conditions::NLEqualities>(f4, f4);
+    auto c5 = constraints<Conditions::NLInequalities | Conditions::NLEqualities>(f5);
+    auto c6 = constraints<Conditions::Empty>();
 
 
     std::cout << c1.ineqs(x0).transpose() << "\n";
@@ -57,9 +64,11 @@ int main ()
     std::cout << c12.ineqs(x0).transpose() << "\t" << c12.eqs(x0).transpose() << "\n";
     std::cout << c3.ineqs(x0).transpose() << "\n";
     std::cout << c33.ineqs(x0).transpose() << "\t" << c33.eqs(x0).transpose() << "\n";
-    std::cout << c4_1.ineqs(x0).transpose() << "\n";
-    std::cout << c4_2.eqs(x0).transpose() << "\n";
-
+    std::cout << c4.ineqs(x0).transpose() << "\n";
+    std::cout << c44.ineqs(x0).transpose() << "\t" << c44.eqs(x0).transpose() << "\n";
+    std::cout << std::get<0>(c44(x0)).transpose() << "\t" << std::get<1>(c44(x0)).transpose() << "\n";
+    std::cout << c5.ineqs(x0).transpose() << "\t" << c5.ineqs(x0).transpose() << "\n";
+    std::cout << std::get<0>(c5(x0)).transpose() << "\t" << std::get<1>(c5(x0)).transpose() << "\n";
 
 
 

@@ -2,7 +2,7 @@
 
 #include "../helpers/helpers.hpp"
 #include "../utils/optimizer.hpp"
-#include "../LineSearch/StrongWolfe/StrongWolfe.hpp"
+#include "../line_search/strong_wolfe/strong_wolfe.hpp"
 #include "projections_dec.hpp"
 
 
@@ -21,9 +21,9 @@ struct CG : public Base_
     using Base::v;
 
     template <class Functions, class Domain, class Constraints>
-    V optimize (const Functions& funcs, const Domain& domain, const Constraints&) const
+    typename Domain::V optimize (const Functions& funcs, const Domain& domain, const Constraints&) const
     {
-        return optimize(funcs, domain.start(), cg, lineSearch, stop, output);
+        return optimize(funcs, domain.x0, cg, lineSearch, stop, output);
     }
 
     template <class Function, class V>
@@ -33,14 +33,14 @@ struct CG : public Base_
 } // namespace impl
 
 template <class Impl>
-struct CGBase : public Optimizer<Impl>
+struct CGBase : public LineSearchOptimizer<Impl>
 {
     using CGType = typename traits::Optimizer<Impl>::CGType;
     CGType cg;
     types::Float v = 0.1;     ///< The minimum factor of orthogonality that the current direction must have
 };
 
-template <class CGType = FR_PR, class LineSearch = StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
+template <class CGType = FR_PR, class LineSearch = ::nlpp::ls::StrongWolfe<>, class Stop = stop::GradientOptimizer<>, class Output = out::GradientOptimizer<>>
 struct CG : public impl::CG<CGBase<CG<CGType, LineSearch, Stop, Output>>>
 {
 };
@@ -59,14 +59,18 @@ struct Optimizer<CG<CGType_, LineSearch_, Stop_, Output_>>
     using Stop = Stop_;
     using Output = Output_;
 
-    template <class V, class... Args>
-    using Functions = ::nlpp::wrap::Functions<Conditions::Function | Conditions::Gradient, V, Args...>;
+    static constexpr Conditions Functions = Conditions::Function | Conditions::Gradient;
+    static constexpr Conditions Domain = Conditions::Start;
+    static constexpr Conditions Constraints = Conditions::Empty;
 
-    template <class V, class... Args>
-    using Domain = ::nlpp::wrap::Functions<Conditions::InitialPoint, V, Args...>;
+    // template <class V, class... Args>
+    // using Functions = ::nlpp::wrap::Functions<Conditions::Function | Conditions::Gradient, V, Args...>;
 
-    template <class V, class... Args>
-    using Constraints = ::nlpp::wrap::Functions<0, V, Args...>;
+    // template <class V, class... Args>
+    // using Domain = ::nlpp::wrap::Functions<Conditions::Start, V, Args...>;
+
+    // template <class V, class... Args>
+    // using Constraints = ::nlpp::wrap::Functions<0, V, Args...>;
 };
 
 } // namespace traits
