@@ -59,9 +59,14 @@ struct Optimizer<CG<CGType_, LineSearch_, Stop_, Output_>>
     using Stop = Stop_;
     using Output = Output_;
 
-    static constexpr Conditions Functions = Conditions::Function | Conditions::Gradient;
-    static constexpr Conditions Domain = Conditions::Start;
-    static constexpr Conditions Constraints = Conditions::Empty;
+    // static constexpr Conditions Functions = Conditions::Function | Conditions::Gradient;
+    // static constexpr Conditions Domain = Conditions::Start;
+    // static constexpr Conditions Constraints = Conditions::Empty;
+
+
+    static constexpr Conditions conditions = Conditions::Function | Conditions::Gradient |
+                                             Conditions::Start;
+
 
     // template <class V, class... Args>
     // using Functions = ::nlpp::wrap::Functions<Conditions::Function | Conditions::Gradient, V, Args...>;

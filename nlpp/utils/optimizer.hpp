@@ -59,6 +59,9 @@ namespace impl
  *        resort to multiple inheritance. Also, this way we can have easy access to any member of the parameters class
 */
 
+
+template <std::size_t...> class TTT;
+
 using ::nlpp::wrap::Functions, ::nlpp::wrap::Domain, ::nlpp::wrap::Constraints;
 
 template <class Impl>
@@ -68,25 +71,68 @@ struct LineSearchOptimizer
     using Stop = typename traits::Optimizer<Impl>::Stop;
     using Output = typename traits::Optimizer<Impl>::Output;
 
+    static constexpr wrap::Conditions conditions = traits::Optimizer<Impl>::conditions;
+
+
+    template <class... Fs>
+    static constexpr auto functions (Fs&&... fs)
+    {
+        return wrap::functions<conditions>(std::forward<Fs>(fs)...);
+    }
+
+    template <class... Vs>
+    static constexpr auto domain (Vs&&... vs)
+    {
+        return wrap::domain<conditions>(std::forward<Vs>(vs)...);
+    }
+
+    template <class... Fs>
+    static constexpr auto constraints (Fs&&... fs)
+    {
+        return wrap::constraints<conditions>(std::forward<Fs>(fs)...);
+    }
+
+
+
     LineSearchOptimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
     {
     }
 
-    // template <class... Args>
-    // impl::Plain<V> operator () (const Args&... args) const
-    // {
-    // }
 
-    // template <class V, class... FunctionArgs, class... DomainArgs, class... ConstraintArgs>
-    // impl::Plain<V> opt (const Functions<V, FunctionArgs...>& functions, const Domain<V, DomainArgs...>& domain, const Constraints<V, ConstraintArgs...>& constraints) const
-    // {
-    //     return static_cast<const Impl&>(*this).optimize(functions, domain, constraints);
-    // }
+
+    template <class... Args>
+    auto operator () (Args&&... args) const
+    {
+        return impl(std::make_index_sequence<sizeof...(Args)>{}, std::forward<Args>(args)...);
+    }
 
     template <class Functions, class Domain, class Constraints>
     auto opt (const Functions& functions, const Domain& domain, const Constraints& constraints) const
     {
         return static_cast<const Impl&>(*this).optimize(functions, domain, constraints);
+    }
+
+
+    template <std::size_t... IArgs, class... Args>
+    constexpr auto impl (std::index_sequence<IArgs...>, Args&&... args) const
+    {
+        constexpr std::size_t StartDomain = std::min({ ((IArgs + 1) * (::nlpp::impl::isEigen<Args> ? 1 : 100))... }) - 1;
+        constexpr std::size_t EndDomain = std::max({ ((IArgs + 1) * ::nlpp::impl::isEigen<Args>)... }) - 1;
+
+        return impl2(std::make_index_sequence<StartDomain>{},
+                     std::make_index_sequence<EndDomain - StartDomain + 1>{},
+                     std::make_index_sequence<sizeof...(Args) - EndDomain - 1>{},
+                     std::forward<Args>(args)...);
+    }
+
+    template <std::size_t... IFunctions, std::size_t... IDomain, std::size_t... IConstraints, class... Args>
+    constexpr auto impl2 (std::index_sequence<IFunctions...>, std::index_sequence<IDomain...>, std::index_sequence<IConstraints...>, Args&&... args) const
+    {
+        auto tup = std::forward_as_tuple(std::forward<Args>(args)...);
+
+        return opt(functions(std::get<IFunctions>(tup)...), 
+                   domain(std::get<sizeof...(IFunctions) + IDomain>(tup)...),
+                   constraints(std::get<sizeof...(IFunctions) + sizeof...(IDomain) + IConstraints>(tup)...));
     }
 
 

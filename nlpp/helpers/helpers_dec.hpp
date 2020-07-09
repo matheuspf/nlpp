@@ -131,6 +131,8 @@ struct IsMat : public std::bool_constant<bool(IsEigen<T>::isMat)> {};
 template <typename T>
 struct IsVec : public std::bool_constant<bool(IsEigen<T>::isVec)> {};
 
+template <typename T>
+static constexpr bool isEigen = IsEigen<T>::value;
 
 template <typename T>
 struct IsScalar

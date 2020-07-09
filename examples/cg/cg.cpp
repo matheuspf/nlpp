@@ -19,17 +19,20 @@ int main ()
 {
     using nlpp::wrap::Conditions;
     using V = Eigen::Vector4d;
+    using Opt = nlpp::CG<>;
 
-    nlpp::CG<> opt;
+    Opt opt;
     nlpp::Rosenbrock func;
     // V x0 = V::Constant(4, 2.0);
     V x0 = V::Constant(2.0);
 
 
     handy::print(handy::benchmark([&]{
-        x0 = opt.opt(nlpp::wrap::functions<Conditions::Function | Conditions::Gradient>(func, nlpp::fd::gradient(func)),
-                    nlpp::wrap::domain<Conditions::Start>(x0),
-                    nlpp::wrap::constraints<Conditions::Empty>());
+        // x0 = opt.opt(Opt::functions(func, nlpp::fd::gradient(func)),
+        //              Opt::domain(x0),
+        //              Opt::constraints());
+
+        x0 = opt(func, nlpp::fd::gradient(func), x0, Opt::constraints());
     }));
 
     handy::print(x0.transpose());
