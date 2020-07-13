@@ -7,17 +7,14 @@ namespace nlpp::impl
 {
 
 template <class Base_>
-template <class Function, class Hessian, class V>
-V Newton<Base_>::optimize (const Function& f, const Hessian& hess, V x)
+template <class Function, class V>
+V Newton<Base_>::optimize (const Function& f, V x, Factorization factorization, LineSearch lineSearch, Stop stop, Output out) const
 {
-    impl::Scalar<V> fx;
-    V gx;
+    auto [fx, gx] = f(x);
 
-    std::tie(fx, gx) = f(x);
-
-    for(int iter = 0; iter < stop.maxIterations(); ++iter)
+    for(int iter = 0; iter < stop.maxIterations; ++iter)
     {
-        auto dir = factorization(gx, hess(x));
+        auto dir = factorization(gx, f.hessian(x));
     
         auto alpha = lineSearch(f, x, dir);
     
@@ -29,7 +26,7 @@ V Newton<Base_>::optimize (const Function& f, const Hessian& hess, V x)
         if(stop(*this, x, fx, gx))
             break;
     
-        output(*this, x, fx, gx);
+        out(*this, x, fx, gx);
     }
 
     return x;
