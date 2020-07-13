@@ -392,27 +392,29 @@ constexpr auto functions (const Fs&... fs)
 
     constexpr int idFunction = impl::OpId<impl::IsFunction, V, TFs>;
 
-    if constexpr(!addGradient && !addHessian)
-        return ::nlpp::wrap::functions(fs...);
+    if constexpr(addGradient || addHessian)
+    {
+        if constexpr(idFunction == -1)
+            static_assert(::nlpp::impl::always_false<V>, "The functor has no interface for the given requirements");
 
-    if constexpr((addGradient || addHessian) && idFunction == -1)
-        static_assert(::nlpp::impl::always_false<V>, "The functor has no interface for the given requirements");
+        const auto& func = std::get<idFunction>(std::forward_as_tuple(fs...));
+        using Func = std::decay_t<decltype(func)>;
 
+        using GradientFD = ::nlpp::fd::Gradient<Func, ::nlpp::fd::Forward, ::nlpp::fd::SimpleStep<Scalar<V>>>;
+        using HessianFD = ::nlpp::fd::Hessian<Func, ::nlpp::fd::Forward, ::nlpp::fd::SimpleStep<Scalar<V>>, Scalar<V>>;
 
-    const auto& func = std::get<idFunction>(std::forward_as_tuple(fs...));
-    using Func = std::decay_t<decltype(func)>;
+        if constexpr(addGradient && addHessian)
+            return ::nlpp::wrap::functions<Cond>(fs..., GradientFD(func), HessianFD(func));
 
-    using GradientFD = ::nlpp::fd::Gradient<Func, ::nlpp::fd::Forward, ::nlpp::fd::SimpleStep<Scalar<V>>>;
-    using HessianFD = ::nlpp::fd::Hessian<Func, ::nlpp::fd::Forward, ::nlpp::fd::SimpleStep<Scalar<V>>, Scalar<V>>;
+        else if constexpr(addGradient)
+            return ::nlpp::wrap::functions<Cond>(fs..., GradientFD(func));
 
-    if constexpr(addGradient && addHessian)
-        return ::nlpp::wrap::functions<Cond>(fs..., GradientFD(func), HessianFD(func));
-
-    else if constexpr(addGradient)
-        return ::nlpp::wrap::functions<Cond>(fs..., GradientFD(func));
+        else
+            return ::nlpp::wrap::functions<Cond>(fs..., HessianFD(func));
+    }
 
     else
-        return ::nlpp::wrap::functions<Cond>(fs..., HessianFD(func));
+        return ::nlpp::wrap::functions<Cond>(fs...);
 }
 
 template <class V = ::nlpp::Vec, class... Fs>

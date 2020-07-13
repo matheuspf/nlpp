@@ -74,30 +74,28 @@ struct LineSearchOptimizer
     static constexpr wrap::Conditions conditions = traits::Optimizer<Impl>::conditions;
 
 
-    template <class... Fs>
+    template <class V = nlpp::Vec, class... Fs>
     static constexpr auto functions (Fs&&... fs)
     {
-        return wrap::functions<conditions>(std::forward<Fs>(fs)...);
+        return wrap::fd::functions<conditions, V>(std::forward<Fs>(fs)...);
     }
 
-    template <class... Vs>
+    template <class V = nlpp::Vec, class... Vs>
     static constexpr auto domain (Vs&&... vs)
     {
         return wrap::domain<conditions>(std::forward<Vs>(vs)...);
     }
 
-    template <class... Fs>
+    template <class V = nlpp::Vec, class... Fs>
     static constexpr auto constraints (Fs&&... fs)
     {
         return wrap::constraints<conditions>(std::forward<Fs>(fs)...);
     }
 
 
-
     LineSearchOptimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
     {
     }
-
 
 
     template <class... Args>
@@ -116,23 +114,26 @@ struct LineSearchOptimizer
     template <std::size_t... IArgs, class... Args>
     constexpr auto impl (std::index_sequence<IArgs...>, Args&&... args) const
     {
-        constexpr std::size_t StartDomain = std::min({ ((IArgs + 1) * (::nlpp::impl::isEigen<Args> ? 1 : 100))... }) - 1;
-        constexpr std::size_t EndDomain = std::max({ ((IArgs + 1) * ::nlpp::impl::isEigen<Args>)... }) - 1;
+        constexpr std::size_t StartDomain = std::min({ ((IArgs + 1) * (impl::isEigen<Args> ? 1 : 100))... }) - 1;
+        constexpr std::size_t EndDomain = std::max({ ((IArgs + 1) * impl::isEigen<Args>)... }) - 1;
+        using V = std::decay_t<NthArg<StartDomain, Args...>>;
 
-        return impl2(std::make_index_sequence<StartDomain>{},
-                     std::make_index_sequence<EndDomain - StartDomain + 1>{},
-                     std::make_index_sequence<sizeof...(Args) - EndDomain - 1>{},
-                     std::forward<Args>(args)...);
+        static_assert(impl::isEigen<V>, "Wrong arguments");
+
+        return impl2<V>(std::make_index_sequence<StartDomain>{},
+                        std::make_index_sequence<EndDomain - StartDomain + 1>{},
+                        std::make_index_sequence<sizeof...(Args) - EndDomain - 1>{},
+                        std::forward<Args>(args)...);
     }
 
-    template <std::size_t... IFunctions, std::size_t... IDomain, std::size_t... IConstraints, class... Args>
+    template <class V, std::size_t... IFunctions, std::size_t... IDomain, std::size_t... IConstraints, class... Args>
     constexpr auto impl2 (std::index_sequence<IFunctions...>, std::index_sequence<IDomain...>, std::index_sequence<IConstraints...>, Args&&... args) const
     {
         auto tup = std::forward_as_tuple(std::forward<Args>(args)...);
 
-        return opt(functions(std::get<IFunctions>(tup)...), 
-                   domain(std::get<sizeof...(IFunctions) + IDomain>(tup)...),
-                   constraints(std::get<sizeof...(IFunctions) + sizeof...(IDomain) + IConstraints>(tup)...));
+        return opt(functions<V>(std::get<IFunctions>(tup)...), 
+                   domain<V>(std::get<sizeof...(IFunctions) + IDomain>(tup)...),
+                   constraints<V>(std::get<sizeof...(IFunctions) + sizeof...(IDomain) + IConstraints>(tup)...));
     }
 
 
