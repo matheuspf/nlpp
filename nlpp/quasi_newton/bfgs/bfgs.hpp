@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bfgs_dec.hpp"
+#include "initial_hessian.hpp"
 
 
 namespace nlpp::impl
@@ -8,7 +9,7 @@ namespace nlpp::impl
 
 template <class Base>
 template <class Function, class V>
-V BFGS<Base>::optimize (const Function&, V x0, InitialHessian initialHessian, LineSearch lineSearch, Stop stop, Output out) const
+V BFGS<Base>::optimize (const Function& f, V x0, InitialHessian initialHessian, LineSearch lineSearch, Stop stop, Output output) const
 {
     using Float = impl::Scalar<V>;
 

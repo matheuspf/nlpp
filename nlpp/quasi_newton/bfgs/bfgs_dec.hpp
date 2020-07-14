@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../utils/optimizer.hpp"
-#include "../line_search/strong_wolfe/strong_wolfe.hpp"
+#include "../../utils/optimizer.hpp"
+#include "../../line_search/strong_wolfe/strong_wolfe.hpp"
 #include "initial_hessian_dec.hpp"
 
 
