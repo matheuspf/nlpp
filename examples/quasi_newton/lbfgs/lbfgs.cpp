@@ -1,43 +1,24 @@
-#include "QuasiNewton/LBFGS/LBFGS.h"
-
-#include "LineSearch/StrongWolfe/StrongWolfe.hpp"
-
-#include "LineSearch/Goldstein/Goldstein.hpp"
-
+#include "quasi_newton/lbfgs/lbfgs.hpp"
 #include "TestFunctions/Rosenbrock.h"
-
-
-using namespace nlpp;
 
 
 int main ()
 {
-    using Func = Rosenbrock;
-    using IH = BFGS_Diagonal<>;
-    using LS = StrongWolfe<>;
-    using Stop = stop::GradientOptimizer<0>;
-    using Out = out::GradientOptimizer<1>;
+    using nlpp::wrap::Conditions;
+    using V = Eigen::Vector4d;
+    // using V = nlpp::Vec;
 
-    params::LBFGS<IH, LS, Stop, Out> params;
+    using Opt = nlpp::LBFGS<>;
 
-    params.stop.maxIterations = 1e4;
-    params.stop.fTol = 1e-4;
-    params.stop.gTol = 1e-4;
-    params.stop.xTol = 1e-4;
-    params.m = 10;
+    Opt opt;
+    nlpp::Rosenbrock func;
+    V x0 = V::Constant(4, 2.0);
 
-    LBFGS<IH, LS, Stop, Out> lbfgs(params);
+    handy::print(handy::benchmark([&]{
+        x0 = opt(func, x0, Opt::constraints());
+    }));
 
-    Func func;
-    Vec x = Vec::Constant(50, 1.2);
-
-    handy::benchmark([&]
-    {
-        x = lbfgs(func, x);
-    });
-
-    handy::print(x.transpose());
-
+    handy::print(x0.transpose());
 
     return 0;
 }

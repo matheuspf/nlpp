@@ -9,7 +9,7 @@ template <typename Float>
 template <class Function, class V>
 impl::Plain2D<V> BFGSDiagonal<Float>::operator() (const Function& f, const Eigen::MatrixBase<V>& x) const
 {
-    auto hess = impl::Plain2D<V>::Constant(x.rows(), x.rows(), 0.0);
+    impl::Plain2D<V> hess = impl::Plain2D<V>::Constant(x.rows(), x.rows(), 0.0);
 
     hess.diagonal() = (2*alpha) / (f.gradient((x.array() + alpha).matrix()) - f.gradient((x.array() - alpha).matrix())).array();
     
