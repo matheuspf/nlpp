@@ -13,3 +13,6 @@
 [submodule "include/nlpp/external/spectra"]
 	path = nlpp/external/spectra
 	url = https://github.com/yixuan/spectra
+[submodule "nlpp/external/nanoflann"]
+	path = nlpp/external/nanoflann
+	url = https://github.com/jlblancoc/nanoflann

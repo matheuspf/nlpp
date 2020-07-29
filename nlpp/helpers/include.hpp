@@ -50,3 +50,20 @@
     #include "../external/spectra/include/Spectra/SymEigsSolver.h"
 
 #endif
+
+
+#if USE_NANOFLANN
+    #if NANOFLANN_INCLUDE_GLOBAL
+
+        #include <nanoflann/nanoflann.hpp>
+
+    #elif NANOFLANN_INCLUDE_LOCAL_RELEASE
+
+        #include "nanoflann/nanoflann.hpp"
+
+    #elif NANOFLANN_INCLUDE_LOCAL
+
+        #include "../external/nanoflann/include/nanoflann.hpp"
+
+    #endif
+#endif

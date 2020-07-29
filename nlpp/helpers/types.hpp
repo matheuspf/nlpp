@@ -39,6 +39,9 @@ using Mat = MatX<types::Float>;
 
 using Veci = VecX<types::Int>;
 using Mati = MatX<types::Int>;
+
+using Vecu = VecX<std::size_t>;
+using Matu = MatX<std::size_t>;
 //@}
 
 namespace impl
