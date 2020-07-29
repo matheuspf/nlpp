@@ -28,8 +28,8 @@ namespace types
  *  @brief Default vector and matrix types
 */
 //@{
-template <typename T>
-using VecX = Eigen::Matrix<T, Eigen::Dynamic, 1>;
+template <typename T, int Rows = Eigen::Dynamic>
+using VecX = Eigen::Matrix<T, Rows, 1>;
 
 template <typename T>
 using MatX = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;

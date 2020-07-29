@@ -1,24 +1,35 @@
-#include "HyperbolicPenalty/HyperbolicPenalty.h"
-
-#include "CG/CG.h"
-
+#include "hyperbolic_penalty/hyperbolic_penalty.hpp"
 #include "TestFunctions/TreeBarTruss.h"
+#include "TestFunctions/hock_schittkowski.hpp"
 
-
-using namespace nlpp;
-
+#include "cg/cg.hpp"
 
 
 int main ()
 {
-    HyperbolicPenalty<> hp(10.0, 10.0);
+    using nlpp::wrap::Conditions;
+    // using V = Eigen::Vector4d;
+    using V = nlpp::Vec;
 
-    Vec x = hp(TreeBarTruss::func, TreeBarTruss::cons, Vec::Constant(2, 0.5));
-    
+    using Opt = nlpp::HyperbolicPenalty<>;
 
-    handy::print("x: ", x.transpose());
-    handy::print("fx: ", TreeBarTruss::func(x));
-    handy::print("cx: ", TreeBarTruss::cons(x).cwiseAbs().sum());
+
+    Opt opt;
+    opt.stop.maxIterations = 10;
+
+    nlpp::TreeBarTruss func;
+    nlpp::TreeBarTruss constraints;
+
+    // nlpp::P95<> func;
+    // nlpp::P95<> constraints;
+
+    V x = V::Constant(2, 0.5);
+
+    handy::print(handy::benchmark([&]{
+        x = opt(func, x, constraints);
+    }));
+
+    handy::print(x.transpose(), "\t", func.function(x));
 
 
     return 0;

@@ -65,9 +65,8 @@ template <std::size_t...> class TTT;
 using ::nlpp::wrap::Functions, ::nlpp::wrap::Domain, ::nlpp::wrap::Constraints;
 
 template <class Impl>
-struct LineSearchOptimizer
+struct Optimizer
 {
-    using LineSearch = typename traits::Optimizer<Impl>::LineSearch;
     using Stop = typename traits::Optimizer<Impl>::Stop;
     using Output = typename traits::Optimizer<Impl>::Output;
 
@@ -93,7 +92,7 @@ struct LineSearchOptimizer
     }
 
 
-    LineSearchOptimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), stop(stop), output(output)
+    Optimizer (const Stop& stop = Stop{}, const Output& output = Output{}) : stop(stop), output(output)
     {
     }
 
@@ -137,14 +136,30 @@ struct LineSearchOptimizer
     }
 
 
-    LineSearch lineSearch;
     Stop stop;      ///< Stopping condition
     Output output;  ///< The output callback
+};
+
+
+template <class Impl>
+struct LineSearchOptimizer : public Optimizer<Impl>
+{
+    NLPP_USING_OPTIMIZER(Base, Optimizer<Impl>);
+    using LineSearch = typename traits::Optimizer<Impl>::LineSearch;
+
+    LineSearchOptimizer (const LineSearch& lineSearch = LineSearch{}, const Stop& stop = Stop{}, const Output& output = Output{}) : lineSearch(lineSearch), Base(stop, output)
+    {
+    }
+
+    LineSearch lineSearch;
 };
 
 } // namespace impl
 //@}
 
+
+template <class Impl>
+using Optimizer = impl::Optimizer<Impl>;
 
 template <class Impl>
 using LineSearchOptimizer = impl::LineSearchOptimizer<Impl>;
