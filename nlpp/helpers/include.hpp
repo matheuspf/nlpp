@@ -6,64 +6,13 @@
 #include <memory>
 #include <deque>
 
+#include <eigen3/Eigen/Dense>
 
-#if EIGEN_INCLUDE_LOCAL
+#include <handy/Handy.h>
 
-    #include "../external/Eigen/Eigen/Dense"
-
-#elif EIGEN_INCLUDE_LOCAL_RELEASE
-
-    #include "Eigen/Dense"
-
-#elif EIGEN_INCLUDE_GLOBAL
-
-    #include <eigen3/Eigen/Dense>
-
-#endif
+#include <Spectra/SymEigsSolver.h>
 
 
-#if HANDY_INCLUDE_GLOBAL
-
-    #include <handy/Handy.h>
-
-#elif HANDY_INCLUDE_LOCAL_RELEASE
-
-    #include "handy/Handy.h"
-
-#elif HANDY_INCLUDE_LOCAL
-
-    #include "../external/handy/include/handy/Handy.h"
-
-#endif
-
-
-#if SPECTRA_INCLUDE_GLOBAL
-
-    #include <Spectra/SymEigsSolver.h>
-
-#elif SPECTRA_INCLUDE_LOCAL_RELEASE
-
-    #include "Spectra/SymEigsSolver.h"
-
-#elif SPECTRA_INCLUDE_LOCAL
-
-    #include "../external/spectra/include/Spectra/SymEigsSolver.h"
-
-#endif
-
-
-#if USE_NANOFLANN
-    #if NANOFLANN_INCLUDE_GLOBAL
-
-        #include <nanoflann/nanoflann.hpp>
-
-    #elif NANOFLANN_INCLUDE_LOCAL_RELEASE
-
-        #include "nanoflann/nanoflann.hpp"
-
-    #elif NANOFLANN_INCLUDE_LOCAL
-
-        #include "../external/nanoflann/include/nanoflann.hpp"
-
-    #endif
+#ifdef NLPP_USE_NANOFLANN
+#include <nanoflann.hpp>
 #endif
