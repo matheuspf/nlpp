@@ -13,6 +13,6 @@
 #include <Spectra/SymEigsSolver.h>
 
 
-#ifdef NLPP_USE_NANOFLANN
-#include <nanoflann.hpp>
+#if NLPP_USE_NANOFLANN
+#   include <nanoflann.hpp>
 #endif

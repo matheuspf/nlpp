@@ -10,7 +10,7 @@ function(handleDependency dep_name submodule_name)
             message(STATUS "Using inherited ${dep} target")
         else()
             message(STATUS "Installing ${dep} via submodule")
-            execute_process(COMMAND git submodule update --init -- external/${submodule_name}
+            execute_process(COMMAND git submodule update --init --depth 1 -- external/${submodule_name}
                             WORKING_DIRECTORY ${lib_path})
             add_subdirectory(${lib_path}/external/${submodule_name} EXCLUDE_FROM_ALL)
         endif()

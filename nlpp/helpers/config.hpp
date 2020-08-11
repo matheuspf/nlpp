@@ -4,7 +4,9 @@
 
 #pragma once
 
-#define NLPP_USE_NANOFLANN
+#ifndef NLPP_USE_NANOFLANN
+#   define NLPP_USE_NANOFLANN 0
+#endif
 
 
 /** @name
