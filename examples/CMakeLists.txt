@@ -11,7 +11,7 @@ endfunction()
 add_custom_target(${lib_name}_examples)
 
 
-set(${lib_name}_test_files
+set(${lib_name}_example_files
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/constraints.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/domain.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/functions.cpp
@@ -28,6 +28,7 @@ set(${lib_name}_test_files
     ${CMAKE_CURRENT_SOURCE_DIR}/quasi_newton/bfgs/bfgs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/quasi_newton/lbfgs/lbfgs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hyberbolic_penalty/hyberbolic_penalty.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/citgo/knn/knn.cpp
 )
 
-addExamples("${${lib_name}_test_files}")
+addExamples("${${lib_name}_example_files}")

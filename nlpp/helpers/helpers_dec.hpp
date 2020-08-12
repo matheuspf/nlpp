@@ -259,6 +259,15 @@ template <typename...> struct EmptyBase
     EmptyBase(...) {}
 };
 
+
+template <class V>
+std::string toString (const Eigen::MatrixBase<V>& x)
+{
+    std::stringstream ss;
+    ss << x;
+    return ss.str();
+}
+
 } // namespace impl
 
 

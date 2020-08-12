@@ -1,39 +1,31 @@
 option(${lib_name_upper}_COVERAGE "If coverage tests will be executed" ON)
 
 
-add_executable(tests "")
+add_executable(${lib_name}_tests "")
 
-target_include_directories(tests PUBLIC ${PROJECT_SOURCE_DIR}/include/nlpp)
+target_link_libraries(${lib_name}_tests PUBLIC ${lib_name})
+target_compile_options(${lib_name}_tests PRIVATE -O2)
 
-target_compile_options(tests PRIVATE -std=c++17 -O2)
-
-
-if(${lib_name_upper}_COVERAGE AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    target_compile_options(tests PRIVATE -g --coverage -fprofile-arcs -ftest-coverage)
-    target_link_libraries(tests PUBLIC -lgcov)
+if(${${lib_name_upper}_COVERAGE} AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    target_compile_options(${lib_name}_tests PRIVATE -g --coverage -fprofile-arcs -ftest-coverage)
+    target_link_libraries(${lib_name}_tests PUBLIC -lgcov)
 endif()
 
 
-# add_subdirectory(Helpers)
-add_subdirectory(LineSearchOptimizer)
-# add_subdirectory(TrustRegion)
+set(${lib_name}_test_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/finite_difference.cpp
+)
 
+target_sources(${lib_name}_tests PUBLIC ${${lib_name}_test_files})
 
 enable_testing()
-
 find_package(GTest QUIET)
 
-
 if(GTest_FOUND)
-
-   target_link_libraries(tests PUBLIC GTest::GTest GTest::Main)
-
+   target_link_libraries(${lib_name}_tests PUBLIC GTest::GTest GTest::Main)
 else()
-
     message(STATUS "GTest not found. Downloading and installing now.")
-
-    include(external/gtest.cmake EXCLUDE_FROM_ALL)
-
+    include(${CMAKE_CURRENT_SOURCE_DIR}/external/gtest.cmake EXCLUDE_FROM_ALL)
 endif()
 
-add_test(allTests tests)
+add_test(allTests ${lib_name}_tests)

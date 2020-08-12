@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "Helpers/FiniteDifference.h"
+#include "utils/finite_difference_dec.hpp"
 
 
 namespace
@@ -86,9 +86,9 @@ TEST_F(FiniteDifferenceTest, GradientTest)
         handy::RandDouble rng; nlpp::Vec x(v); for(int i = 0; i < 10; ++i)
         {
             std::for_each(x.data(), x.data() + x.size(), [&rng](auto& xi) { xi = rng(-10.0, 10.0); });
-                
+
             SCOPED_TRACE((std::string("X: ") + nlpp::impl::toString(x)).c_str());
-            
+
             auto finG = nlpp::fd::gradient(f);
             
             testGradient(finG, g, x, 1e-4);

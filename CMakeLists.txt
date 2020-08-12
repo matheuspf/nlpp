@@ -74,6 +74,7 @@ if(${lib_name_upper}_BUILD_JS_LIB)
     add_subdirectory(lib/js)
 endif()
 
+
 if(${lib_name_upper}_BUILD_TESTS)
     add_subdirectory(tests)
 
@@ -82,7 +83,6 @@ if(${lib_name_upper}_BUILD_TESTS)
     #     target_include_directories(tests PUBLIC ${PROJECT_SOURCE_DIR}/include/nlpp/external/Eigen)
     # endif()
 endif()
-
 
 if(${lib_name_upper}_BUILD_EXAMPLES)
     add_subdirectory(examples)
