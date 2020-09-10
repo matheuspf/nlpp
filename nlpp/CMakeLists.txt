@@ -1,8 +1,8 @@
-if(NOT ${lib_name_upper}_INCLUDE_INSTALL_DIR)
+if(NOT NLPP_INCLUDE_INSTALL_DIR)
     if(INCLUDE_INSTALL_DIR)
-        set(${lib_name_upper}_INCLUDE_INSTALL_DIR ${INCLUDE_INSTALL_DIR})
+        set(NLPP_INCLUDE_INSTALL_DIR ${INCLUDE_INSTALL_DIR})
     else()
-        set(${lib_name_upper}_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include)
+        set(NLPP_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include)
     endif()
 endif()
 
@@ -50,38 +50,38 @@ set(header_files ${header_files} PARENT_SCOPE)
 set(header_folders ${header_folders} PARENT_SCOPE)
 
 
-add_library(${lib_name} INTERFACE)
+add_library(nlpp INTERFACE)
 
-target_sources(${lib_name}
+target_sources(nlpp
     INTERFACE $<BUILD_INTERFACE:${detail_header_files};${header_files}>
 )
 
-target_include_directories(${lib_name}
+target_include_directories(nlpp
     INTERFACE $<BUILD_INTERFACE:${lib_path}>
-    SYSTEM INTERFACE $<INSTALL_INTERFACE:${${lib_name_upper}_INCLUDE_INSTALL_DIR}>
+    SYSTEM INTERFACE $<INSTALL_INTERFACE:${NLPP_INCLUDE_INSTALL_DIR}>
 )
 
-target_compile_features(${lib_name}
+target_compile_features(nlpp
     INTERFACE cxx_std_17
 )
 
-target_link_libraries(${lib_name}
+target_link_libraries(nlpp
     INTERFACE handy
     INTERFACE Eigen3::Eigen
     INTERFACE Spectra::Spectra
 )
 
-if(${${lib_name_upper}_USE_NANOFLANN})
-    target_link_libraries(${lib_name}
+if(${NLPP_USE_NANOFLANN})
+    target_link_libraries(nlpp
         INTERFACE nanoflann::nanoflann
     )
-    target_compile_definitions(${lib_name}
-        INTERFACE ${lib_name_upper}_USE_NANOFLANN=1
+    target_compile_definitions(nlpp
+        INTERFACE NLPP_USE_NANOFLANN=1
     )
 endif()
 
 
 install(
     DIRECTORY ${header_folders}
-    DESTINATION ${${lib_name_upper}_INCLUDE_INSTALL_DIR}/${lib_name}
+    DESTINATION ${NLPP_INCLUDE_INSTALL_DIR}/nlpp
 )
