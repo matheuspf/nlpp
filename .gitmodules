@@ -1,6 +1,6 @@
 [submodule "include/nlpp/external/Eigen"]
 	path = nlpp/external/Eigen
-	url = https://github.com/eigenteam/eigen-git-mirror
+	url = https://gitlab.com/libeigen/eigen
 [submodule "include/nlpp/external/handy"]
 	path = nlpp/external/handy
 	url = https://github.com/matheuspf/handy
