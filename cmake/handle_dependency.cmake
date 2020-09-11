@@ -1,5 +1,5 @@
 function(handleDependency dep_name submodule_name)
-    find_package(${dep_name} QUIET)
+    # find_package(${dep_name} REQUIRED)
     if(${dep_name}_FOUND)
         # set(NLPP_HAS_IMPORTED_TARGETS ON)
         message(${dep_name} " Found")
