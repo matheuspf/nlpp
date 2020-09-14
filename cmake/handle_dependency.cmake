@@ -1,5 +1,5 @@
 function(handleDependency dep_name submodule_name)
-    # find_package(${dep_name} REQUIRED)
+    find_package(${dep_name} REQUIRED)
     if(${dep_name}_FOUND)
         # set(NLPP_HAS_IMPORTED_TARGETS ON)
         message(${dep_name} " Found")
@@ -12,6 +12,12 @@ function(handleDependency dep_name submodule_name)
             message(STATUS "Installing ${dep} via submodule")
             execute_process(COMMAND git submodule update --init --depth 1 -- external/${submodule_name}
                             WORKING_DIRECTORY ${lib_path})
+
+            set(patch_path ${lib_path}/external/patches/${submodule_name}.patch)
+            if(EXISTS ${patch_path})
+                execute_process(COMMAND git apply ${patch_path}
+                                WORKING_DIRECTORY ${lib_path}/external/${submodule_name})
+            endif()
             add_subdirectory(${lib_path}/external/${submodule_name} EXCLUDE_FROM_ALL)
         endif()
     endif()

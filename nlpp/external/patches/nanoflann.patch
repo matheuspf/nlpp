@@ -1,0 +1,19 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d0b5c01..8182638 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -137,9 +137,11 @@ configure_file(
+   "${nanoflann_BINARY_DIR}/cmake_uninstall.cmake"
+   @ONLY IMMEDIATE)
+ 
+-add_custom_target(uninstall
+-  "${CMAKE_COMMAND}" -P "${nanoflann_BINARY_DIR}/cmake_uninstall.cmake")
+-
++if (TARGET uninstall)
++else()
++	add_custom_target(uninstall
++  	  "${CMAKE_COMMAND}" -P "${nanoflann_BINARY_DIR}/cmake_uninstall.cmake")
++endif()
+ 
+ export(EXPORT nanoflannTargets
+        NAMESPACE nanoflann::

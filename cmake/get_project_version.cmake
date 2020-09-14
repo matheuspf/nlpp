@@ -1,5 +1,4 @@
 function(getProjectVersion config_file_path)
-
     ### Get major.minor.patch semantic version
     file(READ ${config_file_path} config_file)
 
