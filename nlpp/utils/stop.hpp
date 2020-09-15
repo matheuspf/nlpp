@@ -13,23 +13,26 @@ struct Optimizer
               maxIterations(maxIterations), xTol(xTol), fTol(fTol), initialized(false) {}
 
     template <class Opt, class V>
-    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx) 
+    Status operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx) 
     {
         bool doStop = false;
+        Status status;
 
         if(initialized)
         {
             bool fStop = std::abs(fx - fx0) < fTol;
             bool xStop = (::nlpp::impl::cast<Float>(x) - x0).norm() < xTol;
 
-            doStop = stop(xStop, fStop);
+            if(stop(xStop, fStop))
+                status.set((fStop ? Status::Code::FunctionCondition : Status::Code::Ok) |
+                           (xStop ? Status::Code::VariableCondition : Status::Code::Ok));
         }
 
         fx0 = fx;
         x0 = ::nlpp::impl::cast<Float>(x);
         initialized = true;
 
-        return doStop;
+        return status;
     }
 
     template <typename... Conds>
@@ -63,13 +66,18 @@ struct GradientOptimizer : public Optimizer<Exclusive, Float>
                       Base(maxIterations, xTol, fTol), gTol(gTol) {}
 
     template <class Opt, class V, class U>
-    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx, const Eigen::MatrixBase<U>& gx)
+    Status operator () (const Opt& optimizer, const Eigen::MatrixBase<V>& x, impl::Scalar<V> fx, const Eigen::MatrixBase<U>& gx)
     {
         bool gStop = gx.norm() < gTol;
 
         gx0 = ::nlpp::impl::cast<Float>(gx);
 
-        return Base::stop(Base::operator()(optimizer, x, fx), gStop);
+        Status status = Base::operator()(optimizer, x, fx);
+
+        if(Base::stop(!status, gStop))
+            return status.code | (gStop ? Status::Code::GradientCondition : Status::Code::Ok);
+
+        return Status::Code::Ok;
     }
 
 
@@ -87,9 +95,9 @@ struct GradientNorm
     }
 
     template <class Opt, class V, class U>
-    bool operator () (const Opt& optimizer, const Eigen::MatrixBase<V>&, Float, const Eigen::MatrixBase<U>& gx) 
+    Status operator () (const Opt& optimizer, const Eigen::MatrixBase<V>&, Float, const Eigen::MatrixBase<U>& gx) 
     {
-        return (gx.norm() / gx.size()) < norm;
+        return (gx.norm() / gx.size()) < norm ? Status::Code::GradientCondition : Status::Code::Ok;
     }
 
     int maxIterations;

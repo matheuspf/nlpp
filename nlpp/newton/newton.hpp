@@ -23,7 +23,7 @@ V Newton<Base_>::optimize (const Function& f, V x, Factorization factorization, 
         fx = f(x, gx);
     
     
-        if(stop(*this, x, fx, gx))
+        if(!stop(*this, x, fx, gx))
             break;
     
         out(*this, x, fx, gx);

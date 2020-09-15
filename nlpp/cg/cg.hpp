@@ -21,7 +21,7 @@ namespace nlpp::impl
 
 template <class Base_>
 template <class Function, class V>
-V CG<Base_>::optimize (const Function& f, const V& x0, CGType cg, LineSearch lineSearch, Stop stop, Output output) const
+std::tuple<V, impl::Scalar<V>, V, Status> CG<Base_>::optimize (const Function& f, const V& x0, CGType cg, LineSearch lineSearch, Stop stop, Output output) const
 {
     V x = x0;
     V fa, dir, fb(x.rows(), x.cols());
@@ -40,8 +40,8 @@ V CG<Base_>::optimize (const Function& f, const V& x0, CGType cg, LineSearch lin
 
         fx = f(x, fb);
     
-        if(stop(*this, x, fx, fb))
-            break;
+        if(auto status = stop(*this, x, fx, fb); !status)
+            return {x, fx, fb, status};
     
         if((fa.dot(fb) / fb.dot(fb)) >= v)
             dir = -fb;
@@ -56,7 +56,7 @@ V CG<Base_>::optimize (const Function& f, const V& x0, CGType cg, LineSearch lin
         output(*this, x, fx, fb);
     }
 
-    return x;
+    return {x, fx, fb, Status::Code::NumIterations};
 }
 
 } // namespace nlpp::impl

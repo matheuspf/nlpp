@@ -21,13 +21,13 @@ struct CG : public Base_
     using Base::v;
 
     template <class Functions, class Domain, class Constraints>
-    typename Domain::V optimize (const Functions& funcs, const Domain& domain, const Constraints&) const
+    auto optimize (const Functions& funcs, const Domain& domain, const Constraints&) const
     {
         return optimize(funcs, domain.x0, cg, lineSearch, stop, output);
     }
 
     template <class Function, class V>
-    V optimize (const Function&, const V&, CGType, LineSearch, Stop, Output) const;
+    std::tuple<V, impl::Scalar<V>, V, Status> optimize (const Function&, const V&, CGType, LineSearch, Stop, Output) const;
 };
 
 } // namespace impl

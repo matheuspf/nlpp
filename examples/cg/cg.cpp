@@ -26,16 +26,16 @@ int main ()
     nlpp::Rosenbrock func;
     V x0 = V::Constant(4, 2.0);
 
+    handy::Benchmark bench;
 
-    handy::print(handy::benchmark([&]{
-        x0 = opt.opt(Opt::functions<V>(func, nlpp::fd::gradient(func)),
-                     Opt::domain(x0),
-                     Opt::constraints());
+    auto [x, fx, gx, status] = opt.opt(Opt::functions<V>(func, nlpp::fd::gradient(func)),
+                                       Opt::domain(x0),
+                                       Opt::constraints());
+    // x0 = opt(func, x0, Opt::constraints());
 
-        // x0 = opt(func, x0, Opt::constraints());
-    }));
+    handy::print(bench.finish());
 
-    handy::print(x0.transpose());
+    handy::print(x.transpose());
 
     return 0;
 }
