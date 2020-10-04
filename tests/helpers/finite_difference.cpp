@@ -97,30 +97,30 @@ TEST_F(FiniteDifferenceTest, GradientTest)
 }
 
 
-// TEST_F(FiniteDifferenceTest, HessianTest)
-// {
-//     SCOPED_TRACE("Finite Hessian Test\n");
+TEST_F(FiniteDifferenceTest, HessianTest)
+{
+    SCOPED_TRACE("Finite Hessian Test\n");
 
-//     handy::forEach(functions, hessians, names, variables, [&](auto& f, auto& h, auto& n, auto& v)
-//     {
-//         SCOPED_TRACE((std::string("Function: ") + n).c_str());
+    handy::forEach(functions, hessians, names, variables, [&](auto& f, auto& h, auto& n, auto& v)
+    {
+        SCOPED_TRACE((std::string("Function: ") + n).c_str());
         
-//         handy::RandDouble rng;
+        handy::RandDouble rng;
 
-//         nlpp::Vec x(v);
+        nlpp::Vec x(v);
 
-//         for(int i = 0; i < 10; ++i)
-//         {
-//             std::for_each(x.data(), x.data() + x.size(), [&rng](auto& xi){ xi = rng(-10.0, 10.0); });
+        for(int i = 0; i < 10; ++i)
+        {
+            std::for_each(x.data(), x.data() + x.size(), [&rng](auto& xi){ xi = rng(-10.0, 10.0); });
 
-//             SCOPED_TRACE((std::string("X: ") + nlpp::impl::toString(x)).c_str());
+            SCOPED_TRACE((std::string("X: ") + nlpp::impl::toString(x)).c_str());
 
-//             auto finH = nlpp::fd::hessian(f);
+            auto finH = nlpp::fd::hessian(f);
 
-//             testGradient(finH, h, x, 1e-3);
-//         }
-//     });
-// }
+            testGradient(finH, h, x, 1e-3);
+        }
+    });
+}
 
 
 } // namespace
