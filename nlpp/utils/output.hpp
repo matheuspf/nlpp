@@ -58,15 +58,20 @@ struct GradientOptimizer<1, Float> : public Optimizer<1, Float>
 template <class Float>
 struct Optimizer<2, Float>
 {
+    Optimizer(std::vector<VecX<Float>>& vx, std::vector<Float>& vfx) : vx(&vx), vfx(&vfx) {}
+    Optimizer(std::vector<VecX<Float>>* vx = nullptr, std::vector<Float>* vfx = nullptr) : vx(vx), vfx(vfx) {}
+
+    ~Optimizer() = default; // no ownership
+
     template <class Opt, class V>
     void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx)
     {
-        vFx.push_back(fx);
-        vX.push_back(::nlpp::impl::cast<Float>(x));
+        vx->push_back(::nlpp::impl::cast<Float>(x));
+        vfx->push_back(fx);
     }
 
-    std::vector<VecX<Float>> vX;
-    std::vector<Float> vFx;
+    std::vector<VecX<Float>>* vx;
+    std::vector<Float>* vfx;
 };
 
 
@@ -75,14 +80,21 @@ struct GradientOptimizer<2, Float> : public Optimizer<2, Float>
 {
     using Base = Optimizer<2, Float>;
 
+    GradientOptimizer(std::vector<VecX<Float>>& vx,
+                      std::vector<Float>& vfx,
+                      std::vector<VecX<Float>>& vgx) : Base(vx, vfx), vgx(&vgx) {}
+    GradientOptimizer(std::vector<VecX<Float>>* vx = nullptr,
+                      std::vector<Float>* vfx = nullptr,
+                      std::vector<VecX<Float>>* vgx = nullptr) : Base(vx, vfx), vgx(vgx) {}
+
     template <class Opt, class V, class U>
     void operator() (const Opt& optimizer, const Eigen::MatrixBase<V>& x, ::nlpp::impl::Scalar<V> fx, const Eigen::MatrixBase<U>& gx)
     {
         Base::operator()(optimizer, x, fx);
-        vGx.push_back(::nlpp::impl::cast<Float>(gx));
+        vgx->push_back(::nlpp::impl::cast<Float>(gx));
     }
 
-    std::vector<VecX<Float>> vGx;
+    std::vector<VecX<Float>>* vgx;
 };
 
 } // namespace nlpp::out

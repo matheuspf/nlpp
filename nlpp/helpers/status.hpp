@@ -6,6 +6,8 @@
 namespace nlpp
 {
 
+namespace
+{
 
 bool Status::ok () const
 {
@@ -42,5 +44,7 @@ void Status::set (Status::Code newCode)
 {
     code = newCode;
 }
+
+} // namespace
 
 }

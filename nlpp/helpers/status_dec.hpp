@@ -5,6 +5,10 @@
 namespace nlpp
 {
 
+// Since status is not a template
+namespace
+{
+
 struct Status
 {
     enum class Code : std::size_t
@@ -36,9 +40,12 @@ struct Status
     Code code;
 };
 
+} // namespace
+
 std::ostream& operator<< (std::ostream& out, const Status& status);
 
 NLPP_ENUM_OPERATOR(Status::Code, |, std::size_t)
 NLPP_ENUM_OPERATOR(Status::Code, &, std::size_t)
+
 
 } // namespace nlpp

@@ -13,7 +13,8 @@ endif()
 
 
 set(nlpp_test_files
-    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/finite_difference.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/finite_difference.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/output.cpp
 )
 
 target_sources(nlpp_tests PUBLIC ${nlpp_test_files})
