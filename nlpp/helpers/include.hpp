@@ -6,9 +6,9 @@
 #include <memory>
 #include <deque>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
-#include <handy/Handy.h>
+#include <Handy.h>
 
 #include <Spectra/SymEigsSolver.h>
 
