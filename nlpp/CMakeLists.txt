@@ -1,3 +1,5 @@
+include(get_project_version)
+
 ### Add header only library
 set(detail_header_files
     ${CMAKE_CURRENT_SOURCE_DIR}/helpers/forward_declarations.hpp
@@ -55,9 +57,9 @@ target_include_directories(nlpp INTERFACE
 )
 
 target_link_libraries(nlpp
-    INTERFACE handy::handy
     INTERFACE Eigen3::Eigen
     INTERFACE Spectra::Spectra
+    INTERFACE handy::handy
 )
 
 if(${NLPP_USE_NANOFLANN})
