@@ -21,21 +21,19 @@ int main ()
     stop::Optimizer<false, double> opt0(maxIterations, xTol, fTol);
     stop::Optimizer<true, double> opt1(maxIterations, xTol, fTol);
 
-    std::cout << opt0(Dummy{}, x, fx) << "\t" << opt0(Dummy{}, x, fx) << "\t" << opt0(Dummy{}, x, fx + 2*xTol) << "\n";
-    std::cout << opt1(Dummy{}, x, fx) << "\t" << opt1(Dummy{}, x, fx) << "\t" << opt1(Dummy{}, x, fx + 2*xTol) << "\n";
-
+    std::cout  << opt0(nullptr, x, fx) << "\t" << opt0(nullptr, x, fx) << "\t\t\t" << opt0(nullptr, x, fx + 2*fTol) << "\n";
+    std::cout  << opt1(nullptr, x, fx) << "\t" << opt1(nullptr, x, fx) << "\t" << opt1(nullptr, x, fx + 2*fTol) << "\n\n";
 
     stop::GradientOptimizer<false, double> gopt0(maxIterations, xTol, fTol, gTol);
     stop::GradientOptimizer<true, double> gopt1(maxIterations, xTol, fTol, gTol);
 
-    std::cout << gopt0(Dummy{}, x, fx, gx) << "\t" << gopt0(Dummy{}, x, fx, gx) << "\t" << gopt0(Dummy{}, x, fx + 2*xTol, gx) << "\n";
-    std::cout << gopt1(Dummy{}, x, fx, gx) << "\t" << gopt1(Dummy{}, x, fx, gx) << "\t" << gopt1(Dummy{}, x, fx + 2*xTol, gx) << "\n";
+    std::cout << gopt0(nullptr, x, fx, gx) << "\t" << gopt0(nullptr, x, fx, gx) << "\t" << gopt0(nullptr, x, fx + 2*fTol, gx) << "\n";
+    std::cout << gopt1(nullptr, x, fx, gx) << "\t" << gopt1(nullptr, x, fx, gx) << "\t" << gopt1(nullptr, x, fx + 2*fTol, gx) << "\n\n";
 
 
     stop::GradientNorm gnopt(maxIterations, gTol);
 
-    std::cout << gnopt(Dummy{}, x, fx, gx) << "\t" << gnopt(Dummy{}, x, fx, Vec::Constant(3, gTol)) << "\n";
-
+    std::cout << gnopt(nullptr, x, fx, gx) << "\t" << gnopt(nullptr, x, fx, Vec::Constant(3, gTol)) << "\n";
 
     return 0;
 }

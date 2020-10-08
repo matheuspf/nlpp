@@ -377,7 +377,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     template <class F, class V>
     static void changeEval (F f, const Eigen::MatrixBase<V>& x, Scalar<V> inc)
     {
-        changeEval(f, x, [&](auto...){ return inc; });
+        changeEval(f, x, [&](auto&&...){ return inc; });
     }
 
     template <class F, class V, class StepSize, std::enable_if_t<!std::is_fundamental<StepSize>::value, int> = 0>
@@ -389,7 +389,7 @@ struct Forward : public FiniteDifference<Forward<Function, Step>>
     template <class F, class V, typename Int>
     static void changeEval (F f, const Eigen::MatrixBase<V>& x, Scalar<V> inc, handy::Range<Int> range)
     {
-        changeEval(f, x, [&](auto...){ return inc; }, range);
+        changeEval(f, x, [&](auto&&...){ return inc; }, range);
     }
 
     template <class F, class V, class StepSize, typename Int, std::enable_if_t<!std::is_fundamental<StepSize>::value, int> = 0>
@@ -892,7 +892,8 @@ struct SimpleStep
 {
     SimpleStep (Float h = constants::eps_<Float>) : h(h) {}
 
-    Float operator () (...) const
+    template <class V>
+    impl::Scalar<V> operator () (const Eigen::MatrixBase<V>&, ...) const
     {
         return h;
     }

@@ -36,16 +36,17 @@ struct Status
 
     void set (Status::Code newCode);
 
-
     Code code;
 };
 
-} // namespace
-
 std::ostream& operator<< (std::ostream& out, const Status& status);
+bool operator == (const Status&, const Status::Code&);
+bool operator == (const Status::Code&, const Status&);
 
 NLPP_ENUM_OPERATOR(Status::Code, |, std::size_t)
 NLPP_ENUM_OPERATOR(Status::Code, &, std::size_t)
+
+} // namespace
 
 
 } // namespace nlpp

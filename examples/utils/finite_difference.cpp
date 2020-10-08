@@ -11,26 +11,6 @@ struct F1
     }
 };
 
-struct F2
-{
-    template <class V>
-    auto hessian (const Eigen::MatrixBase<V>& x, nlpp::impl::Plain2D<V>& h) const
-    {
-    }
-    
-    template <class V>
-    auto hessian (const Eigen::MatrixBase<V>& x) const
-    {
-        return Eigen::MatrixXd(10, 10);
-    }
-    
-    template <class V>
-    auto operator() (const Eigen::MatrixBase<V>& x) const
-    {
-        return Eigen::MatrixXd(10, 10);
-    }
-
-};
 
 
 int main ()
