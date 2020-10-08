@@ -12,20 +12,13 @@ addons:
       - g++-9
       - cmake
 
-install:
-- cd ${TRAVIS_BUILD_DIR}
-- wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
-- tar xf lcov_1.11.orig.tar.gz
-- sudo make -C lcov-1.11/ install
-- gem install coveralls-lcov
-
 script:
 - cd ${TRAVIS_BUILD_DIR}
 - mkdir build
 - cd build
 - CXX=/usr/bin/g++-9 cmake -D NLPP_BUILD_TESTS=ON ..
 - make tests -j4
--./tests/nlpp_tests
+- ./tests/nlpp_tests
 
 after_success:
 - bash <(curl -s https://codecov.io/bash)
