@@ -8,7 +8,7 @@
 
 #include <Eigen/Dense>
 
-#include <Handy.h>
+#include <handy/Handy.h>
 
 #include <Spectra/SymEigsSolver.h>
 

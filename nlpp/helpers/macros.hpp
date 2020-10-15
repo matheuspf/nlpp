@@ -28,3 +28,24 @@ inline constexpr CLASS operator OP (CLASS a, CLASS b)   \
 {   \
     return static_cast<CLASS>(static_cast<INT>(a) OP static_cast<INT>(b));  \
 }
+
+#define NLPP_MAKE_CALLER(NAME, HAS_CALL_OP) \
+\
+template <class T, class... Args> \
+using NLPP_CONCAT(NAME, Invoke) = decltype(std::declval<T>().NAME(std::declval<Args>()...));   \
+\
+template <class Impl, class... Args> \
+auto NLPP_CONCAT(NAME, Call) (const Impl& impl, Args&&... args) \
+{ \
+    if constexpr(::nlpp::impl::is_detected_v<NLPP_CONCAT(NAME, Invoke), Impl, Args...>) \
+        return impl.NAME(std::forward<Args>(args)...); \
+\
+    else if constexpr(HAS_CALL_OP &&::nlpp::impl::is_detected_v<std::invoke_result_t, Impl, Args...>) \
+        return impl(std::forward<Args>(args)...); \
+\
+    else \
+        return ::nlpp::impl::nonesuch{}; \
+} \
+\
+template <class Impl, class... Args> \
+using NLPP_CONCAT(NAME, Type) = decltype(NLPP_CONCAT(NAME, Call)(std::declval<Impl>(), std::declval<Args>()...));
