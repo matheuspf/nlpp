@@ -16,6 +16,7 @@ set(nlpp_test_files
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/finite_difference.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/output.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/stop.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/constraints.cpp
 )
 
 target_sources(nlpp_tests PUBLIC ${nlpp_test_files})

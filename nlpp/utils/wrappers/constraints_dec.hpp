@@ -99,9 +99,18 @@ struct Constraints
     {
         if constexpr(IsIneqsEqs<NthArg<0, Fs...>, V>::value)
             return std::get<0>(fs)(x);
-
-        else
+        
+        else if constexpr(HasIneqs && HasEqs)
             return std::make_pair(ineqs(x), eqs(x));
+        
+        else if constexpr(HasIneqs)
+            return ineqs(x);
+        
+        else if constexpr(HasEqs)
+            return eqs(x);
+        
+        else
+            static_assert(always_false<V>, "The functor has no interface for the given parameter");
     }
 
 
