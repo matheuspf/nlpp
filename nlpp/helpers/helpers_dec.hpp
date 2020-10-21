@@ -299,4 +299,16 @@ inline constexpr int sign (T t)
     return int(T{0} < t) - int(t < T{0});
 }
 
+template<class V>
+inline bool isInf (const Eigen::MatrixBase<V>& x)
+{
+	return !((x - x).array() == (x - x).array()).all();
+}
+
+template<class V>
+inline bool isNan (const Eigen::MatrixBase<V>& x)
+{
+	return ((x.array() == x.array())).all();
+}
+
 } // namespace nlpp

@@ -39,12 +39,12 @@ struct Bounds
     template <class U, class W, std::enable_if_t<isVec<U> && isVec<W>, int> = 0>
     Bounds (U&& lb, W&& ub) : lb(std::forward<U>(lb)), ub(std::forward<W>(ub)) {}
 
-    Bounds (int n) : lb(V::Constant(n, std::numeric_limits<Scalar<V>>::min())), ub(V::Constant(n, std::numeric_limits<Scalar<V>>::max())) {}
+    Bounds (int n) : lb(V::Constant(n, -std::numeric_limits<Scalar<V>>::max()/2)), ub(V::Constant(n, std::numeric_limits<Scalar<V>>::max()/2)) {}
 
     template <class U>
     bool within (const Eigen::MatrixBase<U>& x) const
     {
-        return (x >= lb).all() && (x <= ub).all();
+        return (x.array() >= lb.array()).all() && (x.array() <= ub.array()).all();
     }
 
     template <class U>
