@@ -64,6 +64,11 @@ std::ostream& operator<< (std::ostream& out, const Status& status)
     return out << status.toString();
 }
 
+// std::ostream& operator<< (std::ostream& out, const Status::Code& code)
+// {
+//     return out << Status(code);
+// }
+
 bool operator == (const Status& status, const Status::Code& code)
 {
     return status.code == code;

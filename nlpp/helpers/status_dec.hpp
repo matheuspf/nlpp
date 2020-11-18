@@ -40,6 +40,7 @@ struct Status
 };
 
 std::ostream& operator<< (std::ostream& out, const Status& status);
+// std::ostream& operator<< (std::ostream& out, const Status::Code& code);
 bool operator == (const Status&, const Status::Code&);
 bool operator == (const Status::Code&, const Status&);
 

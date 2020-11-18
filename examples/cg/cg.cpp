@@ -28,10 +28,10 @@ int main ()
 
     handy::Benchmark bench;
 
-    auto [x, fx, gx, status] = opt.opt(Opt::functions<V>(func, nlpp::fd::gradient(func)),
-                                       Opt::domain(x0),
-                                       Opt::constraints());
-    // x0 = opt(func, x0, Opt::constraints());
+    // auto [x, fx, gx, status] = opt.opt(Opt::functions<V>(func, nlpp::fd::gradient(func)),
+    //                                    Opt::domain(x0),
+    //                                    Opt::constraints());
+    auto [x, fx, gx, status] = opt(func, x0, Opt::constraints());
 
     handy::print(bench.finish());
 
