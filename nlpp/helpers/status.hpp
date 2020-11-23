@@ -38,6 +38,9 @@ std::string Status::toString() const
     if(code == Code::Ok)
         return "OK";
 
+    if(bool(code & Code::NumIterations))
+        addCode("NumIterations");
+
     if(bool(code & Code::VariableCondition))
         addCode("VariableCondition");
 
@@ -77,6 +80,16 @@ bool operator == (const Status& status, const Status::Code& code)
 bool operator == (const Status::Code& code, const Status& status)
 {
     return code == status.code;
+}
+
+bool operator != (const Status& status, const Status::Code& code)
+{
+    return !(status == code);
+}
+
+bool operator != (const Status::Code& code, const Status& status)
+{
+    return !(code == status);
 }
 
 } // namespace

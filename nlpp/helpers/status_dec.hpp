@@ -43,6 +43,8 @@ std::ostream& operator<< (std::ostream& out, const Status& status);
 // std::ostream& operator<< (std::ostream& out, const Status::Code& code);
 bool operator == (const Status&, const Status::Code&);
 bool operator == (const Status::Code&, const Status&);
+bool operator != (const Status&, const Status::Code&);
+bool operator != (const Status::Code&, const Status&);
 
 NLPP_ENUM_OPERATOR(Status::Code, |, std::size_t)
 NLPP_ENUM_OPERATOR(Status::Code, &, std::size_t)

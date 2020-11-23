@@ -243,6 +243,10 @@ std::string toString (const Eigen::MatrixBase<V>& x)
     return ss.str();
 }
 
+
+template <class T>
+std::string type_name ();
+
 } // namespace impl
 
 

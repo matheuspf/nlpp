@@ -6,7 +6,48 @@
 #include "helpers_dec.hpp"
 
 
-namespace nlpp::poly
+namespace nlpp
+{
+
+namespace impl
+{
+
+// Taken from https://stackoverflow.com/questions/81870/is-it-possible-to-print-a-variables-type-in-standard-c
+template <typename T>
+std::string type_name()
+{
+    using TR = std::remove_reference_t<T>;
+    std::unique_ptr<char, void(*)(void*)> own
+           (
+#ifndef _MSC_VER
+                abi::__cxa_demangle(typeid(TR).name(), nullptr,
+                                           nullptr, nullptr),
+#else
+                nullptr,
+#endif
+                std::free
+           );
+
+    std::string r = own != nullptr ? own.get() : typeid(TR).name();
+
+    if (std::is_const<TR>::value)
+        r += " const";
+
+    if (std::is_volatile<TR>::value)
+        r += " volatile";
+
+    if (std::is_lvalue_reference<T>::value)
+        r += "&";
+
+    else if (std::is_rvalue_reference<T>::value)
+        r += "&&";
+
+    return r;
+}
+
+} // namespace impl
+
+namespace poly
 {
 
 template <class Impl>
@@ -75,4 +116,6 @@ void PolyClass<Base>::set (T&& t)
     operator=(std::forward<T>(t));
 }
 
-} // namespace nlpp::poly
+} // namespace poly
+
+} // namespace nlpp
