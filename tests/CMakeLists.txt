@@ -20,7 +20,7 @@ set(nlpp_test_files
     # ${CMAKE_CURRENT_SOURCE_DIR}/utils/stop.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/constraints.cpp
     # ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/domain.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cg/cg.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/optimizer/optimizer.cpp
 )
 
 target_sources(nlpp_tests PUBLIC ${nlpp_test_files})

@@ -160,6 +160,12 @@ auto domain (V&& v, Vs&&... vs)
     return Domain<::nlpp::impl::Plain<V>, Cond>(std::forward<V>(v), std::forward<Vs>(vs)...);
 }
 
+template <class V, class... Vs>
+auto startDomain (V&& v, Vs&&... vs)
+{
+    return domain<Conditions::Start>(std::forward<V>(v), std::forward<Vs>(vs)...);
+}
+
 
 
 
