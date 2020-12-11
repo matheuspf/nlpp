@@ -84,3 +84,5 @@ endif()
 if(NLPP_BUILD_BENCH)
     add_subdirectory(benchmark)
 endif()
+
+#add_subdirectory(examples/torch)
