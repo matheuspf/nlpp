@@ -47,7 +47,9 @@ set(header_folders ${header_folders} PARENT_SCOPE)
 add_library(nlpp INTERFACE)
 add_library(nlpp::nlpp ALIAS nlpp)
 
-target_compile_features(nlpp INTERFACE cxx_std_17)
+target_compile_features(nlpp INTERFACE cxx_std_20)
+
+target_compile_options(nlpp INTERFACE -Wno-deprecated)
 
 target_sources(nlpp INTERFACE "$<BUILD_INTERFACE:${detail_header_files};${header_files}>")
 
@@ -58,7 +60,7 @@ target_include_directories(nlpp INTERFACE
 
 target_link_libraries(nlpp
     INTERFACE Eigen3::Eigen
-    INTERFACE Spectra::Spectra
+    INTERFACE Spectra
     INTERFACE handy::handy
 )
 
