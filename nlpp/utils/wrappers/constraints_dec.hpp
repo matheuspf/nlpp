@@ -14,9 +14,23 @@ NLPP_MAKE_CALLER(eqs, false);
 NLPP_MAKE_CALLER(ineqsJac, false);
 NLPP_MAKE_CALLER(eqsJac, false);
 
+using ::nlpp::impl::VecType;
+
+template <class F, class V>
+concept IneqsFunctor = 
+requires(const F& f, const Plain<V>& v)
+{
+    { f.ineqs(v) } -> VecType;
+};
+
+// template <class Impl, class V>
+// struct IsIneqs : std::bool_constant< isVec<V> && isVec<ineqsType<Impl, Plain<V>>> > {};
 
 template <class Impl, class V>
-struct IsIneqs : std::bool_constant< isVec<V> && isVec<ineqsType<Impl, Plain<V>>> > {};
+struct IsIneqs : std::bool_constant< IneqsFunctor<Impl, V> > {};
+
+
+
 
 template <class Impl, class V>
 struct IsEqs : std::bool_constant< isVec<V> && isVec<eqsType<Impl, Plain<V>>> > {};

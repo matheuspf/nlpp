@@ -49,3 +49,12 @@ auto NLPP_CONCAT(NAME, Call) (const Impl& impl, Args&&... args) \
 \
 template <class Impl, class... Args> \
 using NLPP_CONCAT(NAME, Type) = decltype(NLPP_CONCAT(NAME, Call)(std::declval<Impl>(), std::declval<Args>()...));
+
+
+
+#define NLPP_MAKE_CALLER__(NAME, HAS_CALL_OP) \
+\
+template <class F, class... Args> \
+concept NLPP_CONCAT(NAME, Functor) = \
+requires(const F& f, Args&&... args) { { f.NAME(std::forward<Args>(args)...) } } || \
+(HAS_CALL_OP && requires(const F& f, Args&&... args) { { f(std::forward<Args>(args)...) } }); || \

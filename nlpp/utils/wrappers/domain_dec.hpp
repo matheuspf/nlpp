@@ -20,12 +20,12 @@ namespace impl
 {
 
 using ::nlpp::impl::Plain, ::nlpp::impl::Plain1D, ::nlpp::impl::Plain2D, ::nlpp::impl::EmptyBase,
-      ::nlpp::impl::Scalar, ::nlpp::impl::isVec, ::nlpp::impl::isMat;
+      ::nlpp::impl::Scalar, ::nlpp::impl::isVec, ::nlpp::impl::isMat, ::nlpp::impl::VecType, ::nlpp::impl::MatType;
 
-template <class V>
+template <VecType V>
 struct Start
 {
-    template <class U, std::enable_if_t<isVec<U>, int> = 0>
+    template <VecType U>
     Start (U&& x0) : x0(std::forward<U>(x0)) {}
 
     Start (int n) : x0(V::Constant(n, 0.0)) {}
@@ -33,15 +33,15 @@ struct Start
     V x0;
 };
 
-template <class V>
+template <VecType V>
 struct Bounds
 {
-    template <class U, class W, std::enable_if_t<isVec<U> && isVec<W>, int> = 0>
+    template <VecType U, VecType W>
     Bounds (U&& lb, W&& ub) : lb(std::forward<U>(lb)), ub(std::forward<W>(ub)) {}
 
     Bounds (int n) : lb(V::Constant(n, -std::numeric_limits<Scalar<V>>::max()/2)), ub(V::Constant(n, std::numeric_limits<Scalar<V>>::max()/2)) {}
 
-    template <class U>
+    template <VecType U>
     bool within (const Eigen::MatrixBase<U>& x) const
     {
         return (x.array() >= lb.array()).all() && (x.array() <= ub.array()).all();

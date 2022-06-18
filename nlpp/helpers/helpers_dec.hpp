@@ -126,6 +126,16 @@ constexpr bool isVec = IsVec<T>::value;
 
 template <typename T>
 constexpr bool isScalar = IsScalar<T>::value;
+
+// Concepts definition
+template <typename T>
+concept MatType = IsMat<T>::value;
+
+template <typename T>
+concept VecType = IsVec<T>::value;
+
+template <typename T>
+concept ScalarType = IsScalar<T>::value;
 //@}
 
 
