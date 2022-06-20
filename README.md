@@ -78,4 +78,8 @@ model(..., Eq, Jac)
 model(..., Ineq, Eq)
 model(..., IneqJac, EqJac)
 model(..., Ineq, Jac, Eq, Jac)
+
+// Nonlinear ineqs + eqs on same call
+// TODO: support this
+model(..., IneqEq)
 ```

@@ -128,11 +128,14 @@ template <typename T>
 constexpr bool isScalar = IsScalar<T>::value;
 
 // Concepts definition
-template <typename T>
-concept MatType = IsMat<T>::value;
+template <class V>
+concept MatrixBaseType = std::derived_from<Plain<V>, Eigen::MatrixBase<Plain<V>>>;
 
-template <typename T>
-concept VecType = IsVec<T>::value;
+template <class V>
+concept VecType = MatrixBaseType<V> && Plain<V>::ColsAtCompileTime == 1;
+
+template <class V>
+concept MatType = MatrixBaseType<V> && Plain<V>::ColsAtCompileTime != 1;
 
 template <typename T>
 concept ScalarType = IsScalar<T>::value;

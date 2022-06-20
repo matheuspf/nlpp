@@ -12,7 +12,7 @@ add_custom_target(nlpp_examples)
 
 
 set(nlpp_example_files
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/constraints.cpp
+    # ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/constraints.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/domain.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/wrappers/functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/stop.cpp

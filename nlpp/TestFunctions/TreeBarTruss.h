@@ -6,16 +6,21 @@
 namespace nlpp
 {
 
-struct TreeBarTruss
+using impl::VecType;
+
+struct TreeBarTrussFunc
 {
     template <class V>
-    impl::Scalar<V> function (const V& x) const
+    impl::Scalar<V> operator() (const V& x) const
     {
         return (2.0 * std::sqrt(2.0) * x(0) + x(1)) * 100.0;
     }
+};
 
+struct TreeBarTrussIneqs
+{
     template <class V>
-    VecX<impl::Scalar<V>> ineqs (const V& x) const
+    VecX<impl::Scalar<V>> operator() (const V& x) const
     {
         using Float = impl::Scalar<V>;
 

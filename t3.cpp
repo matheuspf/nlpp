@@ -1,32 +1,62 @@
-#include <type_traits>
-#include <iostream>
-#include <string>
-#include <Eigen/Dense>
+#include <bits/stdc++.h>
+#include "nlpp/TestFunctions/Rosenbrock.h"
 
 using namespace std;
 
 
-template <class T>
-// concept Vector = std::is_convertible_v<std::decay_t<T>, Eigen::VectorXd>;
-concept Vector = std::is_convertible_v<decltype(&std::declval<std::decay_t<T>>()), decltype(&std::declval<Eigen::MatrixBase<std::decay_t<T>>>()) >;
+template <class V>
+using Plain = typename std::decay_t<V>::PlainObject;
+
+template <class V>
+concept MatrixBaseType = std::derived_from<Plain<V>, Eigen::MatrixBase<Plain<V>>>;
+
+template <class V>
+concept VecType = MatrixBaseType<V> && Plain<V>::ColsAtCompileTime == 1;
+
+template <class V>
+concept MatType = MatrixBaseType<V> && Plain<V>::ColsAtCompileTime != 1;
 
 
-// template <class T, class V>
-// concept Function = std::is_same_v<std::decay_t<V>, int> &&
-// (requires(const T& f, V v)
-// {
-//     { f(v) } -> std::floating_point;
-// } ||
-// requires(const T& f, V v)
-// {
-//     { f.function(v) } -> std::floating_point;
-// })
-// ;
+template <class F, class V>
+concept FuncBase = VecType<V> && requires(const F& f, const V& v)
+{
+    { f(v) } -> std::floating_point;
+};
+
+template <class F, typename... Args>
+concept FuncHelper = (FuncBase<F, Eigen::VectorX<Args>> || ...);
+
+template <class F>
+concept Func = FuncHelper<F, float, double, long double>;
+
+
+
+template <Func F, class V>
+auto foo (const F& f, const V& v)
+{
+    return f(v);
+}
+
+
+
+
+float goo (const Eigen::Vector2<double>& x)
+{
+    return 10;
+}
+
+
+template <class> class Prt;
+
 
 int main ()
 {
-    std::cout << Vector<int> << "\n";
-    std::cout << Vector<Eigen::VectorXd> << "\n";
+    nlpp::Rosenbrock func;
+    Eigen::VectorXd v = Eigen::VectorXd::Zero(2);
+    
+    foo(func, v);
+    foo(goo, v);
+    
 
     return 0;
 }

@@ -17,8 +17,8 @@ int main ()
     Opt opt;
     opt.stop.maxIterations = 10;
 
-    nlpp::TreeBarTruss func;
-    nlpp::TreeBarTruss constraints;
+    nlpp::TreeBarTrussFunc func;
+    nlpp::TreeBarTrussIneqs constraints;
 
     // nlpp::P95<> func;
     // nlpp::P95<> constraints;
@@ -29,7 +29,7 @@ int main ()
         x = opt(func, x, constraints);
     }));
 
-    handy::print(x.transpose(), "\t", func.function(x));
+    handy::print(x.transpose(), "\t", func(x));
 
 
     return 0;
