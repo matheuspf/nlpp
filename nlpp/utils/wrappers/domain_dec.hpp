@@ -2,16 +2,6 @@
 
 #include "helpers.hpp"
 
-#define NLPP_DEFINE_DOMAIN_VALUE(NAME, ...) \
-template <class>    \
-struct NAME;       \
-\
-template <class V>  \
-struct NAME<Eigen::MatrixBase<V>>  \
-{   \
-    const V value;  \
-};
-
 
 namespace nlpp::wrap
 {
@@ -19,8 +9,9 @@ namespace nlpp::wrap
 namespace impl
 {
 
-using ::nlpp::impl::Plain, ::nlpp::impl::Plain1D, ::nlpp::impl::Plain2D, ::nlpp::impl::EmptyBase,
-      ::nlpp::impl::Scalar, ::nlpp::impl::isVec, ::nlpp::impl::isMat, ::nlpp::impl::VecType, ::nlpp::impl::MatType;
+using ::nlpp::impl::VecType, ::nlpp::impl::MatType, ::nlpp::impl::Plain, ::nlpp::impl::Plain1D,
+      ::nlpp::impl::Empty, ::nlpp::impl::TypeOrEmpty;
+
 
 template <VecType V>
 struct Start
@@ -47,7 +38,7 @@ struct Bounds
         return (x.array() >= lb.array()).all() && (x.array() <= ub.array()).all();
     }
 
-    template <class U>
+    template <VecType U>
     bool within (const Eigen::MatrixBase<U>& x, int i) const
     {
         return x(i) >= lb(i) && x(i) <= ub(i);
@@ -57,15 +48,15 @@ struct Bounds
     V ub;
 };
 
-template <class V>
+template <VecType V>
 struct LinearInequalities
 {
-    template <class U, class W, std::enable_if_t<isMat<U> && isVec<W>, int> = 0>
+    template <MatType U, VecType W, std::enable_if_t<isMat<U> && isVec<W>, int> = 0>
     LinearInequalities (U&& A, W&& b) : A(std::forward<U>(A)), b(std::forward<W>(b)) {}
 
     LinearInequalities (int n) : A(Plain2D<V>::Constant(1, n, 0.0)), b(V::Constant(1, 0.0)) {}
 
-    template <class U>
+    template <VecType U>
     auto ineqs (const Eigen::MatrixBase<U>& x) const
     {
         return A * x - b;
@@ -75,15 +66,15 @@ struct LinearInequalities
     V b;
 };
 
-template <class V>
+template <VecType V>
 struct LinearEqualities
 {
-    template <class U, class W, std::enable_if_t<isMat<U> && isVec<W>, int> = 0>
+    template <MatType U, VecType W, std::enable_if_t<isMat<U> && isVec<W>, int> = 0>
     LinearEqualities (U&& Aeq, W&& beq) : Aeq(std::forward<U>(Aeq)), beq(std::forward<W>(beq)) {}
 
     LinearEqualities (int n) : Aeq(Plain2D<V>::Constant(1, n, 0.0)), beq(V::Constant(1, 0.0)) {}
 
-    template <class U>
+    template <VecType U>
     auto eqs (const Eigen::MatrixBase<U>& x) const
     {
         return Aeq * x - beq;
@@ -96,14 +87,15 @@ struct LinearEqualities
 } // namespace impl
 
 
-using ::nlpp::impl::isVec, ::nlpp::impl::isMat, ::nlpp::impl::Plain1D;
+using ::nlpp::impl::VecType, ::nlpp::impl::MatType, ::nlpp::impl::Plain, ::nlpp::impl::TypeOrEmptyBase;
 
-/// V_ must be PLAIN!!!
-template <class V_, Conditions Cond>
-struct Domain : public std::conditional_t<bool(Cond & Conditions::Start), impl::Start<V_>, ::nlpp::impl::EmptyBase<impl::Start<V_>>>,
-                public std::conditional_t<bool(Cond & Conditions::Bounds), impl::Bounds<V_>, ::nlpp::impl::EmptyBase<impl::Bounds<V_>>>,
-                public std::conditional_t<bool(Cond & Conditions::LinearInequalities), impl::LinearInequalities<V_>, ::nlpp::impl::EmptyBase<impl::LinearInequalities<V_>>>,
-                public std::conditional_t<bool(Cond & Conditions::LinearEqualities), impl::LinearEqualities<V_>, ::nlpp::impl::EmptyBase<impl::LinearEqualities<V_>>>
+
+
+template <VecType V_, Conditions Cond>
+struct Domain : public TypeOrEmptyBase<impl::Start<V_>, bool(Cond & Conditions::Start)>,
+                public TypeOrEmptyBase<impl::Bounds<V_>, bool(Cond & Conditions::Bounds)>,
+                public TypeOrEmptyBase<impl::LinearInequalities<V_>, bool(Cond & Conditions::LinearInequalities)>,
+                public TypeOrEmptyBase<impl::LinearEqualities<V_>, bool(Cond & Conditions::LinearEqualities)>
 {
     using V = V_;
 
@@ -115,52 +107,64 @@ struct Domain : public std::conditional_t<bool(Cond & Conditions::Start), impl::
         HasLinearEqualities = bool(Cond & Conditions::LinearEqualities)
     };
 
-    using Start = std::conditional_t<bool(Cond & Conditions::Start), impl::Start<V>, ::nlpp::impl::EmptyBase<impl::Start<V>>>;
-    using Bounds = std::conditional_t<bool(Cond & Conditions::Bounds), impl::Bounds<V>, ::nlpp::impl::EmptyBase<impl::Bounds<V>>>;
-    using LinearInequalities = std::conditional_t<bool(Cond & Conditions::LinearInequalities), impl::LinearInequalities<V>, ::nlpp::impl::EmptyBase<impl::LinearInequalities<V>>>;
-    using LinearEqualities = std::conditional_t<bool(Cond & Conditions::LinearEqualities), impl::LinearEqualities<V>, ::nlpp::impl::EmptyBase<impl::LinearEqualities<V>>>;
+    using Start = TypeOrEmptyBase<impl::Start<V_>, HasStart>;
+    using Bounds = TypeOrEmptyBase<impl::Bounds<V_>, HasBounds>;
+    using LinearInequalities = TypeOrEmptyBase<impl::LinearInequalities<V_>, HasLinearInequalities>;
+    using LinearEqualities = TypeOrEmptyBase<impl::LinearEqualities<V_>, HasLinearEqualities>;
 
 
-    template <class V1, std::enable_if_t<isVec<V1> && HasStart, int> = 0>
-    Domain (V1&& x0) : Start(std::forward<V1>(x0)), Bounds(x0.rows()), LinearInequalities(x0.rows()), LinearEqualities(x0.rows())
+    template <VecType U, bool Enable = HasStart>
+    requires Enable
+    Domain (U&& start) : Start(std::forward<U>(start)), Bounds(start.rows()),
+                         LinearInequalities(start.rows()), LinearEqualities(start.rows())
     {
     }
 
-    template <class V1, class V2, std::enable_if_t<(isVec<V1> && isVec<V2>) && HasBounds, int> = 0>
-    Domain (V1&& lu, V2&& ub) : Start(lu.rows()), Bounds(std::forward<V1>(lu), std::forward<V2>(ub)), LinearInequalities(lu.rows()), LinearEqualities(lu.rows())
+    template <VecType U, VecType W, bool Enable = HasBounds>
+    requires Enable
+    Domain (U&& lb, W&& ub) : Start(lb.rows()), Bounds(std::forward<U>(lb), std::forward<W>(ub)),
+                              LinearInequalities(lb.rows()), LinearEqualities(lb.rows())
     {
     }
 
-    template <class V1, class V2, class V3, std::enable_if_t<(isVec<V1> && isVec<V2> && isVec<V3>) && (HasStart && HasBounds), int> = 0>
-    Domain (V1&& x0, V2&& lb, V3&& ub) : Start(std::forward<V1>(x0)), Bounds(std::forward<V1>(lb), std::forward<V2>(ub)), LinearInequalities(x0.rows()), LinearEqualities(x0.rows())
+    template <VecType U, VecType W, VecType Z, bool Enable = HasStart && HasBounds>
+    requires Enable
+    Domain (U&& start, W&& lb, Z&& ub) : Start(std::forward<U>(start)), Bounds(std::forward<W>(lb), std::forward<Z>(ub)),
+                                         LinearInequalities(start.rows()), LinearEqualities(start.rows())
     {
     }
 
-    template <class V1, class V2, std::enable_if_t<(isMat<V1> && isVec<V2>) && HasLinearInequalities, int> = 0>
-    Domain (V1&& A, V2&& b) : Start(A.cols()), Bounds(A.cols()), LinearInequalities(std::forward<V1>(A), std::forward<V2>(b)), LinearEqualities(A.cols())
+
+    template <MatType U, VecType W, bool Enable = HasLinearInequalities>
+    requires Enable
+    Domain (U&& A, W&& b) : Start(b.rows()), Bounds(b.rows()),
+                            LinearInequalities(std::forward<U>(A), std::forward<W>(b)),
+                            LinearEqualities(b.rows())
     {
     }
 
-    template <class V1, class V2, std::enable_if_t<(isMat<V1> && isVec<V2>) && HasLinearEqualities, int> = 0>
-    Domain (V1&& Aeq, V2&& beq) : Start(Aeq.cols()), Bounds(Aeq.cols()), LinearInequalities(Aeq.cols()), LinearEqualities(std::forward<V1>(Aeq), std::forward<V2>(beq))
+    template <MatType U, VecType W, bool Enable = HasLinearEqualities, bool Enable2 = !HasLinearInequalities>
+    requires Enable && Enable2
+    Domain (U&& Aeq, W&& beq) : Start(beq.rows()), Bounds(beq.rows()), LinearInequalities(beq.rows()), 
+                                LinearEqualities(std::forward<U>(Aeq), std::forward<W>(beq))
     {
     }
 };
 
 
-template <class V>
+template <VecType V>
 using StartDomain = Domain<V, Conditions::Start>;
 
-template <class V>
+template <VecType V>
 using BoxDomain = Domain<V, Conditions::Bounds>;
 
-template <Conditions Cond, class V, class... Vs>
+template <Conditions Cond, VecType V, VecType... Vs>
 auto domain (V&& v, Vs&&... vs)
 {
     return Domain<::nlpp::impl::Plain<V>, Cond>(std::forward<V>(v), std::forward<Vs>(vs)...);
 }
 
-template <class V, class... Vs>
+template <VecType V, VecType... Vs>
 auto startDomain (V&& v, Vs&&... vs)
 {
     return domain<Conditions::Start>(std::forward<V>(v), std::forward<Vs>(vs)...);
@@ -170,4 +174,6 @@ auto startDomain (V&& v, Vs&&... vs)
 
 
 } // namespace nlpp::wrap
+
+
 
