@@ -245,7 +245,25 @@ template <typename> struct PrintType;
 template <typename...> struct EmptyBase
 {
     EmptyBase(...) {}
+
+    template <class T=nullptr_t>
+    EmptyBase(const std::initializer_list<T>&) {}
 };
+
+struct Empty
+{
+    Empty(...) {}
+
+    template <class T=nullptr_t>
+    Empty(const std::initializer_list<T>&) {}
+};
+
+
+template <class T, bool B>
+using TypeOrEmptyBase = std::conditional_t<B, T, EmptyBase<T>>;
+
+template <class T, bool B>
+using TypeOrEmpty = std::conditional_t<B, T, Empty>;
 
 
 template <class V>
