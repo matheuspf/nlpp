@@ -27,6 +27,7 @@ int main ()
 
     handy::print(handy::benchmark([&]{
         x = opt(func, x, constraints);
+        // x = opt(func, x, nlpp::wrap::constraints(constraints, {}, {}));
     }));
 
     handy::print(x.transpose(), "\t", func(x));
