@@ -121,5 +121,10 @@ int main ()
     handy::print(funcs.hessianDir(y+y, x).transpose());
     handy::print(std::get<0>(funcs(x+x)), std::get<0>(funcs(y+y)));
 
+
+    auto fx = wrap::poly::fd::funcGrad([](const auto& x){ return x[0]; });
+    std::cout << std::get<0>(fx(Eigen::VectorXd{10})) << "\n";
+
+
     return 0;
 }

@@ -459,10 +459,9 @@ using HessianBase = std::function<void(const Plain<V>&, Plain2D<V>&)>;
 
 template <class V = ::nlpp::Vec>
 using Visitor = ::nlpp::wrap::impl::Visitor<FunctionBase<V>, GradientBase<V>, HessianBase<V>>;
-// using Visitor = ::nlpp::wrap::impl::Visitor<Function<V>, Gradient<V>, FunctionGradient<V>, Hessian<V>>;
 
 template <class V = ::nlpp::Vec>
-using Functions = ::nlpp::wrap::Functions<Conditions::AllFunctions, Visitor<V>>;
+using Functions = ::nlpp::wrap::impl::Functions<Conditions::AllFunctions, Visitor<V>>;
 
 
 template <class V = ::nlpp::Vec, class... Fs>
@@ -504,9 +503,9 @@ constexpr auto functions (const Fs&... fs)
 {
     using TFs = std::tuple<Fs...>;
 
-    Function<V> function;
-    Gradient<V> gradient;
-    Hessian<V> hessian;
+    FunctionBase<V> function;
+    GradientBase<V> gradient;
+    HessianBase<V> hessian;
 
     constexpr bool addGradient = bool(Cond & Conditions::Gradient) && !impl::HasOp<impl::IsFuncGrad, V, TFs> && !impl::HasOp<impl::IsGradient, V, TFs>;
     constexpr bool addHessian  = bool(Cond & Conditions::Hessian)  && !impl::HasOp<impl::IsHessian, V, TFs>;
@@ -524,24 +523,24 @@ constexpr auto functions (const Fs&... fs)
         using GradientFD = ::nlpp::fd::Gradient<Func, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep>;
         using HessianFD = ::nlpp::fd::Hessian<Func, ::nlpp::fd::Forward, ::nlpp::fd::AutoStep, Scalar<V>>;
 
-        function = [impl = ::nlpp::wrap::impl::Visitor<Func>(func)](const Plain<V>& x) -> Scalar<V> { return impl.function(x); };
+        function = [f = ::nlpp::wrap::impl::Visitor<Func>(func)](const Plain<V>& x) -> Scalar<V> { return f.function(x); };
 
         if constexpr(addGradient)
-            gradient = [impl = ::nlpp::wrap::impl::Visitor<GradientFD>(GradientFD(func))](const Plain<V>& x, Plain<V>& g) { impl.gradient(x, g); };
+            gradient = [f = ::nlpp::wrap::impl::Visitor<GradientFD>(GradientFD(func))](const Plain<V>& x, Plain<V>& g) { f.gradient(x, g); };
 
         if constexpr(addHessian)
-            hessian = [impl = ::nlpp::wrap::impl::Visitor<HessianFD>(HessianFD(func))](const Plain<V>& x, Plain2D<V>& h) { impl.hessian(x, h); };
+            hessian = [f = ::nlpp::wrap::impl::Visitor<HessianFD>(HessianFD(func))](const Plain<V>& x, Plain2D<V>& h) { f.hessian(x, h); };
     }
 
     else
     {
-        function = [impl = ::nlpp::wrap::impl::Visitor<Fs...>(fs...)](const Plain<V>& x) -> Scalar<V> { return impl.function(x); };
+        function = [f = ::nlpp::wrap::impl::Visitor<Fs...>(fs...)](const Plain<V>& x) -> Scalar<V> { return f.function(x); };
 
         if constexpr(bool(Cond & Conditions::Gradient))
-            gradient = [impl = ::nlpp::wrap::impl::Visitor<Fs...>(fs...)](const Plain<V>& x, Plain<V>& g) { impl.gradient(x, g); };
+            gradient = [f = ::nlpp::wrap::impl::Visitor<Fs...>(fs...)](const Plain<V>& x, Plain<V>& g) { f.gradient(x, g); };
 
         if constexpr(bool(Cond & Conditions::Hessian))
-            hessian = [impl = ::nlpp::wrap::impl::Visitor<Fs...>(fs...)](const Plain<V>& x, Plain<V>& h) { impl.hessian(x, h); };
+            hessian = [f = ::nlpp::wrap::impl::Visitor<Fs...>(fs...)](const Plain<V>& x, Plain<V>& h) { f.hessian(x, h); };
     }
 
     return ::nlpp::wrap::poly::functions<V>(function, gradient, hessian);
