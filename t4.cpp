@@ -1,6 +1,11 @@
-#include <bits/stdc++.h>
+#include <initializer_list>
+#include <iostream>
+#include <Eigen/Dense>
+
 
 using namespace std;
+
+
 
 
 
@@ -30,11 +35,18 @@ void foo (const std::initializer_list<T>&)
 
 void goo(Empty<>, int, std::string, Empty<>) {}
 
+template <class... T>
+void hoo (const T&... t)
+{
+    goo(t...);
+}
+
 
 int main ()
 {
     foo({});
     goo({}, 10, " ", {});
+    hoo({}, 10, " ", {});
 
     return 0;
 }

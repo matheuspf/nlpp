@@ -49,3 +49,22 @@ auto NLPP_CONCAT(NAME, Call) (const Impl& impl, Args&&... args) \
 \
 template <class Impl, class... Args> \
 using NLPP_CONCAT(NAME, Type) = decltype(NLPP_CONCAT(NAME, Call)(std::declval<Impl>(), std::declval<Args>()...));
+
+
+#define NLPP_VEC_TYPES Eigen::VectorX<float>, Eigen::VectorX<double>, Eigen::VectorX<long double>
+
+
+#define NLPP_FUNCTOR_CONCEPT_IMPL(NAME, IMPL, ...) \
+\
+template <class F, typename... Types> \
+concept NLPP_CONCAT(NAME, Helper) = (IMPL<F, Types> || ...); \
+\
+template <class F> \
+concept NAME = NLPP_CONCAT(NAME, Helper)<F, __VA_ARGS__>; \
+\
+template <class F> \
+static constexpr bool NLPP_CONCAT(NAME, _v) = NLPP_CONCAT(NAME)
+
+
+#define NLPP_FUNCTOR_CONCEPT(NAME, IMPL) \
+NLPP_FUNCTOR_CONCEPT_IMPL(NAME, IMPL, NLPP_EXPAND(NLPP_VEC_TYPES))

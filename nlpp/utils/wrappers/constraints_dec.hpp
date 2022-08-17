@@ -19,20 +19,8 @@ concept IneqsFunctorBase = VecType<V> && requires(const F& f, const V& v)
     { f(v) } -> VecType;
 };
 
-template <class F, typename... Types>
-concept IneqsFunctorHelper = (IneqsFunctorBase<F, Eigen::VectorX<Types>> || ...);
-
-template <class F>
-concept IneqsFunctor = IneqsFunctorHelper<F, float, double, long double>;
-
-
 template <class F, class V>
 concept EqsFunctorBase = IneqsFunctorBase<F, V>;
-
-template <class F>
-concept EqsFunctor = IneqsFunctor<F>;
-
-
 
 template <class T>
 concept TupleVecType = requires(const T& t)
@@ -41,18 +29,17 @@ concept TupleVecType = requires(const T& t)
     { std::get<1>(t) } -> VecType;
 };
 
-
 template <class F, class V>
 concept IneqsEqsFunctorBase = VecType<V> && requires(const F& f, const V& v)
 {
     { f(v) } -> TupleVecType;
 };
 
-template <class F, typename... Types>
-concept IneqsEqsFunctorHelper = (IneqsEqsFunctorBase<F, Eigen::VectorX<Types>> || ...);
 
-template <class F>
-concept IneqsEqsFunctor = IneqsEqsFunctorHelper<F, float, double, long double>;
+NLPP_FUNCTOR_CONCEPT(IneqsFunctor, IneqsFunctorBase)
+NLPP_FUNCTOR_CONCEPT(EqsFunctor, EqsFunctorBase)
+NLPP_FUNCTOR_CONCEPT(IneqsEqsFunctor, IneqsEqsFunctorBase)
+
 
 
 

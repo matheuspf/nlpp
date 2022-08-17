@@ -1,4 +1,5 @@
-#include <bits/stdc++.h>
+#include <type_traits>
+#include <iostream>
 #include "nlpp/TestFunctions/Rosenbrock.h"
 
 using namespace std;
@@ -51,11 +52,31 @@ template <class> class Prt;
 
 int main ()
 {
-    nlpp::Rosenbrock func;
-    Eigen::VectorXd v = Eigen::VectorXd::Zero(2);
+    // nlpp::Rosenbrock func;
+    // Eigen::VectorXd v = Eigen::VectorXd::Zero(2);
     
-    foo(func, v);
-    foo(goo, v);
+    // foo(func, v);
+    // foo(goo, v);
+
+    std::cout << VecType<Eigen::VectorX<float>> << "\n";
+    std::cout << VecType<Eigen::VectorX<double>> << "\n";
+    std::cout << VecType<Eigen::MatrixX<float>> << "\n";
+    std::cout << VecType<Eigen::MatrixX<double>> << "\n";
+
+    std::cout << "\n";
+
+    std::cout << MatType<Eigen::VectorX<float>> << "\n";
+    std::cout << MatType<Eigen::VectorX<double>> << "\n";
+    std::cout << MatType<Eigen::MatrixX<float>> << "\n";
+    std::cout << MatType<Eigen::MatrixX<double>> << "\n";
+
+    std::cout << "\n";
+
+    std::cout << VecType<decltype(Eigen::VectorX<float>{} + Eigen::VectorX<float>{})> << "\n";
+    std::cout << VecType<decltype(Eigen::MatrixX<float>{} + Eigen::MatrixX<float>{})> << "\n";
+    std::cout << MatType<decltype(Eigen::VectorX<float>{} + Eigen::VectorX<float>{})> << "\n";
+    std::cout << MatType<decltype(Eigen::MatrixX<float>{} + Eigen::MatrixX<float>{})> << "\n";
+    
     
 
     return 0;

@@ -28,61 +28,129 @@ namespace nlpp::wrap
 namespace impl
 {
 
+using ::nlpp::impl::VecType, ::nlpp::impl::MatType, ::nlpp::impl::Empty;
+
+
+template <class T>
+concept FuncGradTupleType = requires(const T& t)
+{
+    { std::get<0>(t) } -> std::floating_point;
+    { std::get<1>(t) } -> VecType;
+};
+
+
+template <class F, class V>
+concept FuncTypeBase = VecType<V> && requires (const F& f, const V& v)
+{
+    { f(v) } -> std::floating_point;
+};
+
+
+template <class F, class V>
+concept GradTypeBase_0 = VecType<V> && requires (const F& f, const V& v, Plain<V>& vref)
+{
+    { f(v, vref) } -> std::same_as<void>;
+};
+
+template <class F, class V>
+concept GradTypeBase_1 = VecType<V> && requires (const F& f, const V& v)
+{
+    { f(v) } -> VecType;
+};
+
+template <class F, class V>
+concept GradTypeBase_2 = VecType<V> && requires (const F& f, const V& v, Plain<V>& vref, Scalar<V> scalar)
+{
+    { f(v, vref, scalar) } -> std::same_as<void>;
+};
+
+template <class F, class V>
+concept GradTypeBase_3 = VecType<V> && requires (const F& f, const V& v, const V& u)
+{
+    { f(v, u) } -> std::floating_point;
+};
+
+template <class F, class V>
+concept GradTypeBase_4 = VecType<V> && requires (const F& f, const V& v, const V& u, Scalar<V> scalar)
+{
+    { f(v, u, scalar) } -> std::floating_point;
+};
+
+template <class F, class V>
+concept GradTypeBase = GradTypeBase_0<F, V> || GradTypeBase_1<F, V> || GradTypeBase_2<F, V> ||
+                       GradTypeBase_3<F, V> || GradTypeBase_4<F, V>;
+
+
+template <class F, class V>
+concept FuncGradTypeBase_0 = VecType<V> && requires (const F& f, const V& v, Plain<V>& vref, bool calcGrad)
+{
+    { f(v, vref, calcGrad) } -> std::floating_point;
+};
+
+template <class F, class V>
+concept FuncGradTypeBase_1 = VecType<V> && requires (const F& f, const V& v, Plain<V>& vref)
+{
+    { f(v, vref) } -> std::floating_point;
+};
+
+template <class F, class V>
+concept FuncGradTypeBase_2 = VecType<V> && requires (const F& f, const V& v)
+{
+    { f(v) } -> FuncGradTupleType;
+};
+
+template <class F, class V>
+concept FuncGradTypeBase = FuncGradTypeBase_0<F, V> || FuncGradTypeBase_1<F, V> || FuncGradTypeBase_2<F, V>;
+
+
+template <class F, class V>
+concept HessianTypeBase_0 = VecType<V> && requires (const F& f, const V& v, Plain2D<V>& mref)
+{
+    { f(v, mref) } -> std::same_as<void>;
+};
+
+template <class F, class V>
+concept HessianTypeBase_1 = VecType<V> && requires (const F& f, const V& v)
+{
+    { f(v) } -> MatType;
+};
+
+template <class F, class V>
+concept HessianTypeBase_2 = VecType<V> && requires (const F& f, const V& v, const V& u)
+{
+    { f(v, u) } -> VecType;
+};
+
+template <class F, class V>
+concept HessianTypeBase = HessianTypeBase_0<F, V> || HessianTypeBase_1<F, V> || HessianTypeBase_2<F, V>;
+
+
+
+NLPP_FUNCTOR_CONCEPT(FuncType, FuncTypeBase)
+
+NLPP_FUNCTOR_CONCEPT(GradType_0, GradTypeBase_0)
+NLPP_FUNCTOR_CONCEPT(GradType_1, GradTypeBase_1)
+NLPP_FUNCTOR_CONCEPT(GradType_2, GradTypeBase_2)
+NLPP_FUNCTOR_CONCEPT(GradType_3, GradTypeBase_3)
+NLPP_FUNCTOR_CONCEPT(GradType_4, GradTypeBase_4)
+NLPP_FUNCTOR_CONCEPT(GradType, GradTypeBase)
+
+NLPP_FUNCTOR_CONCEPT(FuncGradType_0, FuncGradTypeBase_0)
+NLPP_FUNCTOR_CONCEPT(FuncGradType_1, FuncGradTypeBase_1)
+NLPP_FUNCTOR_CONCEPT(FuncGradType_2, FuncGradTypeBase_2)
+NLPP_FUNCTOR_CONCEPT(FuncGradType, FuncGradTypeBase)
+
+NLPP_FUNCTOR_CONCEPT(HessianType_0, HessianTypeBase_0)
+NLPP_FUNCTOR_CONCEPT(HessianType_1, HessianTypeBase_1)
+NLPP_FUNCTOR_CONCEPT(HessianType_2, HessianTypeBase_2)
+NLPP_FUNCTOR_CONCEPT(HessianType, HessianTypeBase)
+
+
+
 NLPP_MAKE_CALLER(function, true);
 NLPP_MAKE_CALLER(gradient, true);
 NLPP_MAKE_CALLER(funcGrad, true);
 NLPP_MAKE_CALLER(hessian, true);
-
-
-template <class Impl, class V>
-struct IsFunction : std::bool_constant< isVec<V> && std::is_floating_point_v<functionType<Impl, Plain<V>>> > {};
-
-
-template <class Impl, class V>
-struct IsGradient_0 : std::bool_constant< isVec<V> && std::is_same_v<gradientType<Impl, Plain<V>, Plain<V>&>, void> > {};
-
-template <class Impl, class V>
-struct IsGradient_1 : std::bool_constant< isVec<V> && isVec<gradientType<Impl, Plain<V>>> > {};
-
-template <class Impl, class V>
-struct IsGradient_2 : std::bool_constant< isVec<V> && std::is_same_v<gradientType<Impl, Plain<V>, Plain<V>&, Scalar<V>>, void> > {};
-
-template <class Impl, class V>
-struct IsGradient_3 : std::bool_constant< isVec<V> && std::is_floating_point_v<gradientType<Impl, Plain<V>, Plain<V>>> > {};
-
-template <class Impl, class V>
-struct IsGradient_4 : std::bool_constant< isVec<V> && std::is_floating_point_v<gradientType<Impl, Plain<V>, Plain<V>, Scalar<V>>> > {};
-
-template <class Impl, class V>
-struct IsGradient : std::bool_constant< IsGradient_0<Impl, V>::value || IsGradient_1<Impl, V>::value ||
-                                        IsGradient_2<Impl, V>::value || IsGradient_3<Impl, V>::value || IsGradient_4<Impl, V>::value > {};
-
-
-template <class Impl, class V>
-struct IsFuncGrad_0 : std::bool_constant< isVec<V> && std::is_floating_point_v<funcGradType<Impl, Plain<V>, Plain<V>&, bool>> > {};
-
-template <class Impl, class V>
-struct IsFuncGrad_1 : std::bool_constant< isVec<V> && std::is_floating_point_v<funcGradType<Impl, Plain<V>, Plain<V>&>> > {};
-
-template <class Impl, class V>
-struct IsFuncGrad_2 : std::bool_constant< isVec<V> && std::is_floating_point_v<NthArg<0, funcGradType<Impl, Plain<V>>>> &&
-                                          isVec<NthArg<1, funcGradType<Impl, Plain<V>>>> > {};
-
-template <class Impl, class V>
-struct IsFuncGrad : std::bool_constant< IsFuncGrad_0<Impl, V>::value || IsFuncGrad_1<Impl, V>::value || IsFuncGrad_2<Impl, V>::value > {};
-
-
-template <class Impl, class V>
-struct IsHessian_0 : std::bool_constant< isVec<V> && std::is_same_v<hessianType<Impl, Plain<V>, Plain2D<V>&>, void> > {};
-
-template <class Impl, class V>
-struct IsHessian_1 : std::bool_constant< isVec<V> && isMat<hessianType<Impl, Plain<V>>> > {};
-
-template <class Impl, class V>
-struct IsHessian_2 : std::bool_constant< isVec<V> && isVec<hessianType<Impl, Plain<V>, Plain<V>>> > {};
-
-template <class Impl, class V>
-struct IsHessian : std::bool_constant< IsHessian_0<Impl, V>::value || IsHessian_1<Impl, V>::value || IsHessian_2<Impl, V>::value > {};
 
 
 

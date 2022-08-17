@@ -143,8 +143,7 @@ struct Domain : public TypeOrEmptyBase<impl::Start<V_>, bool(Cond & Conditions::
     {
     }
 
-    template <MatType U, VecType W, bool Enable = HasLinearEqualities, bool Enable2 = !HasLinearInequalities>
-    requires Enable && Enable2
+    template <MatType U, VecType W, bool Enable = HasLinearEqualities && !HasLinearInequalities, int=0>
     Domain (U&& Aeq, W&& beq) : Start(beq.rows()), Bounds(beq.rows()), LinearInequalities(beq.rows()), 
                                 LinearEqualities(std::forward<U>(Aeq), std::forward<W>(beq))
     {
