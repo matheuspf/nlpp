@@ -79,6 +79,26 @@ template <class T, class... Args>
 using OperatorType = detected_t<std::invoke_result_t, T, Args...>;
 
 
+template <template <class...> class Check, class TFs, class V, std::size_t... Is>
+constexpr int opIdImpl (std::index_sequence<Is...>)
+{
+    std::initializer_list<bool> arr = { Check<std::tuple_element_t<Is, TFs>, V>::value... };
+
+    std::size_t id = std::max_element(arr.begin(), arr.end()) - arr.begin();
+
+    if(id == 0 && *arr.begin() == 0)
+        return -1;
+    
+    return id;
+}
+
+template <template <class...> class Check, class TFs, class V = std::nullptr_t>
+constexpr int opId = opIdImpl<Check, TFs, V>(std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<TFs>>>{});
+
+template <template <class...> class Check, class TFs, class V = std::nullptr_t>
+constexpr bool hasOp = opId<Check, TFs, V> >= 0;
+
+
 } // namespace impl
 
 } // namespace nlpp::wrap

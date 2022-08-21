@@ -8,246 +8,239 @@
 namespace nlpp::wrap::impl
 {
 
-// template <class Impl>
-// Function<Impl>::Function (const Impl& impl) : Impl(impl) {}
-
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-Scalar<V> Functions<Cond, Impl>::function (const Eigen::MatrixBase<V>& x) const
+template <Conditions Cond, class... Fs>
+template <VecType V, bool Enable> requires Enable
+Scalar<V> Functions<Cond, Fs...>::function (const V& x) const
 {
-    if constexpr(HasOp<IsFunction, V, TFs>)
-        return impl.function(x);
-    
-    else if constexpr(HasOp<IsFuncGrad, V, TFs>)
-        return impl.getFuncGrad(x);
+    if constexpr(constexpr int id = opId<FuncType_Check, TFs, V>; id >= 0)
+        return std::get<id>(fs)(x);
+
+    else if constexpr(constexpr int id = opId<FuncGradType_Check, TFs, V>; id >= 0)
+        return std::get<0>(funcGrad(x));
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-void Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g, Scalar<V> fx) const
+template <Conditions Cond, class... Fs>
+template <VecType V, bool Enable> requires Enable
+Plain<V> Functions<Cond, Fs...>::gradient (const V& x) const
 {
-    if constexpr(HasOp<IsGradient_2, V, TFs>)
-        impl.gradient(x, g, fx);
+    if constexpr(constexpr int id = opId<GradType_0_Check, TFs, V>; id >= 0)
+        return std::get<id>(fs)(x);
 
-    else if constexpr(HasOp<IsGradient_0, V, TFs>)
-        impl.gradient(x, g);
-
-    else if constexpr(HasOp<IsGradient_1, V, TFs>)
-        g = impl.gradient(x);
-
-    else if constexpr(HasOp<IsFuncGrad, V, TFs>)
-        impl.getFuncGrad(x, g, true);
-
-    else
-        static_assert(always_false<V>, "The functor has no interface for the given parameter");
-}
-
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-void Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x, Plain<V>& g) const
-{
-    if constexpr(HasOp<IsGradient_0, V, TFs>)
-        impl.gradient(x, g);
-
-    else if constexpr(HasOp<IsGradient_1, V, TFs>)
-        g = impl.gradient(x);
-
-    else if constexpr(HasOp<IsGradient_2, V, TFs>)
-        impl.gradient(x, g, std::nan("0"));
-
-    else if constexpr(HasOp<IsFuncGrad, V, TFs>)
-        impl.getFuncGrad(x, g, true);
-
-    else
-        static_assert(always_false<V>, "The functor has no interface for the given parameter");
-}
-
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-Plain<V> Functions<Cond, Impl>::gradient (const Eigen::MatrixBase<V>& x) const
-{
-    if constexpr(HasOp<IsGradient_0, V, TFs> || HasOp<IsGradient_2, V, TFs> || HasOp<IsFuncGrad, V, TFs>)
+    else if constexpr(hasOp<GradType_Check, TFs, V> || hasOp<FuncGradType_Check, TFs, V>)
     {
         Plain<V> g(x.rows());
-
-        if constexpr(HasOp<IsGradient_0, V, TFs>)
-            impl.gradient(x, g);
-        
-        else if constexpr(HasOp<IsGradient_2, V, TFs>)
-            impl.gradient(x, g, function(x));
-
-        else
-            impl.getFuncGrad(x, g, true);
+        gradient(x, g);
 
         return g;
     }
 
-    else if constexpr(HasOp<IsGradient_1, V, TFs>)
-        return impl.gradient(x);
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
+
+template <Conditions Cond, class... Fs>
+template <VecType V, bool Enable> requires Enable
+void Functions<Cond, Fs...>::gradient (const V& x, Plain<V>& g) const
+{
+    if constexpr(constexpr int id = opId<GradType_1_Check, TFs, V>; id >= 0)
+        std::get<id>(fs)(x, g);
+
+    else if constexpr(constexpr int id = opId<GradType_0_Check, TFs, V>; id >= 0)
+        g = std::get<id>(fs)(x);
+
+    else if constexpr(hasOp<GradType_Check, TFs, V> || hasOp<FuncGradType_Check, TFs, V>)
+        gradient(x, g, function(x));
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <Conditions Cond, class Impl>
-template <class V, class U, bool Enable, std::enable_if_t<Enable, int>>
-Scalar<V> Functions<Cond, Impl>::gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
+template <Conditions Cond, class... Fs>
+template <VecType V, bool Enable> requires Enable
+void Functions<Cond, Fs...>::gradient (const V& x, Plain<V>& g, Scalar<V> fx) const
 {
-    if constexpr(HasOp<IsGradient_3, V, TFs>)
-        return impl.gradient(x, e);
+    if constexpr(constexpr int id = opId<GradType_2_Check, TFs, V>; id >= 0)
+        std::get<id>(fs)(x, g, fx);
 
-    else if constexpr(HasOp<IsGradient_4, V, TFs>)
-        return impl.gradient(x, e, function(x));
+    else if constexpr(constexpr int id = opId<GradType_1_Check, TFs, V>; id >= 0)
+        std::get<id>(fs)(x, g);
 
-    else
-        return gradient(x).dot(e);
-}
+    else if constexpr(constexpr int id = opId<GradType_0_Check, TFs, V>; id >= 0)
+        g = std::get<id>(fs)(x);
 
-template <Conditions Cond, class Impl>
-template <class V, class U, bool Enable, std::enable_if_t<Enable, int>>
-Scalar<V> Functions<Cond, Impl>::gradientDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e, Scalar<V> fx) const
-{
-    if constexpr(HasOp<IsGradient_4, V, TFs>)
-        return impl.gradient(x, e, fx);
-
-    else if constexpr(HasOp<IsGradient_3, V, TFs>)
-        return impl.gradient(x, e);
-
-    else
-        return gradient(x).dot(e);
-}
-
-
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-Scalar<V> Functions<Cond, Impl>::funcGrad (const Eigen::MatrixBase<V>& x, Plain<V>& g, bool calcGrad) const
-{
-    if constexpr(HasOp<IsFuncGrad, V, TFs>)
-        return impl.getFuncGrad(x, g, calcGrad);
-
-    else if constexpr(HasOp<IsFunction, V, TFs> && HasOp<IsGradient, V, TFs>)
-    {
-        auto f = function(x);
-
-        if(calcGrad)
-            gradient(x, g, f);
-
-        return f;
-    }
+    else if constexpr(constexpr int id = opId<FuncGradType_Check, TFs, V>; id >= 0)
+        funcGrad(x, g);
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-std::pair<Scalar<V>, Plain<V>> Functions<Cond, Impl>::funcGrad (const Eigen::MatrixBase<V>& x) const
+template <Conditions Cond, class... Fs>
+template <VecType V, bool Enable> requires Enable
+std::pair<Scalar<V>, Plain<V>> Functions<Cond, Fs...>::funcGrad (const V& x) const
 {
-    if constexpr(HasOp<IsFuncGrad_0, V, TFs> || HasOp<IsFuncGrad_1, V, TFs>)
+    if constexpr(constexpr int id = opId<FuncGradType_0_Check, TFs, V>; id >= 0)
+        return std::get<id>(fs)(x);
+
+    else if constexpr(constexpr int id = opId<FuncGradType_1_Check, TFs, V>; id >= 0)
     {
         Plain<V> g(x.rows());
-        Scalar<V> fx = impl.funcGrad(x, g);
+        Scalar<V> fx = std::get<id>(fs)(x, g);
 
         return {fx, g};
-    } 
- 
-    else if constexpr(HasOp<IsFuncGrad_2, V, TFs>)
-        return impl.funcGrad(x);
+    }
 
-    else if constexpr(HasOp<IsFunction, V, TFs> && HasOp<IsGradient, V, TFs>)
+    else if constexpr(hasOp<FuncType_Check, TFs, V> && hasOp<GradType_Check, TFs, V>)
         return {function(x), gradient(x)};
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-
-
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-void Functions<Cond, Impl>::hessian (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+template <Conditions Cond, class... Fs>
+template <VecType V, bool Enable> requires Enable
+Scalar<V> Functions<Cond, Fs...>::funcGrad (const V& x, Plain<V>& g) const
 {
-    if constexpr(HasOp<IsHessian_0, V, TFs>)
-        impl.hessian(x, h);
+    if constexpr(constexpr int id = opId<FuncGradType_1_Check, TFs, V>; id >= 0)
+        return std::get<id>(fs)(x, g);
 
-    else if constexpr(HasOp<IsHessian_1, V, TFs>)
-        h = impl.hessian(x);
+    else if constexpr(constexpr int id = opId<FuncGradType_0_Check, TFs, V>; id >= 0)
+    {
+        Scalar<V> fx;
+        std::tie(fx, g) = std::get<id>(fs)(x);
 
-    else if constexpr(HasOp<IsHessian_2, V, TFs>)
-        hessianFromDirectional(x, h);
+        return fx;
+    }
+
+    else if constexpr(hasOp<FuncType_Check, TFs, V> && hasOp<GradType_Check, TFs, V>)
+    {
+        Scalar<V> fx = function(x);
+        gradient(x, g);
+
+        return fx;
+    }
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-Plain2D<V> Functions<Cond, Impl>::hessian (const Eigen::MatrixBase<V>& x) const
-{
-    if constexpr(HasOp<IsHessian_1, V, TFs>)
-        return impl.hessian(x);
 
-    else if constexpr(HasOp<IsHessian_0, V, TFs>)
+template <Conditions Cond, class... Fs>
+template <VecType V, bool Enable> requires Enable
+Plain2D<V> Functions<Cond, Fs...>::hessian (const V& x) const
+{
+    if constexpr(constexpr int id = opId<HessianType_0_Check, TFs, V>; id >= 0)
+        return std::get<id>(fs)(x);
+
+    else if constexpr(constexpr int id = opId<HessianType_1_Check, TFs, V>; id >= 0)
     {
         Plain2D<V> h(x.rows(), x.rows());
-        impl.hessian(x, h);
+        std::get<id>(fs)(x, h);
+
         return h;
     }
 
-    else if constexpr(HasOp<IsHessian_2, V, TFs>)
-        return hessianFromDirectional(x);
+    else
+        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+}
+
+template <Conditions Cond, class... Fs>
+template <VecType V, bool Enable> requires Enable
+void Functions<Cond, Fs...>::hessian (const V& x, Plain2D<V>& h) const
+{
+    if constexpr(constexpr int id = opId<HessianType_1_Check, TFs, V>; id >= 0)
+        std::get<id>(fs)(x, h);
+
+    else if constexpr(constexpr int id = opId<HessianType_0_Check, TFs, V>; id >= 0)
+        h = std::get<id>(fs)(x);
 
     else
         static_assert(always_false<V>, "The functor has no interface for the given parameter");
 }
 
-template <Conditions Cond, class Impl>
-template <class V, class U, bool Enable, std::enable_if_t<Enable, int>>
-Plain<V> Functions<Cond, Impl>::hessianDir (const Eigen::MatrixBase<V>& x, const Eigen::MatrixBase<U>& e) const
-{
-    if constexpr(HasOp<IsHessian_2, V, TFs>)
-        return impl.hessian(x, e);
 
-    else if constexpr(HasOp<IsHessian_0, V, TFs>)
+
+template <Conditions Cond, class... Fs>
+template <VecType V1, VecType V2, bool Enable> requires Enable
+Scalar<V1> Functions<Cond, Fs...>::gradientDir (const V1& x, const V2& e) const
+{
+    if constexpr(constexpr int id = opId<GradDirType_0_Check, TFs, V1>; id >= 0)
+        return std::get<id>(fs)(x, e);
+
+    else if constexpr(constexpr int id = opId<GradDirType_1_Check, TFs, V1>; id >= 0)
+        return std::get<id>(fs)(x, e, function(x));
+
+    else if constexpr(hasOp<GradType_Check, TFs, V1>)
+        return gradient(x).dot(e);
+
+    else
+        static_assert(always_false<V1>, "The functor has no interface for the given parameter");
+}
+
+template <Conditions Cond, class... Fs>
+template <VecType V1, VecType V2, bool Enable> requires Enable
+Scalar<V1> Functions<Cond, Fs...>::gradientDir (const V1& x, const V2& e, Scalar<V1> fx) const
+{
+    if constexpr(constexpr int id = opId<GradDirType_1_Check, TFs, V1>; id >= 0)
+        return std::get<id>(fs)(x, e, fx);
+
+    else if constexpr(constexpr int id = opId<GradDirType_0_Check, TFs, V1>; id >= 0)
+        return std::get<id>(fs)(x, e);
+
+    else if constexpr(hasOp<GradType_Check, TFs, V1>)
     {
-        Plain2D<V> h(x.rows(), x.rows());
-        impl.hessian(x, h);
-        return h * x;
+        Plain<V1> g(x.rows());
+        gradient(x, g, fx);
+
+        return g.dot(e);
     }
 
-    else if constexpr(HasOp<IsHessian_1, V, TFs>)
-        return impl.hessian(x) * x;
+    else
+        static_assert(always_false<V1>, "The functor has no interface for the given parameter");
+}
+
+
+
+template <Conditions Cond, class... Fs>
+template <VecType V1, VecType V2, bool Enable> requires Enable
+Plain<V1> Functions<Cond, Fs...>::hessianDir (const V1& x, const V2& e) const
+{
+    if constexpr(constexpr int id = opId<HessianDirType_Check, TFs, V1>; id >= 0)
+        return std::get<id>(fs)(x, e);
+
+    else if constexpr(hasOp<HessianType_Check, TFs, V1>)
+        return hessian(x) * e;
 
     else
-        static_assert(always_false<V>, "The functor has no interface for the given parameter");
+        static_assert(always_false<V1>, "The functor has no interface for the given parameter");
 }
 
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-Plain2D<V> Functions<Cond, Impl>::hessianFromDirectional (const Eigen::MatrixBase<V>& x) const
-{
-    Plain2D<V> h(x.rows(), x.rows());
-    hessianFromDirectional(x, h);
-    return h;
-}
 
-template <Conditions Cond, class Impl>
-template <class V, bool Enable, std::enable_if_t<Enable, int>>
-void Functions<Cond, Impl>::hessianFromDirectional (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
-{
-    Plain<V> e = Plain<V>::Constant(x.rows(), Scalar<V>{0.0});
+// template <Conditions Cond, class... Fs>
+// template <class V, bool Enable, std::enable_if_t<Enable, int>>
+// Plain2D<V> Functions<Cond, Fs...>::hessianFromDirectional (const Eigen::MatrixBase<V>& x) const
+// {
+//     Plain2D<V> h(x.rows(), x.rows());
+//     hessianFromDirectional(x, h);
+//     return h;
+// }
+
+// template <Conditions Cond, class... Fs>
+// template <class V, bool Enable, std::enable_if_t<Enable, int>>
+// void Functions<Cond, Fs...>::hessianFromDirectional (const Eigen::MatrixBase<V>& x, Plain2D<V>& h) const
+// {
+//     Plain<V> e = Plain<V>::Constant(x.rows(), Scalar<V>{0.0});
     
-    for(int i = 0; i < e.rows(); ++i)
-    {
-        e(i) = Scalar<V>{1.0};
-        h.row(i) = impl.hessian(x, e);
-        e(i) = Scalar<V>{0.0};
-    }
-}
+//     for(int i = 0; i < e.rows(); ++i)
+//     {
+//         e(i) = Scalar<V>{1.0};
+//         h.row(i) = impl.hessian(x, e);
+//         e(i) = Scalar<V>{0.0};
+//     }
+// }
 
 
 } // namespace nlpp::wrap::impl

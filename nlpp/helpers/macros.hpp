@@ -57,14 +57,18 @@ using NLPP_CONCAT(NAME, Type) = decltype(NLPP_CONCAT(NAME, Call)(std::declval<Im
 #define NLPP_FUNCTOR_CONCEPT_IMPL(NAME, IMPL, ...) \
 \
 template <class F, typename... Types> \
-concept NLPP_CONCAT(NAME, Helper) = (IMPL<F, Types> || ...); \
+concept NLPP_CONCAT(NAME, _Helper) = (IMPL<F, Types> || ...); \
 \
-template <class F> \
-concept NAME = NLPP_CONCAT(NAME, Helper)<F, __VA_ARGS__>; \
+template <class F, typename Type = std::nullptr_t> \
+concept NAME = (!std::is_null_pointer_v<Type> && IMPL<F, Type>) || \
+               (std::is_null_pointer_v<Type> && NLPP_CONCAT(NAME, _Helper)<F, __VA_ARGS__>); \
 \
-template <class F> \
-static constexpr bool NLPP_CONCAT(NAME, _v) = NLPP_CONCAT(NAME)
+template <class F, typename Type = std::nullptr_t> \
+struct NLPP_CONCAT(NAME, _Check) : std::bool_constant<NAME<F, Type>> {};
 
 
-#define NLPP_FUNCTOR_CONCEPT(NAME, IMPL) \
-NLPP_FUNCTOR_CONCEPT_IMPL(NAME, IMPL, NLPP_EXPAND(NLPP_VEC_TYPES))
+
+#define NLPP_FUNCTOR_CONCEPT(NAME, IMPL) NLPP_FUNCTOR_CONCEPT_IMPL(NAME, IMPL, NLPP_EXPAND(NLPP_VEC_TYPES))
+
+// Taken from https://stackoverflow.com/a/69696852
+#define NLPP_CONCEPT_LAMBDA(CONCEPT) [] <typename T> () consteval { return TheConcept<T>; }
