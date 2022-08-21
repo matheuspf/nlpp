@@ -5,7 +5,7 @@
 struct F1
 {
     template <class V>
-    nlpp::impl::Scalar<V> function (const Eigen::MatrixBase<V>& x) const
+    nlpp::impl::Scalar<V> operator() (const Eigen::MatrixBase<V>& x) const
     {
         return x[0] * x[0];
     }

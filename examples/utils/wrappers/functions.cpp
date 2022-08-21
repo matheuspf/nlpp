@@ -9,7 +9,7 @@ using Vec = Eigen::VectorXd;
 struct Func
 {
     template <class V>
-    impl::Scalar<V> function (const Eigen::MatrixBase<V>& x) const
+    impl::Scalar<V> operator() (const Eigen::MatrixBase<V>& x) const
     {
         return x(0) + x(1);
     }
@@ -18,7 +18,7 @@ struct Func
 struct Grad1
 {
     template <class V>
-    auto gradient (const Eigen::MatrixBase<V>& x) const
+    auto operator() (const Eigen::MatrixBase<V>& x) const
     {
         return 2 * x;
     }
@@ -45,12 +45,12 @@ struct FuncGrad1
 struct FuncGrad2
 {
     template <class V>
-    impl::Scalar<V> operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g, bool calcGrad) const
+    impl::Scalar<V> operator () (const Eigen::MatrixBase<V>& x, typename V::PlainObject& g) const
     {
-        if(calcGrad)
+        if(g.size())
             Grad2{}(x, g);
 
-        return Func{}.function(x);
+        return Func{}(x);
     }
 };
 
@@ -118,7 +118,7 @@ int main ()
 
     handy::print(funcs.function(x+x), funcs.function(y+y));
     handy::print(funcs.gradient(x+x).transpose(), funcs.gradient(y+y).transpose());
-    handy::print(funcs.hessianDir(y+y, x).transpose());
+    handy::print(funcs.hessianDir(y+y, y).transpose());
     handy::print(std::get<0>(funcs(x+x)), std::get<0>(funcs(y+y)));
 
 
