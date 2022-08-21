@@ -88,7 +88,7 @@ struct Optimizer
     template <class V = nlpp::Vec, class... Fs>
     static constexpr auto constraints (Fs&&... fs)
     {
-        return wrap::constraints(std::forward<Fs>(fs)...);
+        return wrap::constraints<conditions>(std::forward<Fs>(fs)...);
     }
 
 

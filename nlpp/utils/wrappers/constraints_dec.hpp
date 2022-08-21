@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "helpers.hpp"
@@ -13,15 +12,6 @@ namespace impl
 using ::nlpp::impl::VecType, ::nlpp::impl::MatType, ::nlpp::impl::Empty;
 
 
-template <class F, class V>
-concept IneqsFunctorBase = VecType<V> && requires(const F& f, const V& v)
-{
-    { f(v) } -> VecType;
-};
-
-template <class F, class V>
-concept EqsFunctorBase = IneqsFunctorBase<F, V>;
-
 template <class T>
 concept TupleVecType = requires(const T& t)
 {
@@ -29,141 +19,125 @@ concept TupleVecType = requires(const T& t)
     { std::get<1>(t) } -> VecType;
 };
 
+
 template <class F, class V>
-concept IneqsEqsFunctorBase = VecType<V> && requires(const F& f, const V& v)
+concept IneqsTypeBase = VecType<V> && requires(const F& f, const V& x)
 {
-    { f(v) } -> TupleVecType;
+    { f(x) } -> VecType;
+};
+
+template <class F, class V>
+concept EqsTypeBase = IneqsTypeBase<F, V>;
+
+
+template <class F, class V>
+concept IneqsEqsTypeBase = VecType<V> && requires(const F& f, const V& x)
+{
+    { f(x) } -> TupleVecType;
 };
 
 
-NLPP_FUNCTOR_CONCEPT(IneqsFunctor, IneqsFunctorBase)
-NLPP_FUNCTOR_CONCEPT(EqsFunctor, EqsFunctorBase)
-NLPP_FUNCTOR_CONCEPT(IneqsEqsFunctor, IneqsEqsFunctorBase)
+
+NLPP_FUNCTOR_CONCEPT(IneqsType, IneqsTypeBase)
+NLPP_FUNCTOR_CONCEPT(EqsType, EqsTypeBase)
+NLPP_FUNCTOR_CONCEPT(IneqsEqsType, IneqsEqsTypeBase)
 
 
 
 
-template <class Ineqs, class Eqs, class IneqsEqs>
+template <Conditions Cond, class... Fs>
 struct Constraints
 {
+    using TFs = std::tuple<Fs...>;
+
     enum : bool
     {
-        HasIneqs        = !std::same_as<Ineqs, Empty>,
-        HasEqs          = !std::same_as<Eqs, Empty>,
-        HasIneqsEqs     = !std::same_as<IneqsEqs, Empty>
+        HasIneqs        = bool(Cond & Conditions::NLInequalities),
+        HasEqs          = bool(Cond & Conditions::NLEqualities),
+        // HasIneqsJac     = bool(Cond & Conditions::NLInequalitiesJacobian),
+        // HasEqsJac       = bool(Cond & Conditions::NLEqualitiesJacobian),
     };
 
 
-    template <VecType V>
-    VecType auto ineqs (const V& x) const
+    template <typename... Args>
+    Constraints (Args&&... args) : fs(std::forward<Args>(args)...) {}
+
+
+    template <VecType V, bool Enable = HasIneqs> requires Enable
+    auto ineqs (const V& x) const
     {
-        if constexpr (HasIneqs)
-            return _ineqs(x);
+        if constexpr(constexpr int id = opId<IneqsType_Check, TFs, V>; id >= 0)
+            return std::get<id>(fs)(x);
 
-        else if constexpr (HasIneqsEqs)
-            return std::get<0>(_ineqsEqs(x));
+        else if constexpr(constexpr int id = opId<IneqsEqsType_Check, TFs, V>; id >= 0)
+            return std::get<0>(std::get<id>(fs)(x));
 
-        // else
-        //     static_assert(always_false<V>, "The functor has no interface for the given parameter");
+        else
+            static_assert(always_false<V>, "The functor has no interface for the given parameter");
     }
 
-    template <VecType V>
-    VecType auto eqs (const V& x) const
+    template <VecType V, bool Enable = HasEqs> requires Enable
+    auto eqs (const V& x) const
     {
-        if constexpr (HasEqs)
-            return _eqs(x);
+        if constexpr(constexpr int id = opId<EqsType_Check, TFs, V>; id >= 0)
+            return std::get<id>(fs)(x);
 
-        else if constexpr (HasIneqsEqs)
-            return std::get<1>(_ineqsEqs(x));
+        else if constexpr(constexpr int id = opId<IneqsEqsType_Check, TFs, V>; id >= 0)
+            return std::get<1>(std::get<id>(fs)(x));
 
-        // else
-        //     static_assert(always_false<V>, "The functor has no interface for the given parameter");
+        else
+            static_assert(always_false<V>, "The functor has no interface for the given parameter");
     }
 
-    template <VecType V>
+    template <VecType V, bool Enable = HasIneqs && HasEqs> requires Enable
     auto ineqsEqs (const V& x) const
     {
-        if constexpr(HasIneqsEqs)
-            return _ineqsEqs(x);
-        
-        else if constexpr(HasIneqs && HasEqs)
-            return std::forward_as_tuple(_ineqs(x), _eqs(x));
-        
-        else if constexpr(HasIneqs)
-            return std::forward_as_tuple(_ineqs(x), Eigen::VectorX<Scalar<V>>{});
+        if constexpr(constexpr int id = opId<IneqsEqsType_Check, TFs, V>; id >= 0)
+            return std::get<id>(fs)(x);
 
-        else if constexpr(HasEqs)
-            return std::forward_as_tuple(Eigen::VectorX<Scalar<V>>{}, _eqs(x));
+        else if constexpr(hasOp<IneqsType_Check, TFs, V> && hasOp<EqsType_Check, TFs, V>)
+            return std::make_tuple(ineqs(x), eqs(x));
 
-        // else
-        //     static_assert(always_false<V>, "The functor has no interface for the given parameter");
+        else
+            static_assert(always_false<V>, "The functor has no interface for the given parameter");
     }
 
-    template <VecType V>
+
+    template <class V, bool Enable = HasIneqs || HasEqs> requires Enable
     auto operator() (const V& x) const
     {
-        return ineqsEqs(x);
+        if constexpr(hasOp<IneqsType_Check, TFs, V> && hasOp<EqsType_Check, TFs, V>)
+            return ineqsEqs(x);
+
+        else if constexpr(hasOp<IneqsType_Check, TFs, V>)
+            return ineqs(x);
+
+        else if constexpr(hasOp<EqsType_Check, TFs, V>)
+            return eqs(x);
+
+        else
+            static_assert(always_false<V>, "The functor has no interface for the given parameter");
     }
 
 
-    Ineqs _ineqs;
-    Eqs _eqs;
-    IneqsEqs _ineqsEqs;
+    TFs fs;
 };
 
 } // namespace impl
 
 
-using ::nlpp::impl::Empty, impl::IneqsFunctor, impl::EqsFunctor, impl::IneqsEqsFunctor;
+template <Conditions Cond, class... Fs>
+using Constraints = impl::Constraints<Cond, Fs...>;
 
-template <class Ineqs = Empty, class Eqs = Empty, class IneqsEqs = Empty>
-using Constraints = impl::Constraints<Ineqs, Eqs, IneqsEqs>;
+template <class... Fs>
+using Unconstrained = impl::Constraints<Conditions::Empty, Fs...>;
 
-auto constraints ()
+
+template <Conditions Cond, class... Fs>
+auto constraints (const Fs&... fs)
 {
-    return Constraints<>{};
+    return Constraints<Cond, Fs...>(fs...);
 }
-
-template <class Ineqs, class Eqs, class IneqsEqs>
-auto constraints (const Constraints<Ineqs, Eqs, IneqsEqs>& c)
-{
-    return c;
-}
-
-template <IneqsFunctor Ineqs>
-auto constraints (Ineqs&& ineqs, Empty={}, Empty={})
-{
-    return Constraints<Ineqs, Empty, Empty>{std::forward<Ineqs>(ineqs), {}, {}};
-}
-
-template <IneqsEqsFunctor IneqsEqs>
-auto constraints (IneqsEqs&& ineqsEqs, Empty={}, Empty={})
-{
-    return Constraints<Empty, Empty, IneqsEqs>{{}, {}, std::forward<IneqsEqs>(ineqsEqs)};
-}
-
-template <IneqsFunctor Ineqs, EqsFunctor Eqs>
-auto constraints (Ineqs&& ineqs, Eqs&& eqs, Empty={})
-{
-    return Constraints<Ineqs, Eqs, Empty>{
-        std::forward<Ineqs>(ineqs),
-        std::forward<Eqs>(eqs),
-        {}
-    };
-}
-
-template <IneqsFunctor Ineqs, EqsFunctor Eqs, IneqsEqsFunctor IneqsEqs>
-auto constraints (Ineqs&& ineqs, Eqs&& eqs, IneqsEqs&& ineqsEqs)
-{
-    return Constraints<Ineqs, Eqs, IneqsEqs>{
-        std::forward<Ineqs>(ineqs),
-        std::forward<Eqs>(eqs),
-        std::forward<IneqsEqs>(ineqsEqs)
-    };
-}
-
-
-
 
 
 } // namespace nlpp::wrap
