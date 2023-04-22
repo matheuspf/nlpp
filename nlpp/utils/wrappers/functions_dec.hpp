@@ -328,7 +328,11 @@ constexpr auto functions (const Fs&... fs)
     constexpr bool addGradient = bool(Cond & Conditions::Gradient) && !impl::hasOp<impl::FuncGradType_Check, TFs, V> && !impl::hasOp<impl::GradType_Check, TFs, V>;
     constexpr bool addHessian  = bool(Cond & Conditions::Hessian)  && !impl::hasOp<impl::HessianType_Check, TFs, V>;
 
-    constexpr int funcId = impl::opId<impl::FuncType_Check, TFs, V>;
+    // constexpr int funcId = impl::opId<impl::FuncType_Check, TFs, V>;
+
+    constexpr bool xx = impl::hasOp<impl::FuncType_Check, TFs, V>;
+    using XX = std::conditional_t<xx, impl::FuncType_Check, impl::FuncGradType_Check>;
+    constexpr int funcId = impl::opId<XX, TFs, V>;
 
     if constexpr(addGradient || addHessian)
     {

@@ -20,7 +20,9 @@ auto grad (torch::Tensor& x, torch::Tensor& fx)
 
 int main()
 {
-    torch::Device device = torch::kCUDA;
+    // torch::Device device = torch::kCUDA;
+    torch::Device device = torch::kCPU;
+
     // torch::Tensor x = torch::ones(2, torch::requires_grad()).cuda();
     torch::Tensor x = torch::ones(2, device);
     x[1] = 2.0;
@@ -28,7 +30,7 @@ int main()
 
     torch::AutoGradMode guard(false);
 
-    for(int i = 0; i < 10; ++i)
+    for(int i = 0; i < 1000; ++i)
     {
         auto fx = func(x);
         auto gx = grad(x, fx);
